@@ -170,7 +170,10 @@ export class Dispatcher {
 			//
 
 			applySettings: {
-				none: {
+				// Dispatched programmatically (e.g. session load), so it must not
+				// depend on which UI zone happens to hold focus at that moment —
+				// restored tabs focus the editor before initSettings runs.
+				default: {
 					programmatic: (viewModel: SettingsViewModel) => this.commandManager.performApplySettings(viewModel),
 				},
 			},
