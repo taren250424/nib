@@ -80,6 +80,13 @@ function bindContainerClickEvent(dispatcher: Dispatcher, treeFacade: TreeFacade)
     if (!viewModel) return
     if (viewModel.directory) await dispatcher.dispatch("openDirectoryByTreeNode", "element", treeNode)
     else await dispatcher.dispatch("openFile", "element", path)
+
+    // Opening a file hands focus to the editor, and a click in the tree is not
+    // a request to leave it — the arrow keys have to keep moving the selection.
+    // Re-resolved because the node may have been deleted while the open waited
+    // in the command queue.
+    const openedIndex = treeFacade.getFlattenIndexByPath(path)
+    if (openedIndex !== undefined) treeFacade.focusIndex(openedIndex)
   }
 }
 
