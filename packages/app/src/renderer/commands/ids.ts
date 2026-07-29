@@ -67,3 +67,4 @@ export type CommandId =
 	| "settings.apply"
 	| "settings.applyAndSave"
 	| "help.showInformation"
+	| "app.exit"

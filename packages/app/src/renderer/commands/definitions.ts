@@ -1,8 +1,16 @@
 import type { SettingsViewModel } from "@renderer/viewmodels/SettingsViewModel"
 
-import { toggleSide } from "../actions"
+import { exit, toggleSide } from "../actions"
 import type { CommandContext, ICommandDescriptor, Task } from "../core"
-import type { CommandManager, InfoFacade, MenuElements, SideFacade, ZoomManager } from "../modules"
+import type {
+	CommandManager,
+	InfoFacade,
+	MenuElements,
+	SideFacade,
+	TabEditorFacade,
+	TreeFacade,
+	ZoomManager,
+} from "../modules"
 import type { CommandId } from "./ids"
 
 type CommandDefinition = Omit<ICommandDescriptor, "id">
@@ -17,6 +25,8 @@ export type CommandDeps = {
 	sideFacade: SideFacade
 	infoFacade: InfoFacade
 	menuElements: MenuElements
+	tabEditorFacade: TabEditorFacade
+	treeFacade: TreeFacade
 }
 
 /** `when` for commands that only apply while a given UI zone holds focus. */
@@ -41,7 +51,7 @@ const inEditor = (context: CommandContext) => context.focusedTask === "editor" &
  * the apply-time revalidation inside them stays necessary.
  */
 export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[] {
-	const { commandManager, zoomManager, sideFacade, infoFacade, menuElements } = deps
+	const { commandManager, zoomManager, sideFacade, infoFacade, menuElements, tabEditorFacade, treeFacade } = deps
 
 	// Record over CommandId, so a new id cannot be added without a definition.
 	const definitions: Record<CommandId, CommandDefinition> = {
@@ -180,6 +190,7 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
 			run: (viewModel: SettingsViewModel) => commandManager.performApplyAndSaveSettings(viewModel),
 		},
 		"help.showInformation": { run: () => infoFacade.showInformation() },
+		"app.exit": { run: () => exit(tabEditorFacade, treeFacade) },
 	}
 
 	return Object.entries(definitions).map(([id, definition]) => ({ id, ...definition }))

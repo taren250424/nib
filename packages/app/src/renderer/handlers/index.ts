@@ -8,10 +8,4 @@ export { handleTabEditor } from "./tabEditorHandlers"
 export { handleTree } from "./treeHandlers"
 export { handleWindow } from "./windowHandlers"
 export { handleSync } from "./syncHandlers"
-export {
-	handleMenuItems,
-	handleFileMenu,
-	handleEditMenu,
-	handleViewMenu,
-	handleHelpMenu,
-} from "./menu"
+export { handleMenuItems, handleCommandMenus } from "./menu"

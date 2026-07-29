@@ -30,10 +30,7 @@ import {
 	handleContextKeys,
 	handleGlobalInput,
 	handleMenuItems,
-	handleFileMenu,
-	handleEditMenu,
-	handleViewMenu,
-	handleHelpMenu,
+	handleCommandMenus,
 	handleInfo,
 	handleLoad,
 	handleSettings,
@@ -68,21 +65,26 @@ window.addEventListener("DOMContentLoaded", () => {
 	const commandRegistry = diContainer.get<CommandRegistry>(DI.CommandRegistry)
 	const commandManager = diContainer.get<CommandManager>(DI.CommandManager)
 	commandRegistry.registerAll(
-		createCommandDescriptors({ commandManager, zoomManager, sideFacade, infoFacade, menuElements })
+		createCommandDescriptors({
+			commandManager,
+			zoomManager,
+			sideFacade,
+			infoFacade,
+			menuElements,
+			tabEditorFacade,
+			treeFacade,
+		})
 	)
 	keybindingService.registerAll(KEYBINDINGS)
 
 	handleContextKeys(focusManager, contextKeyService)
 	handleGlobalInput(emitter, focusManager, keybindingService)
 	handleMenuItems(emitter, menuElements)
-	handleFileMenu(dispatcher, menuElements, settingsFacade, tabEditorFacade, treeFacade)
-	handleEditMenu(dispatcher, menuElements)
-	handleViewMenu(commandRegistry, menuElements)
-	handleHelpMenu(menuElements, infoFacade)
+	handleCommandMenus(commandRegistry, contextKeyService, menuElements)
 
 	handleTabEditor(dispatcher, emitter, tabEditorFacade)
 	handleInfo(infoFacade)
-	handleWindow(windowFacade, tabEditorFacade, treeFacade)
+	handleWindow(windowFacade, commandRegistry)
 	handleTree(dispatcher, emitter, treeFacade)
 	handleSide(emitter, sideFacade)
 	handleSettings(dispatcher, settingsFacade)

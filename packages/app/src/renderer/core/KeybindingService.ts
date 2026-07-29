@@ -37,7 +37,11 @@ export class KeybindingService {
 
 	/** The binding a key press resolves to right now, or undefined if none applies. */
 	resolve(key: string): Keybinding | undefined {
-		return this.bindings.get(key)?.find((binding) => this.commandRegistry.isEnabled(binding.command))
+		const candidates = this.bindings.get(key)
+		if (!candidates) return undefined
+
+		const command = this.commandRegistry.firstEnabled(candidates.map((binding) => binding.command))
+		return candidates.find((binding) => binding.command === command)
 	}
 
 	handleKeyEvent(e: KeyboardEvent): void {

@@ -49,6 +49,17 @@ export class CommandRegistry {
 	}
 
 	/**
+	 * The first of these commands that applies right now, or undefined if none do.
+	 *
+	 * One trigger often stands for several commands — Ctrl+X and Edit > Cut each
+	 * mean the tree's cut or the editor's depending on where focus is — and both
+	 * the keyboard and the menus need the same answer to which one that is.
+	 */
+	firstEnabled(ids: readonly string[]): string | undefined {
+		return ids.find((id) => this.isEnabled(id))
+	}
+
+	/**
 	 * Runs the command if it applies. A command whose `when` fails is not an
 	 * error: a key combination that means nothing in the focused zone has to fall
 	 * through quietly so the editor's native handling still sees it.

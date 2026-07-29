@@ -1,7 +1,7 @@
-import { exit as actExit } from "../actions"
-import type { TabEditorFacade, TreeFacade, WindowFacade } from "@renderer/modules"
+import type { CommandRegistry } from "@renderer/core"
+import type { WindowFacade } from "@renderer/modules"
 
-export function handleWindow(windowFacade: WindowFacade, tabEditorFacade: TabEditorFacade, treeFacade: TreeFacade) {
+export function handleWindow(windowFacade: WindowFacade, commandRegistry: CommandRegistry) {
 	const { maximizeBtn, minimizeBtn, exitBtn } = windowFacade.renderer.elements
 
 	window.mainToRenderer.onMaximizeWindow(() => {
@@ -21,6 +21,6 @@ export function handleWindow(windowFacade: WindowFacade, tabEditorFacade: TabEdi
 		window.rendererToMain.requestMinimizeWindow()
 	})
 	exitBtn.addEventListener("click", () => {
-		actExit(tabEditorFacade, treeFacade)
+		void commandRegistry.execute("app.exit")
 	})
 }
