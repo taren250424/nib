@@ -8,6 +8,7 @@ import { TreeRenderer } from "./TreeRenderer"
 import { TreeStore } from "./TreeStore"
 import { TreeDragManager } from "./TreeDragManager"
 import { CLASS_SELECTED } from "@renderer/constants/dom"
+import { ContextKeyService } from "@renderer/core"
 import { adjustMenuPosition, assert } from "@renderer/utils"
 
 @injectable()
@@ -15,7 +16,8 @@ export class TreeFacade {
 	constructor(
 		@inject(DI.TreeStore) public readonly store: TreeStore,
 		@inject(DI.TreeRenderer) public readonly renderer: TreeRenderer,
-		@inject(DI.TreeDragManager) public readonly drag: TreeDragManager
+		@inject(DI.TreeDragManager) public readonly drag: TreeDragManager,
+		@inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService
 	) {}
 
 	// store
@@ -193,6 +195,7 @@ export class TreeFacade {
 
 	addClipboardPaths(path: string) {
 		this.store.addClipboardPaths(path)
+		this._publishClipboardContext()
 	}
 
 	getClipboardPaths(): string[] {
@@ -207,12 +210,19 @@ export class TreeFacade {
 		}
 
 		this.store.clearClipboardPaths()
+		this._publishClipboardContext()
 	}
 
 	/** Drops the clipboard entirely: pending paths, their cut styling, and the mode. */
 	clearClipboard() {
 		this.clearClipboardPaths()
 		this.store.clipboardMode = "none"
+	}
+
+	// Both mutators funnel through here, so whether there is anything to paste is
+	// announced from the same place it changes.
+	private _publishClipboardContext() {
+		this.contextKeyService.set("treeHasClipboard", this.store.getClipboardPaths().length > 0)
 	}
 
 	// renderer

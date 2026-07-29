@@ -103,15 +103,20 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
 		// right-clicked node, the selection, or the node a drag was dropped on.
 		"tree.cut": { when: inTask("tree"), run: () => commandManager.performCutTree() },
 		"tree.copy": { when: inTask("tree"), run: () => commandManager.performCopyTree() },
+		// Paste needs something on the clipboard, not merely a selection — cutting
+		// and then clicking elsewhere still leaves something to paste.
 		"tree.pasteFromContextMenu": {
-			when: inTask("tree"),
+			when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
 			run: () => commandManager.performPasteTreeWithContextmenu(),
 		},
 		"tree.pasteFromShortcut": {
-			when: inTask("tree"),
+			when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
 			run: () => commandManager.performPasteTreeWithShortcut(),
 		},
-		"tree.pasteFromDrag": { when: inTask("tree"), run: () => commandManager.performPasteTreeWithDrag() },
+		"tree.pasteFromDrag": {
+			when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
+			run: () => commandManager.performPasteTreeWithDrag(),
+		},
 
 		// Editor clipboard. The native variants let the browser move the text and
 		// only mark the tab dirty; the others do the clipboard work by hand,

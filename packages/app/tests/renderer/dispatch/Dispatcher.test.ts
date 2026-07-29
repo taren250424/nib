@@ -86,11 +86,11 @@ describe("Dispatcher routing", () => {
 	// invocation channels resolve to different commands. The keyboard variant is a
 	// keybinding now and no longer passes through here.
 	it("distinguishes handlers by source within one task", async () => {
-		const contextMenu = createDispatcher("tree")
+		const contextMenu = createDispatcher("tree", { treeHasClipboard: true })
 		await contextMenu.dispatcher.dispatch("paste", "context-menu")
 		expect(contextMenu.calls).toEqual(["performPasteTreeWithContextmenu"])
 
-		const drag = createDispatcher("tree")
+		const drag = createDispatcher("tree", { treeHasClipboard: true })
 		await drag.dispatcher.dispatch("paste", "drag")
 		expect(drag.calls).toEqual(["performPasteTreeWithDrag"])
 	})

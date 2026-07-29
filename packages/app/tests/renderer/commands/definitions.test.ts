@@ -56,7 +56,7 @@ describe("createCommandDescriptors", () => {
 
 		const expectations: [string, string][] = [
 			["tree.delete", "tree"],
-			["tree.pasteFromShortcut", "tree"],
+			["tree.cut", "tree"],
 			["tab.closeOthers", "tab"],
 			["editor.copy", "editor"],
 			["find.submit", "find-replace"],
@@ -94,6 +94,27 @@ describe("createCommandDescriptors", () => {
 
 		for (const id of ["file.newTab", "file.save", "view.zoomIn", "settings.apply"]) {
 			expect(byId.get(id)?.when, `${id} should not be scoped`).toBeUndefined()
+		}
+	})
+
+	// Cutting and then clicking elsewhere still leaves something to paste, so the
+	// condition is the clipboard rather than the current selection.
+	it("requires a clipboard for every paste variant, not just tree focus", () => {
+		const { byId } = descriptorsById()
+		const context = new ContextKeyService()
+		context.set("focusedTask", "tree")
+
+		const pastes = ["tree.pasteFromContextMenu", "tree.pasteFromShortcut", "tree.pasteFromDrag"]
+
+		for (const id of pastes) {
+			const when = byId.get(id)!.when!
+			expect(when(context.snapshot()), `${id} should not apply with an empty clipboard`).toBe(false)
+		}
+
+		context.set("treeHasClipboard", true)
+		for (const id of pastes) {
+			const when = byId.get(id)!.when!
+			expect(when(context.snapshot()), `${id} should apply with a full clipboard`).toBe(true)
 		}
 	})
 
