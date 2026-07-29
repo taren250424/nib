@@ -9,6 +9,7 @@ export default defineConfig({
 	resolve: {
 		alias: [
 			{ find: "@main", replacement: "/src/main" },
+			{ find: "@renderer", replacement: "/src/renderer" },
 			{ find: "@shared", replacement: "/src/shared" },
 			{ find: "@services", replacement: "/src/main/services" },
 			{ find: "@modules_contracts", replacement: "/src/main/modules/contracts" },
