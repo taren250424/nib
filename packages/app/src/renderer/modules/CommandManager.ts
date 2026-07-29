@@ -72,6 +72,10 @@ export class CommandManager {
 			// OS/File system may have ignored the operation; we just skip it to avoid breaking the stack.
 			console.error("[CommandManager] undo(tree) failed:", err)
 		}
+
+		// The pop already happened, so the context has moved whether or not the
+		// undo itself succeeded.
+		this._publishHistoryContext()
 	}
 
 	performRedoEditor() {
@@ -92,6 +96,25 @@ export class CommandManager {
 		} catch (err) {
 			console.error("[CommandManager] redo(tree) failed:", err)
 		}
+
+		this._publishHistoryContext()
+	}
+
+	/**
+	 * Records a command that can be undone. A new command invalidates the redo
+	 * branch, exactly as every other editor does.
+	 */
+	private _pushUndoable(cmd: ICommand) {
+		this.undoStack.push(cmd)
+		this.redoStack.length = 0
+		this._publishHistoryContext()
+	}
+
+	private _publishHistoryContext() {
+		this.contextKeyService.update({
+			canUndoTree: this.undoStack.length > 0,
+			canRedoTree: this.redoStack.length > 0,
+		})
 	}
 
 	//
@@ -440,8 +463,7 @@ export class CommandManager {
 
 		try {
 			await this._withWatchSkip(() => cmd.execute())
-			this.undoStack.push(cmd)
-			this.redoStack.length = 0
+			this._pushUndoable(cmd)
 		} catch (error) {
 			console.error("[CommandManager] create failed:", error)
 		}
@@ -557,8 +579,7 @@ export class CommandManager {
 
 		try {
 			await this._withWatchSkip(() => cmd.execute())
-			this.undoStack.push(cmd)
-			this.redoStack.length = 0
+			this._pushUndoable(cmd)
 		} catch (error) {
 			console.error("[CommandManager] rename failed:", error)
 			this._restoreTreeSpan(treeNode, prePath)
@@ -593,8 +614,7 @@ export class CommandManager {
 
 		try {
 			await this._withWatchSkip(() => cmd.execute())
-			this.undoStack.push(cmd)
-			this.redoStack.length = 0
+			this._pushUndoable(cmd)
 		} catch (error) {
 			console.error("[CommandManager] delete failed:", error)
 		}
@@ -731,8 +751,7 @@ export class CommandManager {
 
 		try {
 			await this._withWatchSkip(() => cmd.execute())
-			this.undoStack.push(cmd)
-			this.redoStack.length = 0
+			this._pushUndoable(cmd)
 
 			// A cut is consumed by its paste. Without this the sources keep their
 			// greyed-out cut styling forever and the mode never leaves "cut", so

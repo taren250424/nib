@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import { Dispatcher } from "@renderer/dispatch/Dispatcher"
 import { CommandRegistry, ContextKeyService } from "@renderer/core"
-import type { FocusManager, Task } from "@renderer/core"
+import type { ContextKeyMap, FocusManager, Task } from "@renderer/core"
 import { createCommandDescriptors } from "@renderer/commands"
 import type { CommandDeps } from "@renderer/commands/definitions"
 
@@ -11,7 +11,7 @@ import type { CommandDeps } from "@renderer/commands/definitions"
  * table, the command it names, that command's `when`, and the CommandManager call
  * it ends in.
  */
-function createDispatcher(task: Task) {
+function createDispatcher(task: Task, context: Partial<ContextKeyMap> = {}) {
 	const calls: string[] = []
 
 	const service = () =>
@@ -35,7 +35,7 @@ function createDispatcher(task: Task) {
 	} as unknown as CommandDeps
 
 	const contextKeyService = new ContextKeyService()
-	contextKeyService.set("focusedTask", task)
+	contextKeyService.update({ ...context, focusedTask: task })
 
 	const commandRegistry = new CommandRegistry(contextKeyService)
 	commandRegistry.registerAll(createCommandDescriptors(deps))
@@ -50,13 +50,20 @@ function createDispatcher(task: Task) {
 
 describe("Dispatcher routing", () => {
 	it("prefers the handler registered for the focused task", async () => {
-		const tree = createDispatcher("tree")
+		const tree = createDispatcher("tree", { canUndoTree: true })
 		await tree.dispatcher.dispatch("undo", "shortcut")
 		expect(tree.calls).toEqual(["performUndoTree"])
 
 		const editor = createDispatcher("editor")
 		await editor.dispatcher.dispatch("undo", "menu")
 		expect(editor.calls).toEqual(["performUndoEditor"])
+	})
+
+	// The tree's undo stack is part of the condition, not just the focused zone.
+	it("skips tree undo when there is nothing on the stack", async () => {
+		const { dispatcher, calls } = createDispatcher("tree", { canUndoTree: false })
+		await dispatcher.dispatch("undo", "shortcut")
+		expect(calls).toEqual([])
 	})
 
 	// Replace leaves focus in the widget; undo there belongs to the editor history.

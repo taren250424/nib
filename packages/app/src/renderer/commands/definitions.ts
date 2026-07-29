@@ -53,8 +53,16 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
 			when: inTask("editor", "find-replace"),
 			run: () => commandManager.performRedoEditor(),
 		},
-		"tree.undo": { when: inTask("tree"), run: () => commandManager.performUndoTree() },
-		"tree.redo": { when: inTask("tree"), run: () => commandManager.performRedoTree() },
+		// The tree keeps its own undo stack, so it can say whether there is anything
+		// left to undo — which the editor's history cannot be asked for as cheaply.
+		"tree.undo": {
+			when: (ctx) => ctx.focusedTask === "tree" && ctx.canUndoTree,
+			run: () => commandManager.performUndoTree(),
+		},
+		"tree.redo": {
+			when: (ctx) => ctx.focusedTask === "tree" && ctx.canRedoTree,
+			run: () => commandManager.performRedoTree(),
+		},
 
 		// Files
 		"file.newTab": { run: () => commandManager.performNewTab() },
