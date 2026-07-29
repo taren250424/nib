@@ -7,7 +7,7 @@ export const DI = {
 
 	ZoomManager: Symbol("ZoomManager"),
 
-	ShortcutRegistry: Symbol("ShortcutRegistry"),
+	KeybindingService: Symbol("KeybindingService"),
 
 	InfoFacade: Symbol("InfoFacade"),
 	InfoElements: Symbol("InfoElements"),

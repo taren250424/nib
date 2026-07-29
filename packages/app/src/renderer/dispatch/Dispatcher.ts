@@ -28,17 +28,17 @@ export class Dispatcher {
 		this._commandIds = {
 			//
 
+			// The find widget keeps focus after a replace, so Edit > Undo clicked from
+			// there still has to reach the editor history it was written into.
 			undo: {
-				editor: { shortcut: "editor.undo.native", default: "editor.undo" },
-				tree: { default: "tree.undo" },
-				// Replace leaves focus in the widget, so Ctrl+Z there has to reach the
-				// editor history the replacement was written into.
+				editor: { default: "editor.undo" },
 				"find-replace": { default: "editor.undo" },
+				tree: { default: "tree.undo" },
 			},
 			redo: {
-				editor: { shortcut: "editor.redo.native", default: "editor.redo" },
-				tree: { default: "tree.redo" },
+				editor: { default: "editor.redo" },
 				"find-replace": { default: "editor.redo" },
+				tree: { default: "tree.redo" },
 			},
 
 			//
@@ -67,7 +67,7 @@ export class Dispatcher {
 			//
 
 			cut: {
-				editor: { shortcut: "editor.cut.native", menu: "editor.cut" },
+				editor: { menu: "editor.cut" },
 				tree: { default: "tree.cut" },
 			},
 			copy: {
@@ -75,10 +75,9 @@ export class Dispatcher {
 				tree: { default: "tree.copy" },
 			},
 			paste: {
-				editor: { shortcut: "editor.paste.native", menu: "editor.paste" },
+				editor: { menu: "editor.paste" },
 				tree: {
 					"context-menu": "tree.pasteFromContextMenu",
-					shortcut: "tree.pasteFromShortcut",
 					drag: "tree.pasteFromDrag",
 				},
 			},
@@ -103,22 +102,6 @@ export class Dispatcher {
 				default: { programmatic: "settings.apply" },
 			},
 			applyAndSaveSettings: { default: { default: "settings.applyAndSave" } },
-
-			//
-
-			esc: {
-				// Closing must work from any zone: clicking the tab bar or tree
-				// leaves the task there (activeElement can be body), and a
-				// per-zone table would silently swallow Esc in those cases.
-				default: { shortcut: "find.close" },
-			},
-			enter: {
-				"find-replace": { shortcut: "find.submit" },
-				tree: { shortcut: "tree.open" },
-			},
-			shiftEnter: {
-				"find-replace": { shortcut: "find.submitBackward" },
-			},
 		}
 	}
 

@@ -1,10 +1,23 @@
 import type { SettingsViewModel } from "@renderer/viewmodels/SettingsViewModel"
 
+import { toggleSide } from "../actions"
 import type { CommandContext, ICommandDescriptor, Task } from "../core"
-import type { CommandManager } from "../modules"
+import type { CommandManager, InfoFacade, MenuElements, SideFacade, ZoomManager } from "../modules"
 import type { CommandId } from "./ids"
 
 type CommandDefinition = Omit<ICommandDescriptor, "id">
+
+/**
+ * What the commands act on. Most reach the app through CommandManager; the rest
+ * name the one service they drive, rather than growing CommandManager further.
+ */
+export type CommandDeps = {
+	commandManager: CommandManager
+	zoomManager: ZoomManager
+	sideFacade: SideFacade
+	infoFacade: InfoFacade
+	menuElements: MenuElements
+}
 
 /** `when` for commands that only apply while a given UI zone holds focus. */
 function inTask(...tasks: Task[]) {
@@ -24,30 +37,21 @@ function inTask(...tasks: Task[]) {
  * A `when` is a gate, not a guarantee. Commands run through a serial queue, so
  * the apply-time revalidation inside them stays necessary.
  */
-export function createCommandDescriptors(commandManager: CommandManager): ICommandDescriptor[] {
+export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[] {
+	const { commandManager, zoomManager, sideFacade, infoFacade, menuElements } = deps
+
 	// Record over CommandId, so a new id cannot be added without a definition.
 	const definitions: Record<CommandId, CommandDefinition> = {
-		// History. The editor's own shortcut is left to the browser: the registry
-		// skips preventDefault inside the editor, and ProseMirror handles the key.
+		// History. In the editor this performs the same prosemirror-history step the
+		// editor's own keymap would; it also applies from the find widget, where
+		// focus sits in an input after a replace.
 		"editor.undo": {
 			when: inTask("editor", "find-replace"),
 			run: () => commandManager.performUndoEditor(),
 		},
-		"editor.undo.native": {
-			when: inTask("editor"),
-			run: () => {
-				/* handled natively by the editor */
-			},
-		},
 		"editor.redo": {
 			when: inTask("editor", "find-replace"),
 			run: () => commandManager.performRedoEditor(),
-		},
-		"editor.redo.native": {
-			when: inTask("editor"),
-			run: () => {
-				/* handled natively by the editor */
-			},
 		},
 		"tree.undo": { when: inTask("tree"), run: () => commandManager.performUndoTree() },
 		"tree.redo": { when: inTask("tree"), run: () => commandManager.performRedoTree() },
@@ -62,6 +66,7 @@ export function createCommandDescriptors(commandManager: CommandManager): IComma
 
 		// Tabs
 		"tab.close": { run: (id: number) => commandManager.performCloseTab(id) },
+		"tab.closeActive": { run: () => commandManager.performCloseActiveTab() },
 		"tab.closeOthers": { when: inTask("tab"), run: () => commandManager.performCloseOtherTabs() },
 		"tab.closeToRight": { when: inTask("tab"), run: () => commandManager.performCloseTabsToRight() },
 		"tab.closeAll": { when: inTask("tab"), run: () => commandManager.performCloseAllTabs() },
@@ -76,6 +81,14 @@ export function createCommandDescriptors(commandManager: CommandManager): IComma
 		},
 		"tree.expandDirectory": {
 			run: (node: HTMLElement) => commandManager.performOpenDirectoryByTreeNode(node),
+		},
+		"tree.focusUp": {
+			when: inTask("tree"),
+			run: (extend: boolean) => commandManager.performFocusTreeUp(extend),
+		},
+		"tree.focusDown": {
+			when: inTask("tree"),
+			run: (extend: boolean) => commandManager.performFocusTreeDown(extend),
 		},
 
 		// Tree clipboard. Paste splits by where the target comes from: the
@@ -110,8 +123,11 @@ export function createCommandDescriptors(commandManager: CommandManager): IComma
 		},
 		"find.next": { run: (direction: "up" | "down") => commandManager.performFind(direction) },
 		"find.replace": { run: () => commandManager.performReplace() },
-		"find.replaceAll": { run: () => commandManager.performReplaceAll() },
-		"find.close": { run: () => commandManager.performCloseFindReplaceBox() },
+		// Both are reachable from a global key, so neither may act on a closed box:
+		// Ctrl+Alt+Enter would rewrite the document with a stale query, and Esc
+		// would consume a key the editor wants for its own purposes.
+		"find.replaceAll": { when: (ctx) => ctx.findReplaceOpen, run: () => commandManager.performReplaceAll() },
+		"find.close": { when: (ctx) => ctx.findReplaceOpen, run: () => commandManager.performCloseFindReplaceBox() },
 		"find.submit": {
 			when: inTask("find-replace"),
 			run: () => commandManager.performFindOrReplaceByActiveElement("down"),
@@ -121,11 +137,25 @@ export function createCommandDescriptors(commandManager: CommandManager): IComma
 			run: () => commandManager.performFindOrReplaceByActiveElement("up"),
 		},
 
-		// Settings
+		// View
+		"view.zoomIn": { run: () => zoomManager.zoomIn() },
+		"view.zoomOut": { run: () => zoomManager.zoomOut() },
+		"view.zoomReset": { run: () => zoomManager.resetZoom() },
+		"view.toggleSide": {
+			run: () => {
+				sideFacade.setSideOpenState(!sideFacade.isSideOpen())
+				sideFacade.syncSession()
+				toggleSide(menuElements, sideFacade)
+			},
+		},
+
+		// Settings and help
+		"settings.open": { run: () => commandManager.performOpenSettings() },
 		"settings.apply": { run: (viewModel: SettingsViewModel) => commandManager.performApplySettings(viewModel) },
 		"settings.applyAndSave": {
 			run: (viewModel: SettingsViewModel) => commandManager.performApplyAndSaveSettings(viewModel),
 		},
+		"help.showInformation": { run: () => infoFacade.showInformation() },
 	}
 
 	return Object.entries(definitions).map(([id, definition]) => ({ id, ...definition }))

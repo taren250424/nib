@@ -1,6 +1,5 @@
 import { CUSTOM_EVENTS } from "@renderer/constants"
-import { FocusManager, ShortcutRegistry, UI_ZONES_VALUES, type Task } from "@renderer/core"
-import type { Dispatcher } from "@renderer/dispatch"
+import { FocusManager, KeybindingService, UI_ZONES_VALUES, type Task } from "@renderer/core"
 import { EventEmitter } from "events"
 
 const state = {
@@ -9,10 +8,9 @@ const state = {
 }
 
 export function handleGlobalInput(
-	dispatcher: Dispatcher,
 	emitter: EventEmitter,
 	focusManager: FocusManager,
-	shortcutRegistry: ShortcutRegistry
+	keybindingService: KeybindingService
 ) {
 	bindDocumentMousedownEvnet(focusManager, emitter)
 	bindDocumentFocusEvents(focusManager)
@@ -22,8 +20,7 @@ export function handleGlobalInput(
 	bindDocumentMouseupEvnetForDrag(emitter)
 	bindDocumentMouseleaveEvnetForDrag(emitter)
 
-	bindDocumentKeydownEvent(shortcutRegistry)
-	bindShortcutEvent(dispatcher, shortcutRegistry)
+	bindDocumentKeydownEvent(focusManager, keybindingService)
 }
 
 //
@@ -101,14 +98,13 @@ function bindDocumentMouseleaveEvnetForDrag(emitter: EventEmitter) {
 
 //
 
-function bindDocumentKeydownEvent(shortcutRegistry: ShortcutRegistry) {
+function bindDocumentKeydownEvent(focusManager: FocusManager, keybindingService: KeybindingService) {
 	document.addEventListener("keydown", (e) => {
-		shortcutRegistry.handleKeyEvent(e)
-	})
-}
+		// Which binding applies is answered from the context keys, and focus events
+		// publish those on a microtask. Settle it first so a key pressed right after
+		// focus moved is resolved against where focus actually is.
+		focusManager.syncFocus()
 
-function bindShortcutEvent(dispatcher: Dispatcher, shortcutRegistry: ShortcutRegistry) {
-	shortcutRegistry.register("ESC", async () => await dispatcher.dispatch("esc", "shortcut"))
-	shortcutRegistry.register("ENTER", async () => await dispatcher.dispatch("enter", "shortcut"))
-	shortcutRegistry.register("Shift+ENTER", async () => await dispatcher.dispatch("shiftEnter", "shortcut"))
+		keybindingService.handleKeyEvent(e)
+	})
 }

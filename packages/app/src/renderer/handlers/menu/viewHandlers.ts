@@ -1,48 +1,11 @@
-import { toggleSide } from "@renderer/actions"
+import { CommandRegistry } from "../../core"
+import { MenuElements } from "@renderer/modules"
 
-import { ShortcutRegistry } from "../../core"
-import { MenuElements, SideFacade, ZoomManager } from "@renderer/modules"
+export function handleViewMenu(commandRegistry: CommandRegistry, menuElements: MenuElements) {
+	const { fileTree, zoomIn, zoomOut, zoomReset } = menuElements
 
-export function handleViewMenu(
-	shortcutRegistry: ShortcutRegistry,
-	menuElements: MenuElements,
-	zoomManager: ZoomManager,
-	sideFacade: SideFacade
-) {
-	bindSideToggleEvent(menuElements, sideFacade)
-	bindZoomEventsWithMenu(menuElements, zoomManager)
-	bindZoomEventsWithShortcut(shortcutRegistry, zoomManager)
-}
-
-function bindSideToggleEvent(menuElements: MenuElements, sideFacade: SideFacade) {
-	const { fileTree } = menuElements
-
-	fileTree.addEventListener("click", () => {
-		const isOpen = sideFacade.isSideOpen()
-		sideFacade.setSideOpenState(!isOpen)
-		sideFacade.syncSession()
-		toggleSide(menuElements, sideFacade)
-	})
-}
-
-function bindZoomEventsWithMenu(menuElements: MenuElements, zoomManager: ZoomManager) {
-	const { zoomIn, zoomOut, zoomReset } = menuElements
-
-	zoomIn.addEventListener("click", () => {
-		zoomManager.zoomIn()
-	})
-
-	zoomOut.addEventListener("click", () => {
-		zoomManager.zoomOut()
-	})
-
-	zoomReset.addEventListener("click", () => {
-		zoomManager.resetZoom()
-	})
-}
-
-function bindZoomEventsWithShortcut(shortcutRegistry: ShortcutRegistry, zoomManager: ZoomManager) {
-	shortcutRegistry.register("Ctrl++", () => zoomManager.zoomIn())
-	shortcutRegistry.register("Ctrl+-", () => zoomManager.zoomOut())
-	shortcutRegistry.register("Ctrl+0", () => zoomManager.resetZoom())
+	fileTree.addEventListener("click", () => commandRegistry.execute("view.toggleSide"))
+	zoomIn.addEventListener("click", () => commandRegistry.execute("view.zoomIn"))
+	zoomOut.addEventListener("click", () => commandRegistry.execute("view.zoomOut"))
+	zoomReset.addEventListener("click", () => commandRegistry.execute("view.zoomReset"))
 }

@@ -10,9 +10,7 @@
  */
 export type CommandId =
 	| "editor.undo"
-	| "editor.undo.native"
 	| "editor.redo"
-	| "editor.redo.native"
 	| "tree.undo"
 	| "tree.redo"
 	//
@@ -24,6 +22,7 @@ export type CommandId =
 	| "file.saveAll"
 	//
 	| "tab.close"
+	| "tab.closeActive"
 	| "tab.closeOthers"
 	| "tab.closeToRight"
 	| "tab.closeAll"
@@ -33,6 +32,8 @@ export type CommandId =
 	| "tree.delete"
 	| "tree.open"
 	| "tree.expandDirectory"
+	| "tree.focusUp"
+	| "tree.focusDown"
 	//
 	| "tree.cut"
 	| "tree.copy"
@@ -57,5 +58,12 @@ export type CommandId =
 	| "find.submit"
 	| "find.submitBackward"
 	//
+	| "view.zoomIn"
+	| "view.zoomOut"
+	| "view.zoomReset"
+	| "view.toggleSide"
+	//
+	| "settings.open"
 	| "settings.apply"
 	| "settings.applyAndSave"
+	| "help.showInformation"

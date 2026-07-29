@@ -4,7 +4,7 @@ import { Dispatcher } from "@renderer/dispatch/Dispatcher"
 import { CommandRegistry, ContextKeyService } from "@renderer/core"
 import type { FocusManager, Task } from "@renderer/core"
 import { createCommandDescriptors } from "@renderer/commands"
-import type { CommandManager } from "@renderer/modules"
+import type { CommandDeps } from "@renderer/commands/definitions"
 
 /**
  * Exercises the whole path an event takes: the dispatcher's [event][task][source]
@@ -14,22 +14,31 @@ import type { CommandManager } from "@renderer/modules"
 function createDispatcher(task: Task) {
 	const calls: string[] = []
 
-	const commandManager = new Proxy(
-		{},
-		{
-			get:
-				(_target, property: string) =>
-				(...args: unknown[]) => {
-					calls.push(args.length ? `${property}:${args.join(",")}` : property)
-				},
-		}
-	) as unknown as CommandManager
+	const service = () =>
+		new Proxy(
+			{},
+			{
+				get:
+					(_target, property: string) =>
+					(...args: unknown[]) => {
+						calls.push(args.length ? `${property}:${args.join(",")}` : property)
+					},
+			}
+		)
+
+	const deps = {
+		commandManager: service(),
+		zoomManager: service(),
+		sideFacade: service(),
+		infoFacade: service(),
+		menuElements: service(),
+	} as unknown as CommandDeps
 
 	const contextKeyService = new ContextKeyService()
 	contextKeyService.set("focusedTask", task)
 
 	const commandRegistry = new CommandRegistry(contextKeyService)
-	commandRegistry.registerAll(createCommandDescriptors(commandManager))
+	commandRegistry.registerAll(createCommandDescriptors(deps))
 
 	const focusManager = {
 		getFocusedTask: () => task,
@@ -54,8 +63,8 @@ describe("Dispatcher routing", () => {
 	it("routes undo and redo from the find widget to the editor", async () => {
 		const { dispatcher, calls } = createDispatcher("find-replace")
 
-		await dispatcher.dispatch("undo", "shortcut")
-		await dispatcher.dispatch("redo", "shortcut")
+		await dispatcher.dispatch("undo", "menu")
+		await dispatcher.dispatch("redo", "menu")
 
 		expect(calls).toEqual(["performUndoEditor", "performRedoEditor"])
 	})
@@ -66,14 +75,13 @@ describe("Dispatcher routing", () => {
 		expect(calls).toEqual(["performNewTab"])
 	})
 
+	// Paste takes its target from wherever the user pointed, so the two remaining
+	// invocation channels resolve to different commands. The keyboard variant is a
+	// keybinding now and no longer passes through here.
 	it("distinguishes handlers by source within one task", async () => {
 		const contextMenu = createDispatcher("tree")
 		await contextMenu.dispatcher.dispatch("paste", "context-menu")
 		expect(contextMenu.calls).toEqual(["performPasteTreeWithContextmenu"])
-
-		const shortcut = createDispatcher("tree")
-		await shortcut.dispatcher.dispatch("paste", "shortcut")
-		expect(shortcut.calls).toEqual(["performPasteTreeWithShortcut"])
 
 		const drag = createDispatcher("tree")
 		await drag.dispatcher.dispatch("paste", "drag")

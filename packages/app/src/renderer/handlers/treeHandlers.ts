@@ -1,17 +1,10 @@
 import "@milkdown/theme-nord/style.css"
 import { TreeFacade } from "../modules"
 import { DOM, CUSTOM_EVENTS } from "../constants"
-import { FocusManager, ShortcutRegistry } from "../core"
 import { Dispatcher } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 
-export function handleTree(
-	dispatcher: Dispatcher,
-	emitter: EventEmitter,
-	focusManager: FocusManager,
-	treeFacade: TreeFacade,
-	shortcutRegistry: ShortcutRegistry
-) {
+export function handleTree(dispatcher: Dispatcher, emitter: EventEmitter, treeFacade: TreeFacade) {
 	bindMousedownEvents(emitter, treeFacade)
 
 	bindTreeTopMenuEvents(dispatcher, treeFacade)
@@ -20,8 +13,6 @@ export function handleTree(
 
 	bindContextmenuToggleEvents(emitter, treeFacade)
 	bindContextmenuClickEvents(dispatcher, treeFacade)
-
-	bindShortcutEvents(dispatcher, shortcutRegistry, focusManager, treeFacade)
 
 	bindMousedownEventsForDrag(emitter, treeFacade)
 	bindMousemoveEventsForDrag(emitter, treeFacade)
@@ -176,60 +167,6 @@ function bindContextmenuClickEvents(dispatcher: Dispatcher, treeFacade: TreeFaca
 }
 
 //
-
-function bindShortcutEvents(
-	dispatcher: Dispatcher,
-	shortcutRegistry: ShortcutRegistry,
-	focusManager: FocusManager,
-	treeFacade: TreeFacade
-) {
-	shortcutRegistry.register("ARROWUP", (e: KeyboardEvent) => moveUpFocus(e, focusManager, treeFacade))
-	shortcutRegistry.register("ARROWDOWN", (e: KeyboardEvent) => moveDownFocus(e, focusManager, treeFacade))
-	shortcutRegistry.register("Shift+ARROWUP", (e: KeyboardEvent) => moveUpFocus(e, focusManager, treeFacade))
-	shortcutRegistry.register("Shift+ARROWDOWN", (e: KeyboardEvent) => moveDownFocus(e, focusManager, treeFacade))
-
-	shortcutRegistry.register("Ctrl+X", async () => await dispatcher.dispatch("cut", "shortcut"))
-	shortcutRegistry.register("Ctrl+C", async () => await dispatcher.dispatch("copy", "shortcut"))
-	shortcutRegistry.register("Ctrl+V", async () => await dispatcher.dispatch("paste", "shortcut"))
-	shortcutRegistry.register("F2", async () => await dispatcher.dispatch("rename", "shortcut"))
-	shortcutRegistry.register("DELETE", async () => await dispatcher.dispatch("delete", "shortcut"))
-}
-
-//
-
-function moveUpFocus(e: KeyboardEvent, focusManager: FocusManager, treeFacade: TreeFacade) {
-	if (focusManager.getFocusedTask() !== "tree") return
-	if (treeFacade.lastSelectedIndex <= 0) return
-	_moveFocus(e, treeFacade, treeFacade.lastSelectedIndex, -1)
-}
-
-function moveDownFocus(e: KeyboardEvent, focusManager: FocusManager, treeFacade: TreeFacade) {
-	if (focusManager.getFocusedTask() !== "tree") return
-	if (treeFacade.lastSelectedIndex >= treeFacade.flattenTree.length - 1) return
-	_moveFocus(e, treeFacade, treeFacade.lastSelectedIndex, 1)
-}
-
-function _moveFocus(e: KeyboardEvent, treeFacade: TreeFacade, lastIndex: number, delta: number) {
-	const preNode = treeFacade.getTreeNodeByIndex(lastIndex)
-	preNode.classList.remove(DOM.CLASS_FOCUSED)
-
-	lastIndex = lastIndex += delta
-	treeFacade.lastSelectedIndex = lastIndex
-
-	const newTreeNode = treeFacade.getTreeNodeByIndex(lastIndex)
-	newTreeNode.classList.add(DOM.CLASS_FOCUSED)
-
-	if (e.shiftKey) {
-		newTreeNode.classList.add(DOM.CLASS_SELECTED)
-		treeFacade.addSelectedIndices(lastIndex)
-		treeFacade.lastSelectedIndex = lastIndex
-	} else {
-		treeFacade.clearTreeSelected()
-		newTreeNode.classList.add(DOM.CLASS_SELECTED)
-		treeFacade.addSelectedIndices(lastIndex)
-		treeFacade.lastSelectedIndex = lastIndex
-	}
-}
 
 //
 

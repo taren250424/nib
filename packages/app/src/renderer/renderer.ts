@@ -8,8 +8,9 @@ import diContainer from "./diContainer"
 // Registers the <velin-select> custom element before any module queries it.
 import "./components/VelinSelect"
 
-import { CommandQueue, CommandRegistry, ContextKeyService, FocusManager, ShortcutRegistry } from "./core"
+import { CommandQueue, CommandRegistry, ContextKeyService, FocusManager, KeybindingService } from "./core"
 import { createCommandDescriptors } from "./commands"
+import { KEYBINDINGS } from "./commands/keybindings"
 import { Dispatcher } from "./dispatch"
 import { EventEmitter } from "events"
 
@@ -50,7 +51,7 @@ window.addEventListener("DOMContentLoaded", () => {
 	const focusManager = diContainer.get<FocusManager>(DI.FocusManager)
 	const contextKeyService = diContainer.get<ContextKeyService>(DI.ContextKeyService)
 	const zoomManager = diContainer.get<ZoomManager>(DI.ZoomManager)
-	const shortcutRegistry = diContainer.get<ShortcutRegistry>(DI.ShortcutRegistry)
+	const keybindingService = diContainer.get<KeybindingService>(DI.KeybindingService)
 
 	const infoFacade = diContainer.get<InfoFacade>(DI.InfoFacade)
 	const settingsFacade = diContainer.get<SettingsFacade>(DI.SettingsFacade)
@@ -62,23 +63,27 @@ window.addEventListener("DOMContentLoaded", () => {
 	const dispatcher = diContainer.get<Dispatcher>(DI.Dispatcher)
 	const emitter = diContainer.get<EventEmitter>(DI.EventEmitter)
 
-	// Commands must exist before anything can dispatch one, including session load.
+	// Commands and their bindings must exist before any input can reach one,
+	// including the dispatches session load performs.
 	const commandRegistry = diContainer.get<CommandRegistry>(DI.CommandRegistry)
 	const commandManager = diContainer.get<CommandManager>(DI.CommandManager)
-	commandRegistry.registerAll(createCommandDescriptors(commandManager))
+	commandRegistry.registerAll(
+		createCommandDescriptors({ commandManager, zoomManager, sideFacade, infoFacade, menuElements })
+	)
+	keybindingService.registerAll(KEYBINDINGS)
 
 	handleContextKeys(focusManager, contextKeyService)
-	handleGlobalInput(dispatcher, emitter, focusManager, shortcutRegistry)
+	handleGlobalInput(emitter, focusManager, keybindingService)
 	handleMenuItems(emitter, menuElements)
-	handleFileMenu(dispatcher, shortcutRegistry, menuElements, settingsFacade, tabEditorFacade, treeFacade)
-	handleEditMenu(dispatcher, shortcutRegistry, menuElements)
-	handleViewMenu(shortcutRegistry, menuElements, zoomManager, sideFacade)
-	handleHelpMenu(shortcutRegistry, menuElements, infoFacade)
+	handleFileMenu(dispatcher, menuElements, settingsFacade, tabEditorFacade, treeFacade)
+	handleEditMenu(dispatcher, menuElements)
+	handleViewMenu(commandRegistry, menuElements)
+	handleHelpMenu(menuElements, infoFacade)
 
-	handleTabEditor(dispatcher, emitter, tabEditorFacade, shortcutRegistry)
+	handleTabEditor(dispatcher, emitter, tabEditorFacade)
 	handleInfo(infoFacade)
 	handleWindow(windowFacade, tabEditorFacade, treeFacade)
-	handleTree(dispatcher, emitter, focusManager, treeFacade, shortcutRegistry)
+	handleTree(dispatcher, emitter, treeFacade)
 	handleSide(emitter, sideFacade)
 	handleSettings(dispatcher, settingsFacade)
 	handleSync(commandQueue, tabEditorFacade, treeFacade)

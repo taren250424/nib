@@ -34,7 +34,3 @@ export type AppEvents =
 	//
 	| "applySettings"
 	| "applyAndSaveSettings"
-	//
-	| "esc"
-	| "enter"
-	| "shiftEnter"

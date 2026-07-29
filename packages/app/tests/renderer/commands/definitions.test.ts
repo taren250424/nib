@@ -1,24 +1,34 @@
 import { describe, expect, it } from "vitest"
 
 import { createCommandDescriptors } from "@renderer/commands"
+import type { CommandDeps } from "@renderer/commands/definitions"
 import { CommandRegistry, ContextKeyService } from "@renderer/core"
-import type { CommandManager } from "@renderer/modules"
 
-function recordingCommandManager() {
+/** Every dependency recorded through one call log, so a command's target is visible. */
+function recordingDeps() {
 	const calls: string[] = []
-	const commandManager = new Proxy(
-		{},
-		{
-			get: (_target, property: string) => () => calls.push(property),
-		}
-	) as unknown as CommandManager
+	const service = () =>
+		new Proxy(
+			{},
+			{
+				get: (_target, property: string) => () => calls.push(property),
+			}
+		)
 
-	return { commandManager, calls }
+	const deps = {
+		commandManager: service(),
+		zoomManager: service(),
+		sideFacade: service(),
+		infoFacade: service(),
+		menuElements: service(),
+	} as unknown as CommandDeps
+
+	return { deps, calls }
 }
 
 function descriptorsById() {
-	const { commandManager, calls } = recordingCommandManager()
-	const descriptors = createCommandDescriptors(commandManager)
+	const { deps, calls } = recordingDeps()
+	const descriptors = createCommandDescriptors(deps)
 	return { byId: new Map(descriptors.map((d) => [d.id, d])), descriptors, calls }
 }
 
@@ -34,10 +44,10 @@ describe("createCommandDescriptors", () => {
 	})
 
 	it("registers as a whole without collisions", () => {
-		const { commandManager } = recordingCommandManager()
+		const { deps } = recordingDeps()
 		const registry = new CommandRegistry(new ContextKeyService())
 
-		expect(() => registry.registerAll(createCommandDescriptors(commandManager))).not.toThrow()
+		expect(() => registry.registerAll(createCommandDescriptors(deps))).not.toThrow()
 	})
 
 	it("scopes the zone-specific commands to their zone", () => {
@@ -82,21 +92,28 @@ describe("createCommandDescriptors", () => {
 	it("leaves globally available commands unconditional", () => {
 		const { byId } = descriptorsById()
 
-		for (const id of ["file.newTab", "file.save", "find.close", "settings.apply"]) {
+		for (const id of ["file.newTab", "file.save", "view.zoomIn", "settings.apply"]) {
 			expect(byId.get(id)?.when, `${id} should not be scoped`).toBeUndefined()
 		}
 	})
 
-	it("keeps the native editor variants free of side effects", async () => {
-		const { byId, calls } = descriptorsById()
+	// Both are on a global key, so neither may act on a box that is not open.
+	it("gates the find commands that a global key can reach", () => {
+		const { byId } = descriptorsById()
+		const context = new ContextKeyService()
 
-		await byId.get("editor.undo.native")!.run()
-		await byId.get("editor.redo.native")!.run()
+		for (const id of ["find.close", "find.replaceAll"]) {
+			const when = byId.get(id)?.when
+			expect(when, `${id} should be gated`).toBeDefined()
 
-		expect(calls).toEqual([])
+			expect(when!(context.snapshot()), `${id} should not apply while closed`).toBe(false)
+			context.set("findReplaceOpen", true)
+			expect(when!(context.snapshot()), `${id} should apply while open`).toBe(true)
+			context.set("findReplaceOpen", false)
+		}
 	})
 
-	it("points each command at its command manager method", async () => {
+	it("points each command at the work it performs", async () => {
 		const { byId, calls } = descriptorsById()
 
 		await byId.get("tree.cut")!.run()
@@ -105,14 +122,27 @@ describe("createCommandDescriptors", () => {
 
 		expect(calls).toEqual(["performCutTree", "performCutEditorManual", "performCutEditor"])
 	})
+
+	// Zoom, settings and help used to be wired straight from their handlers,
+	// which left them outside anything that could describe or enable them.
+	it("covers the actions that used to bypass the command system", async () => {
+		const { byId, calls } = descriptorsById()
+
+		await byId.get("view.zoomIn")!.run()
+		await byId.get("view.zoomReset")!.run()
+		await byId.get("settings.open")!.run()
+		await byId.get("help.showInformation")!.run()
+
+		expect(calls).toEqual(["zoomIn", "resetZoom", "performOpenSettings", "showInformation"])
+	})
 })
 
 describe("command descriptors under a registry", () => {
 	it("runs a zone command only in its zone", async () => {
-		const { commandManager, calls } = recordingCommandManager()
+		const { deps, calls } = recordingDeps()
 		const context = new ContextKeyService()
 		const registry = new CommandRegistry(context)
-		registry.registerAll(createCommandDescriptors(commandManager))
+		registry.registerAll(createCommandDescriptors(deps))
 
 		context.set("focusedTask", "editor")
 		await registry.execute("tree.delete")
@@ -124,10 +154,10 @@ describe("command descriptors under a registry", () => {
 	})
 
 	it("reports enablement without running anything", () => {
-		const { commandManager, calls } = recordingCommandManager()
+		const { deps, calls } = recordingDeps()
 		const context = new ContextKeyService()
 		const registry = new CommandRegistry(context)
-		registry.registerAll(createCommandDescriptors(commandManager))
+		registry.registerAll(createCommandDescriptors(deps))
 
 		context.set("focusedTask", "tree")
 		expect(registry.isEnabled("tree.rename")).toBe(true)
@@ -137,9 +167,9 @@ describe("command descriptors under a registry", () => {
 })
 
 it("does not touch the command manager while merely building the descriptors", () => {
-	const { commandManager, calls } = recordingCommandManager()
+	const { deps, calls } = recordingDeps()
 
-	createCommandDescriptors(commandManager)
+	createCommandDescriptors(deps)
 
 	expect(calls).toEqual([])
 })

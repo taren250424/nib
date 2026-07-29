@@ -1,26 +1,18 @@
 import "@milkdown/theme-nord/style.css"
 
 import { CUSTOM_EVENTS, DOM } from "../constants"
-import { ShortcutRegistry } from "../core"
 import { TabEditorFacade } from "../modules"
 import { Dispatcher } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 import { debounce } from "@renderer/utils"
 
-export function handleTabEditor(
-	dispatcher: Dispatcher,
-	emitter: EventEmitter,
-	tabEditorFacade: TabEditorFacade,
-	shortcutRegistry: ShortcutRegistry
-) {
+export function handleTabEditor(dispatcher: Dispatcher, emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
 	bindContainerClickEvent(dispatcher, tabEditorFacade)
 
 	bindContextmenuToggleEvents(emitter, tabEditorFacade)
 	bindContextmenuClickEvents(dispatcher, tabEditorFacade)
 
 	bindFindReplaceEvents(dispatcher, tabEditorFacade)
-
-	bindShortcutEvents(dispatcher, shortcutRegistry, tabEditorFacade)
 
 	bindMousedownEventsForDrag(emitter, tabEditorFacade)
 	bindMousemoveEventsForDrag(emitter, tabEditorFacade)
@@ -155,20 +147,6 @@ function bindFindReplaceEvents(dispatcher: Dispatcher, tabEditorFacade: TabEdito
 		const value = (e.target as HTMLInputElement).value
 		await dispatcher.dispatch("replaceQueryChanged", "menu", value)
 	})
-}
-
-//
-
-function bindShortcutEvents(
-	dispatcher: Dispatcher,
-	shortcutRegistry: ShortcutRegistry,
-	tabEditorFacade: TabEditorFacade
-) {
-	shortcutRegistry.register(
-		"Ctrl+W",
-		async () => await dispatcher.dispatch("closeTab", "shortcut", tabEditorFacade.activeTabId)
-	)
-	shortcutRegistry.register("Ctrl+Alt+ENTER", async () => await dispatcher.dispatch("replaceAll", "shortcut"))
 }
 
 //

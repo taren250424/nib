@@ -12,7 +12,7 @@ import { DI, DOM } from "../constants"
 import closedFolderSvg from "../assets/icons/closed_folder.svg?raw"
 import openedFolderSvg from "../assets/icons/opened_folder.svg?raw"
 
-import { CommandQueue, FocusManager } from "../core"
+import { CommandQueue, ContextKeyService, FocusManager } from "../core"
 import { TabEditorFacade, TreeFacade, SettingsFacade } from "./index"
 import { CreateCommand, DeleteCommand, PasteCommand, RenameCommand } from "../commands"
 
@@ -25,6 +25,7 @@ export class CommandManager {
 
 	constructor(
 		@inject(DI.FocusManager) private readonly focusManager: FocusManager,
+		@inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService,
 		@inject(DI.SettingsFacade) private readonly settingsFacade: SettingsFacade,
 		@inject(DI.TabEditorFacade) private readonly tabEditorFacade: TabEditorFacade,
 		@inject(DI.TreeFacade) private readonly treeFacade: TreeFacade,
@@ -159,6 +160,50 @@ export class CommandManager {
 		const closeAllTabsResponse = await window.rendererToMain.closeAllTabs(tabEditorsDto)
 		if (closeAllTabsResponse.result) this.tabEditorFacade.removeAllTabs(closeAllTabsResponse.data)
 	}
+
+	performCloseActiveTab() {
+		return this.performCloseTab(this.tabEditorFacade.activeTabId)
+	}
+
+	performOpenSettings() {
+		this.settingsFacade.openSettings()
+	}
+
+	//
+
+	// Keyboard navigation of the tree. `extend` is the Shift variant, which grows
+	// the selection instead of replacing it.
+
+	performFocusTreeUp(extend: boolean) {
+		const index = this.treeFacade.lastSelectedIndex
+		if (index <= 0) return
+		this._moveTreeFocus(index, -1, extend)
+	}
+
+	performFocusTreeDown(extend: boolean) {
+		const index = this.treeFacade.lastSelectedIndex
+		if (index >= this.treeFacade.flattenTree.length - 1) return
+		this._moveTreeFocus(index, 1, extend)
+	}
+
+	private _moveTreeFocus(fromIndex: number, delta: number, extend: boolean) {
+		this.treeFacade.getTreeNodeByIndex(fromIndex).classList.remove(DOM.CLASS_FOCUSED)
+
+		const index = fromIndex + delta
+		// Assigning this focuses the node, which is what scrolls it into view.
+		this.treeFacade.lastSelectedIndex = index
+
+		const node = this.treeFacade.getTreeNodeByIndex(index)
+		node.classList.add(DOM.CLASS_FOCUSED)
+
+		if (!extend) this.treeFacade.clearTreeSelected()
+
+		node.classList.add(DOM.CLASS_SELECTED)
+		this.treeFacade.addSelectedIndices(index)
+		this.treeFacade.lastSelectedIndex = index
+	}
+
+	//
 
 	performOpenDirectoryByTreeNode(treeNode: HTMLElement) {
 		return this.commandQueue.enqueue(() => this._doOpenDirectoryByTreeNode(treeNode))
@@ -715,6 +760,7 @@ export class CommandManager {
 		this.tabEditorFacade.findAndReplaceContainer.style.display = "flex"
 		this.tabEditorFacade.replaceBox.style.display = showReplace ? "flex" : "none"
 		this.tabEditorFacade.findReplaceOpen = true
+		this.contextKeyService.set("findReplaceOpen", true)
 		this.tabEditorFacade.replaceInfo.textContent = ""
 
 		if (showReplace) this.tabEditorFacade.replaceInput.select()
@@ -812,6 +858,7 @@ export class CommandManager {
 		this.tabEditorFacade.replaceInfo.textContent = ""
 
 		this.tabEditorFacade.findReplaceOpen = false
+		this.contextKeyService.set("findReplaceOpen", false)
 
 		// Hand focus back so typing continues in the document instead of the input
 		// that was just hidden. Closing the last tab also closes the box, and then

@@ -5,7 +5,7 @@ import { Container } from "inversify"
 import { CommandRegistry } from "./core/CommandRegistry"
 import { ContextKeyService } from "./core/ContextKeyService"
 import { FocusManager } from "./core/FocusManager"
-import { ShortcutRegistry } from "./core/ShortcutRegistry"
+import { KeybindingService } from "./core/KeybindingService"
 import { CommandQueue } from "./core/CommandQueue"
 
 import { MenuElements } from "./modules/menu/MenuElements"
@@ -52,7 +52,7 @@ const diContainer = new Container()
 diContainer.bind(DI.FocusManager).to(FocusManager).inSingletonScope()
 diContainer.bind(DI.ContextKeyService).to(ContextKeyService).inSingletonScope()
 diContainer.bind(DI.CommandRegistry).to(CommandRegistry).inSingletonScope()
-diContainer.bind(DI.ShortcutRegistry).to(ShortcutRegistry).inSingletonScope()
+diContainer.bind(DI.KeybindingService).to(KeybindingService).inSingletonScope()
 
 diContainer.bind(DI.MenuElements).to(MenuElements).inSingletonScope()
 
