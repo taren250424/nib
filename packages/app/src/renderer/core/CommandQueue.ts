@@ -11,18 +11,18 @@ import { injectable } from "inversify"
  */
 @injectable()
 export class CommandQueue {
-	private tail: Promise<unknown> = Promise.resolve()
+  private tail: Promise<unknown> = Promise.resolve()
 
-	/**
-	 * Runs `task` after all previously enqueued tasks settle.
-	 * A rejection propagates to the caller of enqueue() but never breaks the chain.
-	 */
-	enqueue<T>(task: () => T | Promise<T>): Promise<T> {
-		const run = this.tail.then(task)
-		this.tail = run.then(
-			() => undefined,
-			() => undefined
-		)
-		return run
-	}
+  /**
+   * Runs `task` after all previously enqueued tasks settle.
+   * A rejection propagates to the caller of enqueue() but never breaks the chain.
+   */
+  enqueue<T>(task: () => T | Promise<T>): Promise<T> {
+    const run = this.tail.then(task)
+    this.tail = run.then(
+      () => undefined,
+      () => undefined
+    )
+    return run
+  }
 }

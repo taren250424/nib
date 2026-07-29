@@ -10,138 +10,138 @@ $indicator-size: 3px;
 $padding-top-binary-warning: 40px;
 
 #tab-container {
-	display: flex;
+  display: flex;
 
-	width: 100%;
-	height: $tab-height;
+  width: 100%;
+  height: $tab-height;
 
-	overflow-y: hidden;
-	overflow-x: scroll;
+  overflow-y: hidden;
+  overflow-x: scroll;
 
-	position: relative;
+  position: relative;
 
-	&::-webkit-scrollbar {
-		height: 2px;
-	}
+  &::-webkit-scrollbar {
+    height: 2px;
+  }
 
-	&::-webkit-scrollbar-track {
-		background: var(--tab-selected);
-	}
+  &::-webkit-scrollbar-track {
+    background: var(--tab-selected);
+  }
 
-	&::-webkit-scrollbar-thumb {
-		background-color: var(--tab-selected);
-	}
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--tab-selected);
+  }
 
-	&::-webkit-scrollbar-thumb:hover {
-		cursor: pointer;
-		background-color: var(--scrollbar-thumb-hover);
-	}
+  &::-webkit-scrollbar-thumb:hover {
+    cursor: pointer;
+    background-color: var(--scrollbar-thumb-hover);
+  }
 }
 
 .tab {
-	flex: 1;
-	min-width: $tab-min-width;
-	max-width: $tab-max-width;
-	height: 100%;
-	margin-right: $tab-right-margin;
+  flex: 1;
+  min-width: $tab-min-width;
+  max-width: $tab-max-width;
+  height: 100%;
+  margin-right: $tab-right-margin;
 
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-	padding: $tab-elem-padding;
+  padding: $tab-elem-padding;
 
-	user-select: none;
+  user-select: none;
 }
 
 .tab:hover,
 .tab * {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .tab {
-	background-color: var(--tab-bg);
-	font-size: 0.9rem;
+  background-color: var(--tab-bg);
+  font-size: 0.9rem;
 }
 
 .tab.selected {
-	background-color: var(--tab-selected);
+  background-color: var(--tab-selected);
 }
 
 .tab > span {
-	flex: 1;
-	display: block;
+  flex: 1;
+  display: block;
 
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tab > button {
-	width: $tab-button-width;
-	height: $tab-button-width;
+  width: $tab-button-width;
+  height: $tab-button-width;
 
-	border-radius: $tab-button-radius;
+  border-radius: $tab-button-radius;
 
-	background-color: var(--tab-btn-bg);
-	transition: background-color 0.2s ease;
+  background-color: var(--tab-btn-bg);
+  transition: background-color 0.2s ease;
 
-	display: flex;
-	align-items: center;
-	justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-	position: relative;
+  position: relative;
 }
 
 .tab > button:hover {
-	background-color: var(--tab-btn-hover-bg);
-	color: var(--tab-btn-hover-font);
+  background-color: var(--tab-btn-hover-bg);
+  color: var(--tab-btn-hover-font);
 }
 
 #tab-context-menu {
-	display: none;
-	position: fixed;
-	flex-direction: column;
-	z-index: 90;
+  display: none;
+  position: fixed;
+  flex-direction: column;
+  z-index: 90;
 }
 
 #tab-context-menu.selected {
-	display: flex;
+  display: flex;
 }
 
 .editor-box {
-	display: none;
+  display: none;
 }
 
 .editor-box.selected {
-	display: block;
+  display: block;
 }
 
 .editor-box.binary {
-	font-size: 1.5rem;
-	font-weight: bold;
-	text-align: center;
-	color: var(--warning-color);
-	padding-top: $padding-top-binary-warning;
-	cursor: default;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--warning-color);
+  padding-top: $padding-top-binary-warning;
+  cursor: default;
 }
 
 .tab-indicator {
-	width: $indicator-size;
-	height: 100%;
-	background-color: var(--tab-indicator);
+  width: $indicator-size;
+  height: 100%;
+  background-color: var(--tab-indicator);
 
-	position: absolute;
-	top: 0;
-	pointer-events: none;
+  position: absolute;
+  top: 0;
+  pointer-events: none;
 }
 
 .tab-ghost {
-	position: fixed;
-	width: $tab-max-width;
-	height: $tab-height;
-	pointer-events: none;
-	opacity: 0.7;
-	z-index: 90;
-	background-color: var(--tab-ghost-bg);
+  position: fixed;
+  width: $tab-max-width;
+  height: $tab-height;
+  pointer-events: none;
+  opacity: 0.7;
+  z-index: 90;
+  background-color: var(--tab-ghost-bg);
 }

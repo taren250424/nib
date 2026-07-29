@@ -1,43 +1,43 @@
 $risizer-size: 3px;
 
 #side {
-	height: 100%;
-	display: flex;
-	flex-shrink: 0;
-	user-select: none;
-	position: relative;
+  height: 100%;
+  display: flex;
+  flex-shrink: 0;
+  user-select: none;
+  position: relative;
 }
 
 #view-menu-file-tree.selected {
-	& .checkbox {
-		position: relative;
-	}
+  & .checkbox {
+    position: relative;
+  }
 
-	& .checkbox::after {
-		content: "";
-		position: absolute;
-		left: 4px;
-		top: 1px;
-		width: 6px;
-		height: 10px;
-		border-right: 2px solid var(--app-font-color);
-		border-bottom: 2px solid var(--app-font-color);
-		transform: rotate(45deg);
-	}
+  & .checkbox::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 6px;
+    height: 10px;
+    border-right: 2px solid var(--app-font-color);
+    border-bottom: 2px solid var(--app-font-color);
+    transform: rotate(45deg);
+  }
 }
 
 #side-resizer {
-	position: absolute;
-	top: 0;
-	right: calc(-1 * $risizer-size / 2);
-	z-index: 100;
-	width: $risizer-size;
-	height: 100%;
-	cursor: ew-resize;
-	background-color: transparent;
-	transition: background-color 0.3s ease;
+  position: absolute;
+  top: 0;
+  right: calc(-1 * $risizer-size / 2);
+  z-index: 100;
+  width: $risizer-size;
+  height: 100%;
+  cursor: ew-resize;
+  background-color: transparent;
+  transition: background-color 0.3s ease;
 }
 
 #side-resizer:hover {
-	background-color: var(--side-resizer);
+  background-color: var(--side-resizer);
 }

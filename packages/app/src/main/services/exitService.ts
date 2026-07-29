@@ -9,64 +9,64 @@ import type { TreeDto } from "@shared/dto/TreeDto"
 import { BrowserWindow } from "electron"
 
 export default async function exit(
-	mainWindow: BrowserWindow,
-	fileManager: IFileManager,
-	dialogManager: IDialogManager,
-	tabRepository: ITabRepository,
-	treeRepository: ITreeRepository,
-	tabSessionData: TabEditorsDto,
-	treeSessionData: TreeDto
+  mainWindow: BrowserWindow,
+  fileManager: IFileManager,
+  dialogManager: IDialogManager,
+  tabRepository: ITabRepository,
+  treeRepository: ITreeRepository,
+  tabSessionData: TabEditorsDto,
+  treeSessionData: TreeDto
 ) {
-	await syncTab(mainWindow, fileManager, dialogManager, tabRepository, tabSessionData)
-	await syncTree(treeRepository, treeSessionData as TreeSessionModel)
-	mainWindow.close()
+  await syncTab(mainWindow, fileManager, dialogManager, tabRepository, tabSessionData)
+  await syncTree(treeRepository, treeSessionData as TreeSessionModel)
+  mainWindow.close()
 }
 
 async function syncTab(
-	mainWindow: BrowserWindow,
-	fileManager: IFileManager,
-	dialogManager: IDialogManager,
-	tabRepository: ITabRepository,
-	tabSessionData: TabEditorsDto
+  mainWindow: BrowserWindow,
+  fileManager: IFileManager,
+  dialogManager: IDialogManager,
+  tabRepository: ITabRepository,
+  tabSessionData: TabEditorsDto
 ) {
-	const data: TabSessionData[] = []
+  const data: TabSessionData[] = []
 
-	for (const tab of tabSessionData.data) {
-		const { id, isModified, filePath, fileName, content } = tab
+  for (const tab of tabSessionData.data) {
+    const { id, isModified, filePath, fileName, content } = tab
 
-		if (!isModified) {
-			data.push({ id: id, filePath: filePath, isModified: false })
-			continue
-		}
+    if (!isModified) {
+      data.push({ id: id, filePath: filePath, isModified: false })
+      continue
+    }
 
-		const confirm = await dialogManager.showConfirmDialog(`Do you want to save ${fileName} file?`)
-		if (!confirm) {
-			data.push({ id: id, filePath: filePath, isModified: false })
-			continue
-		}
+    const confirm = await dialogManager.showConfirmDialog(`Do you want to save ${fileName} file?`)
+    if (!confirm) {
+      data.push({ id: id, filePath: filePath, isModified: false })
+      continue
+    }
 
-		if (!filePath) {
-			const result = await dialogManager.showSaveDialog(mainWindow, fileName)
+    if (!filePath) {
+      const result = await dialogManager.showSaveDialog(mainWindow, fileName)
 
-			if (result.canceled || !result.filePath) {
-				data.push({ id: id, filePath: filePath, isModified: false })
-			} else {
-				await fileManager.write(result.filePath, content)
+      if (result.canceled || !result.filePath) {
+        data.push({ id: id, filePath: filePath, isModified: false })
+      } else {
+        await fileManager.write(result.filePath, content)
 
-				data.push({ id: id, filePath: result.filePath, isModified: false })
-			}
-		} else if (filePath) {
-			await fileManager.write(filePath, content)
-			data.push({ id: id, filePath: filePath, isModified: false })
-		}
-	}
+        data.push({ id: id, filePath: result.filePath, isModified: false })
+      }
+    } else if (filePath) {
+      await fileManager.write(filePath, content)
+      data.push({ id: id, filePath: filePath, isModified: false })
+    }
+  }
 
-	await tabRepository.writeTabSession({
-		activatedId: tabSessionData.activatedId,
-		data: data,
-	})
+  await tabRepository.writeTabSession({
+    activatedId: tabSessionData.activatedId,
+    data: data,
+  })
 }
 
 async function syncTree(treeRepository: ITreeRepository, treeSessionData: TreeSessionModel) {
-	await treeRepository.writeTreeSession(treeSessionData as TreeSessionModel)
+  await treeRepository.writeTreeSession(treeSessionData as TreeSessionModel)
 }

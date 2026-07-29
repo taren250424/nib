@@ -6,63 +6,62 @@ $ghost-padding: 4px;
 $tree-top-min-height: 25px;
 
 #tree {
-	width: 0px;
-	height: 100%;
-	cursor: default;
+  width: 0px;
+  height: 100%;
+  cursor: default;
 
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-	overflow: hidden;
+  overflow: hidden;
 }
 
 #tree-top {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	min-height: $tree-top-min-height;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: $tree-top-min-height;
 }
 
 #tree-top-name {
-	margin: 0 $tree-horizontal-gap;
-	flex: 1;
-	font-size: 0.9rem;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	font-weight: bold;
+  margin: 0 $tree-horizontal-gap;
+  flex: 1;
+  font-size: 0.9rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: bold;
 }
 
 #tree-top-icons {
-	display: flex;
-	position: relative;
+  display: flex;
+  position: relative;
 }
 
 #tree-top-icons svg {
-	width: dimensions.$tree-icon-size;
-	height: dimensions.$tree-icon-size;
-	margin-right: $tree-horizontal-gap;
+  width: dimensions.$tree-icon-size;
+  height: dimensions.$tree-icon-size;
+  margin-right: $tree-horizontal-gap;
 }
 
 #tree-top-icons button:hover {
-	cursor: pointer;
-	background-color: var(--tree-top-icon-hover);
+  cursor: pointer;
+  background-color: var(--tree-top-icon-hover);
 }
 
-
 #tree-node-container {
-	flex: 1;
-	overflow: auto;
-
-	// border: 1px solid transparent;
-
-	height: 100%;
-  position: relative;
-
-	// Required for SimpleBar to initialize
+  flex: 1;
   overflow: auto;
 
-	// Remove default scrollbar size
+  // border: 1px solid transparent;
+
+  height: 100%;
+  position: relative;
+
+  // Required for SimpleBar to initialize
+  overflow: auto;
+
+  // Remove default scrollbar size
   &::-webkit-scrollbar {
     width: 0 !important;
     height: 0 !important;
@@ -75,109 +74,109 @@ $tree-top-min-height: 25px;
 // }
 
 .tree-node-wrapper {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	min-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 100px;
 }
 
 .tree-node-wrapper.cut {
-	color: var(--tree-node-cut);
+  color: var(--tree-node-cut);
 }
 
 .tree-node-temp,
 .tree-node {
-	font-size: 0.7rem;
-	display: flex;
-	align-items: center;
-	border: 1px solid transparent;
-	gap: 2px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  gap: 2px;
 }
 
 .tree-node > input,
 .tree-node-temp > input {
-	border: none;
-	outline: 1px solid var(--tree-node-focused);
-	margin-left: 1px;
+  border: none;
+  outline: 1px solid var(--tree-node-focused);
+  margin-left: 1px;
 }
 
 .tree-node.focused {
-	border-top: 1px solid var(--tree-node-focused);
-	border-bottom: 1px solid var(--tree-node-focused);
+  border-top: 1px solid var(--tree-node-focused);
+  border-bottom: 1px solid var(--tree-node-focused);
 }
 
 .tree-node:hover {
-	cursor: pointer;
-	background-color: var(--tree-node-hover);
+  cursor: pointer;
+  background-color: var(--tree-node-hover);
 }
 
 .tree-node.selected {
-	background-color: var(--tree-node-selected);
+  background-color: var(--tree-node-selected);
 }
 
 .tree-node.selected:hover {
-	background-color: var(--tree-node-selected-hover);
+  background-color: var(--tree-node-selected-hover);
 }
 
 // Only the tree nodes are focusable, so :focus-within tells us whether this
 // selection is the one being acted on or one left behind when focus moved to
 // the editor. Dim the latter.
 #tree-node-container:not(:focus-within) .tree-node.selected {
-	background-color: var(--tree-node-selected-inactive);
+  background-color: var(--tree-node-selected-inactive);
 }
 
 #tree-node-container:not(:focus-within) .tree-node.selected:hover {
-	background-color: var(--tree-node-selected);
+  background-color: var(--tree-node-selected);
 }
 
 .tree-node > span {
-	margin-left: 1px;
+  margin-left: 1px;
 }
 
 .tree-node-type {
-	width: dimensions.$tree-icon-size;
-	height: dimensions.$tree-icon-size;
+  width: dimensions.$tree-icon-size;
+  height: dimensions.$tree-icon-size;
 
-	text-align: center;
-	flex-shrink: 0;
-	/* prevent icon from shrinking on resize */
+  text-align: center;
+  flex-shrink: 0;
+  /* prevent icon from shrinking on resize */
 }
 
 .tree-node-input {
-	width: 100%;
+  width: 100%;
 }
 
 .tree-node-children {
-	display: none;
+  display: none;
 }
 
 .tree-node-children.expanded {
-	display: block;
+  display: block;
 }
 
 #tree-context-menu {
-	display: none;
-	position: fixed;
-	flex-direction: column;
-	z-index: 90;
+  display: none;
+  position: fixed;
+  flex-direction: column;
+  z-index: 90;
 }
 
 #tree-context-menu.selected {
-	display: flex;
+  display: flex;
 }
 
 .tree-ghost {
-	position: fixed;
-	pointer-events: none;
-	background-color: var(--tree-ghost-bg);
-	color: var(--tree-ghost-font);
-	font-size: 0.7rem;
-	padding: $ghost-padding;
-	z-index: 90;
+  position: fixed;
+  pointer-events: none;
+  background-color: var(--tree-ghost-bg);
+  color: var(--tree-ghost-font);
+  font-size: 0.7rem;
+  padding: $ghost-padding;
+  z-index: 90;
 }
 
 .tree-drag-overlay {
-	background-color: var(--tree-wrapper-drag-overlay);
+  background-color: var(--tree-wrapper-drag-overlay);
 }
 
 // Simple Bar
@@ -199,10 +198,10 @@ $tree-top-min-height: 25px;
 }
 
 .simplebar-scrollbar {
-	width: dimensions.$scrollbar-size !important;
+  width: dimensions.$scrollbar-size !important;
 
   &::before {
-		// SimpleBar applies styles to the ::before pseudo-element
+    // SimpleBar applies styles to the ::before pseudo-element
     background-color: transparent !important;
     transition: background-color 0.2s linear;
 
@@ -212,7 +211,7 @@ $tree-top-min-height: 25px;
     top: 0 !important;
     bottom: 0 !important;
 
-		// Override SimpleBar's default fade-out behavior
+    // Override SimpleBar's default fade-out behavior
     opacity: 1 !important;
 
     border-radius: 0 !important;

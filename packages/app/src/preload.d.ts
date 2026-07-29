@@ -3,9 +3,9 @@ import type { MainToRendererAPI, RendererToMainAPI, UtilsAPI } from "@shared/pre
 export {}
 
 declare global {
-	interface Window {
-		mainToRenderer: MainToRendererAPI
-		rendererToMain: RendererToMainAPI
-		utils: UtilsAPI
-	}
+  interface Window {
+    mainToRenderer: MainToRendererAPI
+    rendererToMain: RendererToMainAPI
+    utils: UtilsAPI
+  }
 }

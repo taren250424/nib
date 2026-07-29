@@ -6,13 +6,13 @@ import unmaximizeSvg from "../../assets/icons/unmaximize.svg?raw"
 
 @injectable()
 export class WindowRenderer {
-	constructor(@inject(DI.WindowElements) public readonly elements: WindowElements) {}
+  constructor(@inject(DI.WindowElements) public readonly elements: WindowElements) {}
 
-	renderMaximizeButtonSvg() {
-		this.elements.maximizeBtn.querySelector("svg")!.outerHTML = maximizeSvg
-	}
+  renderMaximizeButtonSvg() {
+    this.elements.maximizeBtn.querySelector("svg")!.outerHTML = maximizeSvg
+  }
 
-	renderUnMaximizeButtonSvg() {
-		this.elements.maximizeBtn.querySelector("svg")!.outerHTML = unmaximizeSvg
-	}
+  renderUnMaximizeButtonSvg() {
+    this.elements.maximizeBtn.querySelector("svg")!.outerHTML = unmaximizeSvg
+  }
 }

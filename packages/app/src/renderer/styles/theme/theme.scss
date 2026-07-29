@@ -4,17 +4,17 @@
 @use "./solarized.scss";
 
 :root {
-	@include base.define-theme-from-palette(light.$palette);
+  @include base.define-theme-from-palette(light.$palette);
 }
 
 html.light {
-	@include base.define-theme-from-palette(light.$palette);
+  @include base.define-theme-from-palette(light.$palette);
 }
 
 html.solarized {
-	@include base.define-theme-from-palette(solarized.$palette);
+  @include base.define-theme-from-palette(solarized.$palette);
 }
 
 html.slate {
-	@include base.define-theme-from-palette(slate.$palette);
+  @include base.define-theme-from-palette(slate.$palette);
 }

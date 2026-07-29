@@ -3,50 +3,50 @@
 $space: 4px;
 
 #info-overlay {
-	display: none;
+  display: none;
 }
 
 #info-container {
-	width: 20%;
-	height: 40%;
+  width: 20%;
+  height: 40%;
 
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 #info-top {
-	height: dimensions.$title_height;
-	background-color: var(--title-bg);
+  height: dimensions.$title_height;
+  background-color: var(--title-bg);
 }
 
 #info-content {
-	flex: 1;
+  flex: 1;
 
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 
-	gap: $space;
+  gap: $space;
 }
 
 #info-content > * > label {
-	margin-right: $space;
+  margin-right: $space;
 }
 
 #info-bottom {
-	display: flex;
-	justify-content: center;
-	background-color: var(--title-bg);
+  display: flex;
+  justify-content: center;
+  background-color: var(--title-bg);
 }
 
 #info-close {
-	width: dimensions.$button-width;
-	height: dimensions.$button-height;
-	margin: dimensions.$button-margin;
-	background-color: var(--overlay-surface-button-bg);
+  width: dimensions.$button-width;
+  height: dimensions.$button-height;
+  margin: dimensions.$button-margin;
+  background-color: var(--overlay-surface-button-bg);
 }
 
 #info-close:hover {
-	background-color: var(--overlay-surface-button-hover-bg);
+  background-color: var(--overlay-surface-button-hover-bg);
 }

@@ -19,38 +19,38 @@ type ChangeListener = (changed: ReadonlySet<ContextKey>) => void
  */
 @injectable()
 export class ContextKeyService {
-	private readonly values: ContextKeyMap = { ...DEFAULT_CONTEXT_KEYS }
-	private readonly listeners = new Set<ChangeListener>()
+  private readonly values: ContextKeyMap = { ...DEFAULT_CONTEXT_KEYS }
+  private readonly listeners = new Set<ChangeListener>()
 
-	get<K extends ContextKey>(key: K): ContextKeyMap[K] {
-		return this.values[key]
-	}
+  get<K extends ContextKey>(key: K): ContextKeyMap[K] {
+    return this.values[key]
+  }
 
-	set<K extends ContextKey>(key: K, value: ContextKeyMap[K]) {
-		this.update({ [key]: value } as Partial<ContextKeyMap>)
-	}
+  set<K extends ContextKey>(key: K, value: ContextKeyMap[K]) {
+    this.update({ [key]: value } as Partial<ContextKeyMap>)
+  }
 
-	/** Applies several keys at once so subscribers repaint once rather than per key. */
-	update(values: Partial<ContextKeyMap>) {
-		const changed = new Set<ContextKey>()
+  /** Applies several keys at once so subscribers repaint once rather than per key. */
+  update(values: Partial<ContextKeyMap>) {
+    const changed = new Set<ContextKey>()
 
-		for (const [key, value] of Object.entries(values) as [ContextKey, ContextKeyMap[ContextKey]][]) {
-			if (this.values[key] === value) continue
-			this.values[key] = value as never
-			changed.add(key)
-		}
+    for (const [key, value] of Object.entries(values) as [ContextKey, ContextKeyMap[ContextKey]][]) {
+      if (this.values[key] === value) continue
+      this.values[key] = value as never
+      changed.add(key)
+    }
 
-		if (changed.size === 0) return
-		for (const listener of this.listeners) listener(changed)
-	}
+    if (changed.size === 0) return
+    for (const listener of this.listeners) listener(changed)
+  }
 
-	/** Subscribes to context changes. Returns the unsubscribe function. */
-	onDidChange(listener: ChangeListener): () => void {
-		this.listeners.add(listener)
-		return () => this.listeners.delete(listener)
-	}
+  /** Subscribes to context changes. Returns the unsubscribe function. */
+  onDidChange(listener: ChangeListener): () => void {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
+  }
 
-	snapshot(): Readonly<ContextKeyMap> {
-		return { ...this.values }
-	}
+  snapshot(): Readonly<ContextKeyMap> {
+    return { ...this.values }
+  }
 }

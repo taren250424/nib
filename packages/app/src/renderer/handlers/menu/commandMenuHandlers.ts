@@ -12,29 +12,29 @@ import type { MenuElements } from "@renderer/modules"
  * clicked.
  */
 export function handleCommandMenus(
-	commandRegistry: CommandRegistry,
-	contextKeyService: ContextKeyService,
-	menuElements: MenuElements
+  commandRegistry: CommandRegistry,
+  contextKeyService: ContextKeyService,
+  menuElements: MenuElements
 ) {
-	for (const binding of MENU_BINDINGS) {
-		const element = menuElements[binding.element] as HTMLElement
+  for (const binding of MENU_BINDINGS) {
+    const element = menuElements[binding.element] as HTMLElement
 
-		element.addEventListener("click", () => {
-			const command = commandRegistry.firstEnabled(binding.commands)
-			if (!command) return
+    element.addEventListener("click", () => {
+      const command = commandRegistry.firstEnabled(binding.commands)
+      if (!command) return
 
-			void commandRegistry.execute(command, ...(binding.args ?? []))
-		})
-	}
+      void commandRegistry.execute(command, ...(binding.args ?? []))
+    })
+  }
 
-	const render = () => {
-		for (const binding of MENU_BINDINGS) {
-			const element = menuElements[binding.element] as HTMLElement
-			const enabled = commandRegistry.firstEnabled(binding.commands) !== undefined
-			element.classList.toggle(DOM.CLASS_DEACTIVE, !enabled)
-		}
-	}
+  const render = () => {
+    for (const binding of MENU_BINDINGS) {
+      const element = menuElements[binding.element] as HTMLElement
+      const enabled = commandRegistry.firstEnabled(binding.commands) !== undefined
+      element.classList.toggle(DOM.CLASS_DEACTIVE, !enabled)
+    }
+  }
 
-	contextKeyService.onDidChange(render)
-	render()
+  contextKeyService.onDidChange(render)
+  render()
 }

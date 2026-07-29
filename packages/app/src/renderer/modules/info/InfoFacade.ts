@@ -4,13 +4,13 @@ import type { InfoElements } from "./InfoElements"
 
 @injectable()
 export class InfoFacade {
-	constructor(@inject(DI.InfoElements) public readonly elements: InfoElements) {}
+  constructor(@inject(DI.InfoElements) public readonly elements: InfoElements) {}
 
-	showInformation() {
-		this.elements.overlay.style.display = "flex"
-	}
+  showInformation() {
+    this.elements.overlay.style.display = "flex"
+  }
 
-	hideInformation() {
-		this.elements.overlay.style.display = "none"
-	}
+  hideInformation() {
+    this.elements.overlay.style.display = "none"
+  }
 }

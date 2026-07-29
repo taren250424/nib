@@ -9,37 +9,37 @@ import type { Task } from "./ui_zones"
  * currently disagree with each other.
  */
 export type ContextKeyMap = {
-	focusedTask: Task
+  focusedTask: Task
 
-	treeHasSelection: boolean
-	treeSelectionIsDirectory: boolean
-	treeHasClipboard: boolean
-	canUndoTree: boolean
-	canRedoTree: boolean
+  treeHasSelection: boolean
+  treeSelectionIsDirectory: boolean
+  treeHasClipboard: boolean
+  canUndoTree: boolean
+  canRedoTree: boolean
 
-	hasActiveEditor: boolean
-	editorIsBinary: boolean
-	editorIsDirty: boolean
-	findReplaceOpen: boolean
+  hasActiveEditor: boolean
+  editorIsBinary: boolean
+  editorIsDirty: boolean
+  findReplaceOpen: boolean
 
-	sideOpen: boolean
+  sideOpen: boolean
 }
 
 export type ContextKey = keyof ContextKeyMap
 
 export const DEFAULT_CONTEXT_KEYS: ContextKeyMap = {
-	focusedTask: "none",
+  focusedTask: "none",
 
-	treeHasSelection: false,
-	treeSelectionIsDirectory: false,
-	treeHasClipboard: false,
-	canUndoTree: false,
-	canRedoTree: false,
+  treeHasSelection: false,
+  treeSelectionIsDirectory: false,
+  treeHasClipboard: false,
+  canUndoTree: false,
+  canRedoTree: false,
 
-	hasActiveEditor: false,
-	editorIsBinary: false,
-	editorIsDirty: false,
-	findReplaceOpen: false,
+  hasActiveEditor: false,
+  editorIsBinary: false,
+  editorIsDirty: false,
+  findReplaceOpen: false,
 
-	sideOpen: false,
+  sideOpen: false,
 }

@@ -6,24 +6,24 @@ import type { WindowRenderer } from "./WindowRenderer"
 
 @injectable()
 export class WindowFacade {
-	constructor(
-		@inject(DI.WindowStore) public readonly store: WindowStore,
-		@inject(DI.WindowRenderer) public readonly renderer: WindowRenderer
-	) {}
+  constructor(
+    @inject(DI.WindowStore) public readonly store: WindowStore,
+    @inject(DI.WindowRenderer) public readonly renderer: WindowRenderer
+  ) {}
 
-	isWindowMaximize(): boolean {
-		return this.store.isWindowMaximize()
-	}
+  isWindowMaximize(): boolean {
+    return this.store.isWindowMaximize()
+  }
 
-	setWindowMaximizeState(state: boolean) {
-		this.store.setWindowMaximizeState(state)
-	}
+  setWindowMaximizeState(state: boolean) {
+    this.store.setWindowMaximizeState(state)
+  }
 
-	renderMaximizeButtonSvg() {
-		this.renderer.renderMaximizeButtonSvg()
-	}
+  renderMaximizeButtonSvg() {
+    this.renderer.renderMaximizeButtonSvg()
+  }
 
-	renderUnMaximizeButtonSvg() {
-		this.renderer.renderUnMaximizeButtonSvg()
-	}
+  renderUnMaximizeButtonSvg() {
+    this.renderer.renderUnMaximizeButtonSvg()
+  }
 }

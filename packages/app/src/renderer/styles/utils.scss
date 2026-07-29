@@ -12,146 +12,146 @@ $tooltip-vertical-padding: 4px;
 $tooltip-border-radius: 4px;
 
 .drag {
-	-webkit-app-region: drag;
+  -webkit-app-region: drag;
 }
 
 .no-drag {
-	-webkit-app-region: no-drag;
+  -webkit-app-region: no-drag;
 }
 
 .dropdown {
-	display: none;
-	position: absolute;
-	background: var(--dropdown-bg);
-	border: 1px solid var(--dropdown-border);
-	min-width: $dropdown-min-width;
-	z-index: 96;
-	padding: $dropdown-padding;
+  display: none;
+  position: absolute;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  min-width: $dropdown-min-width;
+  z-index: 96;
+  padding: $dropdown-padding;
 }
 
 .dropdown-item {
-	display: flex;
-	align-items: center;
+  display: flex;
+  align-items: center;
 
-	padding: $dropdown-item-padding;
-	white-space: nowrap;
+  padding: $dropdown-item-padding;
+  white-space: nowrap;
 
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .dropdown-item:hover {
-	background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1));
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1));
 }
 
 .dropdown-divider {
-	height: 1px;
-	margin: 1px;
-	background-color: var(--dropdown-divider);
+  height: 1px;
+  margin: 1px;
+  background-color: var(--dropdown-divider);
 }
 
 .checkbox {
-	width: 12px;
-	height: 12px;
-	margin-right: 12px;
+  width: 12px;
+  height: 12px;
+  margin-right: 12px;
 }
 
 .dropdown-item > .text {
-	flex: 1;
+  flex: 1;
 
-	display: flex;
-	justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .shortcut {
-	font-size: $shortcut-font-size;
-	margin-left: $shortcut-left-margin;
-	color: var(--shortcut-font);
-	user-select: none;
+  font-size: $shortcut-font-size;
+  margin-left: $shortcut-left-margin;
+  color: var(--shortcut-font);
+  user-select: none;
 }
 
 .ellipsis {
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .deactive,
 .not-implemented {
-	color: var(--deactive) !important;
-	cursor: default !important;
+  color: var(--deactive) !important;
+  cursor: default !important;
 }
 
 .tooltip-btn {
-	position: relative;
+  position: relative;
 }
 
 .tooltip {
-	visibility: hidden;
+  visibility: hidden;
 
-	position: absolute;
-	background: var(--tooltip-bg);
-	color: var(--tooltip-font);
+  position: absolute;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-font);
 
-	padding: $tooltip-vertical-padding $tooltip-horizontal-padding;
-	border-radius: $tooltip-border-radius;
-	font-size: 0.7rem;
+  padding: $tooltip-vertical-padding $tooltip-horizontal-padding;
+  border-radius: $tooltip-border-radius;
+  font-size: 0.7rem;
 
-	white-space: nowrap;
-	pointer-events: none;
+  white-space: nowrap;
+  pointer-events: none;
 
-	opacity: 0;
-	transition: opacity 0.2s;
+  opacity: 0;
+  transition: opacity 0.2s;
 
-	z-index: 97;
+  z-index: 97;
 
-	&-bottom {
-		top: 100%;
-		left: 50%;
-		transform: translateX(-50%);
-	}
+  &-bottom {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 
-	&-right {
-		top: 50%;
-		left: 100%;
-		transform: translateY(-50%);
-	}
+  &-right {
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+  }
 
-	&-bottom-left {
-		top: 100%;
-		right: 0;
-		left: auto;
-		transform: none;
-	}
+  &-bottom-left {
+    top: 100%;
+    right: 0;
+    left: auto;
+    transform: none;
+  }
 }
 
 .tooltip-btn:hover .tooltip {
-	visibility: visible;
-	opacity: 1;
+  visibility: visible;
+  opacity: 1;
 }
 
 .overlay {
-	position: fixed;
+  position: fixed;
 
-	justify-content: center;
-	align-items: center;
+  justify-content: center;
+  align-items: center;
 
-	width: 100%;
-	height: 100%;
+  width: 100%;
+  height: 100%;
 
-	z-index: 98;
+  z-index: 98;
 
-	background-color: rgba(0, 0, 0, 0.35);
-	backdrop-filter: blur(2px);
+  background-color: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
 }
 
 .overlay-surface {
-	min-width: 200px;
-	min-height: 100px;
-	border-radius: dimensions.$window-icon-border-radius;
-	box-shadow: 0 4px 16px rgb(0, 0, 0, 0.3);
-	background-color: var(--overlay-surface-bg);
+  min-width: 200px;
+  min-height: 100px;
+  border-radius: dimensions.$window-icon-border-radius;
+  box-shadow: 0 4px 16px rgb(0, 0, 0, 0.3);
+  background-color: var(--overlay-surface-bg);
 }
 
 .svg-close {
-	color: var(--close-btn);
+  color: var(--close-btn);
 }

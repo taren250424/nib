@@ -14,37 +14,37 @@ import { electronAPI } from "@shared/constants/electronAPI/electronAPI"
 import { loadedRenderer } from "../services/loadService"
 
 export default function registerLoadHandlers(
-	mainWindow: BrowserWindow,
-	fileManager: IFileManager,
-	fileWatcher: IFileWatcher,
-	windowRepository: IWindowRepository,
-	settingsRepository: ISettingsRepository,
-	sideRepository: ISideRepository,
-	tabRepository: ITabRepository,
-	treeRepository: ITreeRepository,
-	windowUtils: IWindowUtils,
-	settingsUtils: ISettingsUtils,
-	tabUtils: ITabUtils,
-	treeUtils: ITreeUtils
+  mainWindow: BrowserWindow,
+  fileManager: IFileManager,
+  fileWatcher: IFileWatcher,
+  windowRepository: IWindowRepository,
+  settingsRepository: ISettingsRepository,
+  sideRepository: ISideRepository,
+  tabRepository: ITabRepository,
+  treeRepository: ITreeRepository,
+  windowUtils: IWindowUtils,
+  settingsUtils: ISettingsUtils,
+  tabUtils: ITabUtils,
+  treeUtils: ITreeUtils
 ) {
-	ipcMain.on(electronAPI.events.rendererToMain.loadedRenderer, async () => {
-		loadedRenderer(
-			mainWindow,
-			fileManager,
-			fileWatcher,
-			windowRepository,
-			settingsRepository,
-			sideRepository,
-			tabRepository,
-			treeRepository,
-			windowUtils,
-			settingsUtils,
-			tabUtils,
-			treeUtils
-		)
-	})
+  ipcMain.on(electronAPI.events.rendererToMain.loadedRenderer, async () => {
+    loadedRenderer(
+      mainWindow,
+      fileManager,
+      fileWatcher,
+      windowRepository,
+      settingsRepository,
+      sideRepository,
+      tabRepository,
+      treeRepository,
+      windowUtils,
+      settingsUtils,
+      tabUtils,
+      treeUtils
+    )
+  })
 
-	ipcMain.on(electronAPI.events.rendererToMain.showMainWindow, () => {
-		mainWindow.show()
-	})
+  ipcMain.on(electronAPI.events.rendererToMain.showMainWindow, () => {
+    mainWindow.show()
+  })
 }

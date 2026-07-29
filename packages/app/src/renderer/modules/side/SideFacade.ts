@@ -6,84 +6,84 @@ import { SideDragManager } from "./SideDragManager"
 
 @injectable()
 export class SideFacade {
-	constructor(
-		@inject(DI.SideStore) public readonly store: SideStore,
-		@inject(DI.SideRenderer) public readonly renderer: SideRenderer,
-		@inject(DI.SideDragManager) public readonly drag: SideDragManager
-	) {}
+  constructor(
+    @inject(DI.SideStore) public readonly store: SideStore,
+    @inject(DI.SideRenderer) public readonly renderer: SideRenderer,
+    @inject(DI.SideDragManager) public readonly drag: SideDragManager
+  ) {}
 
-	// store
+  // store
 
-	isSideOpen(): boolean {
-		return this.store.isSideOpen()
-	}
+  isSideOpen(): boolean {
+    return this.store.isSideOpen()
+  }
 
-	setSideOpenState(state: boolean) {
-		this.store.setSideOpenState(state)
-	}
+  setSideOpenState(state: boolean) {
+    this.store.setSideOpenState(state)
+  }
 
-	getSideWidth() {
-		return this.store.getSideWidth()
-	}
+  getSideWidth() {
+    return this.store.getSideWidth()
+  }
 
-	setSideWidth(width: number) {
-		this.store.setSideWidth(width)
-	}
+  setSideWidth(width: number) {
+    this.store.setSideWidth(width)
+  }
 
-	// renderer
+  // renderer
 
-	updateSideWidth(width: number) {
-		this.renderer.updateSideWidth(width)
-	}
+  updateSideWidth(width: number) {
+    this.renderer.updateSideWidth(width)
+  }
 
-	// drag
+  // drag
 
-	isDragging(): boolean {
-		return this.drag.isDragging()
-	}
+  isDragging(): boolean {
+    return this.drag.isDragging()
+  }
 
-	startDrag() {
-		this.drag.startDrag()
-	}
+  startDrag() {
+    this.drag.startDrag()
+  }
 
-	endDrag() {
-		this.drag.endDrag()
-	}
+  endDrag() {
+    this.drag.endDrag()
+  }
 
-	//
+  //
 
-	get dragMinWidth() {
-		return this.drag.minWidth
-	}
+  get dragMinWidth() {
+    return this.drag.minWidth
+  }
 
-	get dragMaxWidth() {
-		return this.drag.maxWidth
-	}
+  get dragMaxWidth() {
+    return this.drag.maxWidth
+  }
 
-	// orchestra - drag
+  // orchestra - drag
 
-	initDrag() {
-		this.startDrag()
-		this.renderer.setResizingCursor(true)
-	}
+  initDrag() {
+    this.startDrag()
+    this.renderer.setResizingCursor(true)
+  }
 
-	calculateWidth(clientX: number) {
-		const sideLeft = this.renderer.elements.side.getBoundingClientRect().left
-		const offsetX = clientX - sideLeft
-		return Math.min(Math.max(offsetX, this.dragMinWidth), this.dragMaxWidth)
-	}
+  calculateWidth(clientX: number) {
+    const sideLeft = this.renderer.elements.side.getBoundingClientRect().left
+    const offsetX = clientX - sideLeft
+    return Math.min(Math.max(offsetX, this.dragMinWidth), this.dragMaxWidth)
+  }
 
-	clearDrag() {
-		this.endDrag()
-		this.renderer.setResizingCursor(false)
-	}
+  clearDrag() {
+    this.endDrag()
+    this.renderer.setResizingCursor(false)
+  }
 
-	// orchestra
+  // orchestra
 
-	async syncSession() {
-		await window.rendererToMain.syncSideSessionFromRenderer({
-			open: this.isSideOpen(),
-			width: this.getSideWidth(),
-		})
-	}
+  async syncSession() {
+    await window.rendererToMain.syncSideSessionFromRenderer({
+      open: this.isSideOpen(),
+      width: this.getSideWidth(),
+    })
+  }
 }

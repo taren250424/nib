@@ -1,99 +1,99 @@
 @use "sass:map";
 
 @mixin define-theme-from-palette($p) {
-	// Base Colors
-	$bg-frame: map.get($p, bg-frame);
-	$bg-subtle: map.get($p, bg-subtle);
-	$bg-surface: map.get($p, bg-surface);
-	$bg-highlight: map.get($p, bg-highlight);
+  // Base Colors
+  $bg-frame: map.get($p, bg-frame);
+  $bg-subtle: map.get($p, bg-subtle);
+  $bg-surface: map.get($p, bg-surface);
+  $bg-highlight: map.get($p, bg-highlight);
 
-	$ref: map.get($p, ref);
-	$deactive: map.get($p, deactive);
-	$accent: map.get($p, accent);
-	$accent-contrast: map.get($p, accent-contrast);
+  $ref: map.get($p, ref);
+  $deactive: map.get($p, deactive);
+  $accent: map.get($p, accent);
+  $accent-contrast: map.get($p, accent-contrast);
 
-	$warning-color: map.get($p, warning-color);
-	$font-color: map.get($p, font-color);
-	$close-btn-color: map.get($p, close-btn-color);
-	$tooltip-bg: map.get($p, tooltip-bg);
-	$tooltip-font: map.get($p, tooltip-font);
-	$search-highlight: map.get($p, search-highlight);
-	$search-highlight-current: map.get($p, search-highlight-current);
-	$hover-foreground-color: map.get($p, hover-foreground-color);
-	$disabled-bg: map.get($p, disabled-bg);
+  $warning-color: map.get($p, warning-color);
+  $font-color: map.get($p, font-color);
+  $close-btn-color: map.get($p, close-btn-color);
+  $tooltip-bg: map.get($p, tooltip-bg);
+  $tooltip-font: map.get($p, tooltip-font);
+  $search-highlight: map.get($p, search-highlight);
+  $search-highlight-current: map.get($p, search-highlight-current);
+  $hover-foreground-color: map.get($p, hover-foreground-color);
+  $disabled-bg: map.get($p, disabled-bg);
 
-	// CSS Variable Mapping
-	--app-bg: #{$bg-surface};
-	--app-font-color: #{$font-color};
-	--accent: #{$accent};
-	--accent-contrast: #{$accent-contrast};
+  // CSS Variable Mapping
+  --app-bg: #{$bg-surface};
+  --app-font-color: #{$font-color};
+  --accent: #{$accent};
+  --accent-contrast: #{$accent-contrast};
 
-	--overlay-surface-bg: #{$bg-highlight};
-	--overlay-surface-button-bg: #{$bg-surface};
-	--overlay-surface-button-hover-bg: #{$bg-highlight};
+  --overlay-surface-bg: #{$bg-highlight};
+  --overlay-surface-button-bg: #{$bg-surface};
+  --overlay-surface-button-hover-bg: #{$bg-highlight};
 
-	--close-btn: #{$close-btn-color};
+  --close-btn: #{$close-btn-color};
 
-	--title-bg: #{$bg-frame};
-	--side-menu-bg: #{$bg-frame};
-	--side-resizer: #{$accent};
+  --title-bg: #{$bg-frame};
+  --side-menu-bg: #{$bg-frame};
+  --side-resizer: #{$accent};
 
-	--menu-item-hover: #{$bg-subtle};
-	--window-icon-hover: #{$bg-subtle};
+  --menu-item-hover: #{$bg-subtle};
+  --window-icon-hover: #{$bg-subtle};
 
-	--find-replace-container-bg: #{$bg-frame};
-	--find-replace-input: #{$bg-highlight};
-	--find-replace-button-hover: #{$bg-subtle};
+  --find-replace-container-bg: #{$bg-frame};
+  --find-replace-input: #{$bg-highlight};
+  --find-replace-button-hover: #{$bg-subtle};
 
-	--tooltip-bg: #{$tooltip-bg};
-	--tooltip-font: #{$tooltip-font};
+  --tooltip-bg: #{$tooltip-bg};
+  --tooltip-font: #{$tooltip-font};
 
-	--shortcut-font: #{$ref};
-	--deactive: #{$deactive};
-	--not-implemented: #{$deactive};
+  --shortcut-font: #{$ref};
+  --deactive: #{$deactive};
+  --not-implemented: #{$deactive};
 
-	--dropdown-bg: #{$bg-surface};
-	--dropdown-border: #{$bg-frame};
-	--dropdown-divider: #{$bg-subtle};
+  --dropdown-bg: #{$bg-surface};
+  --dropdown-border: #{$bg-frame};
+  --dropdown-divider: #{$bg-subtle};
 
-	--search-highlight: #{$search-highlight};
-	--search-highlight-current: #{$search-highlight-current};
+  --search-highlight: #{$search-highlight};
+  --search-highlight-current: #{$search-highlight-current};
 
-	--scrollbar-thumb: #{$bg-subtle};
-	--scrollbar-thumb-hover: #{$accent}b3;
+  --scrollbar-thumb: #{$bg-subtle};
+  --scrollbar-thumb-hover: #{$accent}b3;
 
-	--tab-bg: #{$bg-subtle};
-	--tab-ghost-bg: #{$bg-surface};
-	--tab-selected: #{$bg-highlight};
-	--tab-btn-bg: transparent;
-	--tab-btn-hover-bg: #{$bg-frame};
-	--tab-btn-hover-font: #{$font-color};
-	--tab-indicator: #{$accent};
+  --tab-bg: #{$bg-subtle};
+  --tab-ghost-bg: #{$bg-surface};
+  --tab-selected: #{$bg-highlight};
+  --tab-btn-bg: transparent;
+  --tab-btn-hover-bg: #{$bg-frame};
+  --tab-btn-hover-font: #{$font-color};
+  --tab-indicator: #{$accent};
 
-	--tree-node-cut: #{$ref};
-	--tree-node-focused: #{$accent};
-	// Selection is accent-tinted so it reads as a state rather than as hover, and
-	// dims once the tree stops holding focus, the way list widgets normally do.
-	// These five used to be one and the same colour, which left the selection,
-	// the hover and the drop target indistinguishable.
-	--tree-node-selected: #{$accent}66;
-	--tree-node-selected-inactive: #{$accent}26;
-	--tree-node-selected-hover: #{$accent}80;
-	--tree-node-hover: #{$bg-subtle};
-	--tree-ghost-bg: #{$tooltip-bg};
-	--tree-ghost-font: #{$tooltip-font};
-	--tree-top-icon-hover: #{$bg-subtle};
-	--tree-wrapper-drag-overlay: #{$bg-highlight};
+  --tree-node-cut: #{$ref};
+  --tree-node-focused: #{$accent};
+  // Selection is accent-tinted so it reads as a state rather than as hover, and
+  // dims once the tree stops holding focus, the way list widgets normally do.
+  // These five used to be one and the same colour, which left the selection,
+  // the hover and the drop target indistinguishable.
+  --tree-node-selected: #{$accent}66;
+  --tree-node-selected-inactive: #{$accent}26;
+  --tree-node-selected-hover: #{$accent}80;
+  --tree-node-hover: #{$bg-subtle};
+  --tree-ghost-bg: #{$tooltip-bg};
+  --tree-ghost-font: #{$tooltip-font};
+  --tree-top-icon-hover: #{$bg-subtle};
+  --tree-wrapper-drag-overlay: #{$bg-highlight};
 
-	--settings-menu-container: #{$bg-surface};
-	--settings-menu-button-bg: #{$bg-subtle};
-	--settings-menu-button-hover: #{$bg-highlight};
-	--settings-menu-button-selected: #{$bg-highlight};
-	--settings-contents: #{$bg-highlight};
-	--setting-node-border-color: #{$ref};
+  --settings-menu-container: #{$bg-surface};
+  --settings-menu-button-bg: #{$bg-subtle};
+  --settings-menu-button-hover: #{$bg-highlight};
+  --settings-menu-button-selected: #{$bg-highlight};
+  --settings-contents: #{$bg-highlight};
+  --setting-node-border-color: #{$ref};
 
-	--warning-color: #{$warning-color};
-	--hover-foreground-color: #{$hover-foreground-color};
+  --warning-color: #{$warning-color};
+  --hover-foreground-color: #{$hover-foreground-color};
 
-	--disabled-bg: #{$disabled-bg};
+  --disabled-bg: #{$disabled-bg};
 }

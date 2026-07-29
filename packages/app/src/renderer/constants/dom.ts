@@ -94,4 +94,3 @@ export const CLASS_IS_MODIFIED = "is-modified"
 
 export const MODIFIED_TEXT = "•"
 export const EXIT_TEXT = "×"
-

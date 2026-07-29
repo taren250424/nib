@@ -5,23 +5,19 @@ import type { WindowDto } from "@shared/dto/WindowDto"
 import type { SettingsDto } from "@shared/dto/SettingsDto"
 
 export default interface MainToRendererAPI {
-	session: (
-		callback: (
-			windowDto: WindowDto,
-			settingsDto: SettingsDto,
-			sideDto: SideDto,
-			tabEditorsDto: TabEditorsDto,
-			treeDto: TreeDto,
-			version: string,
-		) => void
-	) => void
-	syncFromWatch: (
-		callback: (
-			tabEditorsDto: TabEditorsDto,
-			treeDto: TreeDto,
-			partialUpdates?: TreePartialUpdate[]
-		) => void
-	) => void
-	onMaximizeWindow: (callback: () => void) => void
-	onUnmaximizeWindow: (callback: () => void) => void
+  session: (
+    callback: (
+      windowDto: WindowDto,
+      settingsDto: SettingsDto,
+      sideDto: SideDto,
+      tabEditorsDto: TabEditorsDto,
+      treeDto: TreeDto,
+      version: string
+    ) => void
+  ) => void
+  syncFromWatch: (
+    callback: (tabEditorsDto: TabEditorsDto, treeDto: TreeDto, partialUpdates?: TreePartialUpdate[]) => void
+  ) => void
+  onMaximizeWindow: (callback: () => void) => void
+  onUnmaximizeWindow: (callback: () => void) => void
 }

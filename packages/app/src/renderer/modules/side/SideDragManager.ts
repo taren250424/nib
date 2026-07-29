@@ -2,22 +2,22 @@ import { injectable } from "inversify"
 
 @injectable()
 export class SideDragManager {
-	readonly minWidth = 100
-	readonly maxWidth = 500
+  readonly minWidth = 100
+  readonly maxWidth = 500
 
-	private _isDragging = false
+  private _isDragging = false
 
-	//
+  //
 
-	isDragging(): boolean {
-		return this._isDragging
-	}
+  isDragging(): boolean {
+    return this._isDragging
+  }
 
-	startDrag() {
-		this._isDragging = true
-	}
+  startDrag() {
+    this._isDragging = true
+  }
 
-	endDrag() {
-		this._isDragging = false
-	}
+  endDrag() {
+    this._isDragging = false
+  }
 }

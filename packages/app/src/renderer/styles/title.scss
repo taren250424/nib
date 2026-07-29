@@ -7,88 +7,88 @@ $menu-container-horizontal-margin: 10px;
 
 #title,
 #title > :nth-child(-n + 3) {
-	display: flex;
-	align-items: center;
+  display: flex;
+  align-items: center;
 }
 
 #title {
-	width: 100%;
-	height: dimensions.$title-height;
-	flex-shrink: 0;
+  width: 100%;
+  height: dimensions.$title-height;
+  flex-shrink: 0;
 
-	background-color: var(--title-bg);
+  background-color: var(--title-bg);
 }
 
 #logo {
-	margin-left: dimensions.$icon-horizontal-margin;
-	margin-right: dimensions.$icon-horizontal-margin;
+  margin-left: dimensions.$icon-horizontal-margin;
+  margin-right: dimensions.$icon-horizontal-margin;
 
-	width: dimensions.$icon-size;
-	height: dimensions.$icon-size;
+  width: dimensions.$icon-size;
+  height: dimensions.$icon-size;
 }
 
 #logo > img {
-	width: 100%;
-	height: 100%;
+  width: 100%;
+  height: 100%;
 
-	object-fit: cover;
+  object-fit: cover;
 }
 
 #window {
-	border-radius: dimensions.$window-icon-border-radius;
-	margin-left: auto;
+  border-radius: dimensions.$window-icon-border-radius;
+  margin-left: auto;
 }
 
 #window button {
-	width: dimensions.$title-button-width;
-	height: dimensions.$title-button-height;
+  width: dimensions.$title-button-width;
+  height: dimensions.$title-button-height;
 }
 
 // should be of equal width and height
 #window svg {
-	width: dimensions.$title-button-height;
-	height: dimensions.$title-button-height;
-	padding: 10px;
+  width: dimensions.$title-button-height;
+  height: dimensions.$title-button-height;
+  padding: 10px;
 }
 
 #minimizeWindow:hover,
 #maximizeWindow:hover {
-	background: var(--window-icon-hover);
+  background: var(--window-icon-hover);
 }
 
 #title-exit:hover {
-	background: var(--warning-color);
+  background: var(--warning-color);
 
-	& svg {
-		color: var(--hover-foreground-color);
-	}
+  & svg {
+    color: var(--hover-foreground-color);
+  }
 }
 
 #menu-container {
-	flex-shrink: 0;
+  flex-shrink: 0;
 
-	display: flex;
+  display: flex;
 }
 
 .menu-item {
-	border-radius: $menu-border-radius;
-	padding: 0 $menu-horizontal-padding;
+  border-radius: $menu-border-radius;
+  padding: 0 $menu-horizontal-padding;
 
-	text-align: center;
+  text-align: center;
 
-	margin-right: $menu-container-horizontal-margin;
-	font-size: 0.9rem;
+  margin-right: $menu-container-horizontal-margin;
+  font-size: 0.9rem;
 
-	position: relative;
-	cursor: pointer;
-	user-select: none;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
 }
 
 .menu-item.selected > .dropdown {
-	display: block;
+  display: block;
 }
 
 .menu-item:not(.selected):hover {
-	cursor: pointer;
-	background: var(--menu-item-hover);
+  cursor: pointer;
+  background: var(--menu-item-hover);
 }

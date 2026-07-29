@@ -1,3 +1,3 @@
 export interface WindowDto {
-	maximize: boolean
+  maximize: boolean
 }

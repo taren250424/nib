@@ -6,95 +6,95 @@ import type { TreeViewModel } from "../viewmodels/TreeViewModel"
 import { TabEditorFacade, TreeFacade } from "../modules"
 
 type DeletedItemInfo = {
-	path: string
-	isDirectory: boolean
-	parentPath: string
+  path: string
+  isDirectory: boolean
+  parentPath: string
 }
 
 export class DeleteCommand implements ICommand {
-	private trashMap: TrashMap[] | null = null
-	private deletedItems: DeletedItemInfo[] = []
+  private trashMap: TrashMap[] | null = null
+  private deletedItems: DeletedItemInfo[] = []
 
-	// Captures paths, not indices: indices shift whenever the tree mutates,
-	// so they are re-resolved from paths at apply time instead.
-	constructor(
-		private treeFacade: TreeFacade,
-		private tabEditorFacade: TabEditorFacade,
-		private selectedPaths: string[]
-	) {}
+  // Captures paths, not indices: indices shift whenever the tree mutates,
+  // so they are re-resolved from paths at apply time instead.
+  constructor(
+    private treeFacade: TreeFacade,
+    private tabEditorFacade: TabEditorFacade,
+    private selectedPaths: string[]
+  ) {}
 
-	async execute(): Promise<void> {
-		this.deletedItems = []
+  async execute(): Promise<void> {
+    this.deletedItems = []
 
-		const pathsToDelete: string[] = []
-		const idsToDelete: number[] = []
-		for (const path of this.selectedPaths) {
-			const viewModel = this.treeFacade.getTreeViewModelByPath(path)
-			// Already gone (removed by an earlier command or watcher sync) — skip.
-			if (!viewModel) continue
+    const pathsToDelete: string[] = []
+    const idsToDelete: number[] = []
+    for (const path of this.selectedPaths) {
+      const viewModel = this.treeFacade.getTreeViewModelByPath(path)
+      // Already gone (removed by an earlier command or watcher sync) — skip.
+      if (!viewModel) continue
 
-			pathsToDelete.push(viewModel.path)
-			idsToDelete.push(...this.getIdsFromTreeViewModel(viewModel))
+      pathsToDelete.push(viewModel.path)
+      idsToDelete.push(...this.getIdsFromTreeViewModel(viewModel))
 
-			// Save metadata for undo
-			this.deletedItems.push({
-				path: viewModel.path,
-				isDirectory: viewModel.directory,
-				parentPath: window.utils.getDirName(viewModel.path),
-			})
-		}
+      // Save metadata for undo
+      this.deletedItems.push({
+        path: viewModel.path,
+        isDirectory: viewModel.directory,
+        parentPath: window.utils.getDirName(viewModel.path),
+      })
+    }
 
-		if (pathsToDelete.length === 0) return
+    if (pathsToDelete.length === 0) return
 
-		pathsToDelete.sort((a, b) => b.localeCompare(a))
+    pathsToDelete.sort((a, b) => b.localeCompare(a))
 
-		const response: Response<TrashMap[] | null> = await window.rendererToMain.delete(pathsToDelete)
-		if (!response.result) return
-		this.trashMap = response.data
+    const response: Response<TrashMap[] | null> = await window.rendererToMain.delete(pathsToDelete)
+    if (!response.result) return
+    this.trashMap = response.data
 
-		for (let i = 0; i < idsToDelete.length; i++) {
-			this.tabEditorFacade.removeTab(idsToDelete[i])
-		}
+    for (let i = 0; i < idsToDelete.length; i++) {
+      this.tabEditorFacade.removeTab(idsToDelete[i])
+    }
 
-		// Re-resolve indices at apply time; applyDelete corrects selection state internally.
-		const indices: number[] = []
-		for (const item of this.deletedItems) {
-			const idx = this.treeFacade.getFlattenIndexByPath(item.path)
-			if (idx !== undefined) indices.push(idx)
-		}
-		this.treeFacade.applyDelete(indices)
+    // Re-resolve indices at apply time; applyDelete corrects selection state internally.
+    const indices: number[] = []
+    for (const item of this.deletedItems) {
+      const idx = this.treeFacade.getFlattenIndexByPath(item.path)
+      if (idx !== undefined) indices.push(idx)
+    }
+    this.treeFacade.applyDelete(indices)
 
-		const tabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
-		await window.rendererToMain.syncTabSessionFromRenderer(tabEditorsDto)
+    const tabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
+    await window.rendererToMain.syncTabSessionFromRenderer(tabEditorsDto)
 
-		const viewModel = this.treeFacade.getRootTreeViewModel()
-		const treeDto = this.treeFacade.toTreeDto(viewModel)
-		await window.rendererToMain.syncTreeSessionFromRenderer(treeDto)
-	}
+    const viewModel = this.treeFacade.getRootTreeViewModel()
+    const treeDto = this.treeFacade.toTreeDto(viewModel)
+    await window.rendererToMain.syncTreeSessionFromRenderer(treeDto)
+  }
 
-	async undo(): Promise<void> {
-		const result = await window.rendererToMain.undo_delete(this.trashMap)
-		if (!result) return
+  async undo(): Promise<void> {
+    const result = await window.rendererToMain.undo_delete(this.trashMap)
+    if (!result) return
 
-		for (const item of this.deletedItems) {
-			this.treeFacade.applyCreate(item.parentPath, item.path, item.isDirectory)
-		}
+    for (const item of this.deletedItems) {
+      this.treeFacade.applyCreate(item.parentPath, item.path, item.isDirectory)
+    }
 
-		const viewModel = this.treeFacade.getRootTreeViewModel()
-		const treeDto = this.treeFacade.toTreeDto(viewModel)
-		await window.rendererToMain.syncTreeSessionFromRenderer(treeDto)
-	}
+    const viewModel = this.treeFacade.getRootTreeViewModel()
+    const treeDto = this.treeFacade.toTreeDto(viewModel)
+    await window.rendererToMain.syncTreeSessionFromRenderer(treeDto)
+  }
 
-	private getIdsFromTreeViewModel(vm: TreeViewModel, arr: number[] = []) {
-		if (vm.directory && vm.children) {
-			for (const child of vm.children) {
-				this.getIdsFromTreeViewModel(child, arr)
-			}
-		}
+  private getIdsFromTreeViewModel(vm: TreeViewModel, arr: number[] = []) {
+    if (vm.directory && vm.children) {
+      for (const child of vm.children) {
+        this.getIdsFromTreeViewModel(child, arr)
+      }
+    }
 
-		const tabEditorView = this.tabEditorFacade.getTabEditorViewByPath(vm.path)
-		if (tabEditorView) arr.push(tabEditorView.getId())
+    const tabEditorView = this.tabEditorFacade.getTabEditorViewByPath(vm.path)
+    if (tabEditorView) arr.push(tabEditorView.getId())
 
-		return arr
-	}
+    return arr
+  }
 }

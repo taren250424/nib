@@ -45,7 +45,7 @@ import { ZoomManager } from "./modules/zoom/ZoomManager"
 
 import { CommandManager } from "./modules/CommandManager"
 import { Dispatcher } from "./dispatch"
-import { EventEmitter } from 'events';
+import { EventEmitter } from "events"
 
 const diContainer = new Container()
 

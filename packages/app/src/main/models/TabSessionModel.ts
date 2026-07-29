@@ -1,10 +1,10 @@
 export interface TabSessionModel {
-	activatedId: number
-	data: TabSessionData[]
+  activatedId: number
+  data: TabSessionData[]
 }
 
 export interface TabSessionData {
-	id: number
-	filePath: string
-	isModified: boolean
+  id: number
+  filePath: string
+  isModified: boolean
 }

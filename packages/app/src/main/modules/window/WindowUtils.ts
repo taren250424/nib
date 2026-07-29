@@ -5,9 +5,9 @@ import type { WindowDto } from "@shared/dto/WindowDto"
 
 @injectable()
 export default class WindowUtils implements IWindowUtils {
-	toWindowDto(session: WindowSessionModel): WindowDto {
-		return {
-			maximize: session.maximize,
-		}
-	}
+  toWindowDto(session: WindowSessionModel): WindowDto {
+    return {
+      maximize: session.maximize,
+    }
+  }
 }

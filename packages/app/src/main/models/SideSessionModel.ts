@@ -1,4 +1,4 @@
 export default interface SideSessionModel {
-	open: boolean
-	width: number
+  open: boolean
+  width: number
 }

@@ -9,16 +9,16 @@ import { electronAPI } from "@shared/constants/electronAPI/electronAPI"
 import exit from "@services/exitService"
 
 export default function registerExitHandlers(
-	mainWindow: BrowserWindow,
-	fileManager: IFileManager,
-	dialogManager: IDialogManager,
-	tabRepository: ITabRepository,
-	treeRepository: ITreeRepository
+  mainWindow: BrowserWindow,
+  fileManager: IFileManager,
+  dialogManager: IDialogManager,
+  tabRepository: ITabRepository,
+  treeRepository: ITreeRepository
 ) {
-	ipcMain.handle(
-		electronAPI.events.rendererToMain.exit,
-		async (_e, tabSessionData: TabEditorsDto, treeSessionData: TreeDto) => {
-			await exit(mainWindow, fileManager, dialogManager, tabRepository, treeRepository, tabSessionData, treeSessionData)
-		}
-	)
+  ipcMain.handle(
+    electronAPI.events.rendererToMain.exit,
+    async (_e, tabSessionData: TabEditorsDto, treeSessionData: TreeDto) => {
+      await exit(mainWindow, fileManager, dialogManager, tabRepository, treeRepository, tabSessionData, treeSessionData)
+    }
+  )
 }

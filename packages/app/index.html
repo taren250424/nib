@@ -1,404 +1,404 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="UTF-8" />
-		<title>Velin</title>
-	</head>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Velin</title>
+  </head>
 
-	<body>
-		<div id="settings-overlay" class="overlay">
-			<div id="settings-container" class="overlay-surface">
-				<div id="settings-top">
-					<span id="settings-title">Settings</span>
-					<button id="settings-exit" class="tooltip-btn">
-						<svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
-							<path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-						</svg>
-					</button>
-				</div>
+  <body>
+    <div id="settings-overlay" class="overlay">
+      <div id="settings-container" class="overlay-surface">
+        <div id="settings-top">
+          <span id="settings-title">Settings</span>
+          <button id="settings-exit" class="tooltip-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
+              <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
 
-				<div id="settings-section">
-					<div id="settings-menus">
-						<button id="settings-menu-editor" class="settings-nav-item">Editor</button>
-						<button id="settings-menu-theme" class="settings-nav-item">Theme</button>
-					</div>
-					<div id="settings-contents">
-						<div id="settings-contents-editor" class="settings-panel">
-							<h2 class="settings-panel-title">Editor</h2>
-							<div id="setting-node-editor-width" class="setting-node">
-								<label>Width</label>
-								<input type="number" />
-							</div>
-							<div id="setting-node-editor-size" class="setting-node">
-								<label>Font Size</label>
-								<input type="number" />
-							</div>
-							<div id="setting-node-editor-family" class="setting-node">
-								<label>Font Family</label>
-								<input type="string" />
-							</div>
-							<div id="setting-node-editor-auto-save" class="setting-node">
-								<label>Auto Save</label>
-								<velin-select>
-									<velin-option value="off">Off</velin-option>
-									<velin-option value="afterDelay">After Delay</velin-option>
-									<velin-option value="onFocusChange">On Focus Change</velin-option>
-									<velin-option value="onWindowChange">On Window Change</velin-option>
-								</velin-select>
-							</div>
-						</div>
+        <div id="settings-section">
+          <div id="settings-menus">
+            <button id="settings-menu-editor" class="settings-nav-item">Editor</button>
+            <button id="settings-menu-theme" class="settings-nav-item">Theme</button>
+          </div>
+          <div id="settings-contents">
+            <div id="settings-contents-editor" class="settings-panel">
+              <h2 class="settings-panel-title">Editor</h2>
+              <div id="setting-node-editor-width" class="setting-node">
+                <label>Width</label>
+                <input type="number" />
+              </div>
+              <div id="setting-node-editor-size" class="setting-node">
+                <label>Font Size</label>
+                <input type="number" />
+              </div>
+              <div id="setting-node-editor-family" class="setting-node">
+                <label>Font Family</label>
+                <input type="string" />
+              </div>
+              <div id="setting-node-editor-auto-save" class="setting-node">
+                <label>Auto Save</label>
+                <velin-select>
+                  <velin-option value="off">Off</velin-option>
+                  <velin-option value="afterDelay">After Delay</velin-option>
+                  <velin-option value="onFocusChange">On Focus Change</velin-option>
+                  <velin-option value="onWindowChange">On Window Change</velin-option>
+                </velin-select>
+              </div>
+            </div>
 
-						<div id="settings-contents-theme" class="settings-panel">
-							<h2 class="settings-panel-title">Theme</h2>
-							<div id="settings-node-theme" class="setting-node">
-								<label>Theme</label>
-								<velin-select>
-									<velin-option value="light">Light</velin-option>
-									<velin-option value="solarized">Solarized</velin-option>
-									<velin-option value="slate">Slate</velin-option>
-								</velin-select>
-							</div>
-						</div>
-					</div>
-				</div>
+            <div id="settings-contents-theme" class="settings-panel">
+              <h2 class="settings-panel-title">Theme</h2>
+              <div id="settings-node-theme" class="setting-node">
+                <label>Theme</label>
+                <velin-select>
+                  <velin-option value="light">Light</velin-option>
+                  <velin-option value="solarized">Solarized</velin-option>
+                  <velin-option value="slate">Slate</velin-option>
+                </velin-select>
+              </div>
+            </div>
+          </div>
+        </div>
 
-				<div id="settings-bottom">
-					<button id="settings-close-btn">Close</button>
-					<button id="settings-apply-btn" class="primary">Apply</button>
-				</div>
-			</div>
-		</div>
+        <div id="settings-bottom">
+          <button id="settings-close-btn">Close</button>
+          <button id="settings-apply-btn" class="primary">Apply</button>
+        </div>
+      </div>
+    </div>
 
-		<div id="find-replace-container">
-			<div id="find">
-				<input id="find-input" type="text" />
+    <div id="find-replace-container">
+      <div id="find">
+        <input id="find-input" type="text" />
 
-				<button id="find-option-case" class="tooltip-btn find-option-btn">
-					Aa
-					<span class="tooltip tooltip-bottom">Match case</span>
-				</button>
-				<button id="find-option-word" class="tooltip-btn find-option-btn">
-					ab
-					<span class="tooltip tooltip-bottom">Whole word</span>
-				</button>
-				<button id="find-option-regex" class="tooltip-btn find-option-btn">
-					.*
-					<span class="tooltip tooltip-bottom">Use regex</span>
-				</button>
+        <button id="find-option-case" class="tooltip-btn find-option-btn">
+          Aa
+          <span class="tooltip tooltip-bottom">Match case</span>
+        </button>
+        <button id="find-option-word" class="tooltip-btn find-option-btn">
+          ab
+          <span class="tooltip tooltip-bottom">Whole word</span>
+        </button>
+        <button id="find-option-regex" class="tooltip-btn find-option-btn">
+          .*
+          <span class="tooltip tooltip-bottom">Use regex</span>
+        </button>
 
-				<button id="find-up" class="tooltip-btn">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-						<path
-							d="M12 19V5M5 12L12 5L19 12"
-							stroke="black"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							fill="none"
-						/>
-					</svg>
-					<span class="tooltip tooltip-bottom">Find up (Shift+Enter)</span>
-				</button>
-				<button id="find-down" class="tooltip-btn">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-						<path
-							d="M12 5V19M5 12L12 19L19 12"
-							stroke="black"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							fill="none"
-						/>
-					</svg>
-					<span class="tooltip tooltip-bottom">Find down (Enter)</span>
-				</button>
-				<button id="close-find-replace">
-					<svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
-						<path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
-					</svg>
-				</button>
+        <button id="find-up" class="tooltip-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+            <path
+              d="M12 19V5M5 12L12 5L19 12"
+              stroke="black"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span class="tooltip tooltip-bottom">Find up (Shift+Enter)</span>
+        </button>
+        <button id="find-down" class="tooltip-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+            <path
+              d="M12 5V19M5 12L12 19L19 12"
+              stroke="black"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span class="tooltip tooltip-bottom">Find down (Enter)</span>
+        </button>
+        <button id="close-find-replace">
+          <svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
+            <path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
 
-				<span id="find-info"></span>
-			</div>
+        <span id="find-info"></span>
+      </div>
 
-			<div id="replace">
-				<input id="replace-input" type="text" />
+      <div id="replace">
+        <input id="replace-input" type="text" />
 
-				<button id="replace-current" class="tooltip-btn">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-						<path
-							d="M7 19V5H13C15.2091 5 17 6.79086 17 9C17 11.2091 15.2091 13 13 13H7M13 13L17 19"
-							stroke="black"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							fill="none"
-						/>
-					</svg>
-					<span class="tooltip tooltip-bottom">Replace (Enter)</span>
-				</button>
-				<button id="replace-all" class="tooltip-btn">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-						<path
-							d="M5 19L12 5L19 19M7 14H17"
-							stroke="black"
-							stroke-width="2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							fill="none"
-						/>
-					</svg>
-					<span class="tooltip tooltip-bottom">Replace All (Ctrl+Alt+Enter)</span>
-				</button>
+        <button id="replace-current" class="tooltip-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+            <path
+              d="M7 19V5H13C15.2091 5 17 6.79086 17 9C17 11.2091 15.2091 13 13 13H7M13 13L17 19"
+              stroke="black"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span class="tooltip tooltip-bottom">Replace (Enter)</span>
+        </button>
+        <button id="replace-all" class="tooltip-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+            <path
+              d="M5 19L12 5L19 19M7 14H17"
+              stroke="black"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </svg>
+          <span class="tooltip tooltip-bottom">Replace All (Ctrl+Alt+Enter)</span>
+        </button>
 
-				<span id="replace-info"></span>
-			</div>
-		</div>
+        <span id="replace-info"></span>
+      </div>
+    </div>
 
-		<div id="info-overlay" class="overlay">
-			<div id="info-container" class="overlay-surface">
-				<div id="info-top"></div>
-				<div id="info-content">
-					<div id="info-version">
-						<label>version</label>
-						<span></span>
-					</div>
-				</div>
-				<div id="info-bottom">
-					<button id="info-close">Close</button>
-				</div>
-			</div>
-		</div>
+    <div id="info-overlay" class="overlay">
+      <div id="info-container" class="overlay-surface">
+        <div id="info-top"></div>
+        <div id="info-content">
+          <div id="info-version">
+            <label>version</label>
+            <span></span>
+          </div>
+        </div>
+        <div id="info-bottom">
+          <button id="info-close">Close</button>
+        </div>
+      </div>
+    </div>
 
-		<div id="tab-context-menu" class="dropdown">
-			<div id="tab-context-close" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Close<span class="shortcut">Ctrl+W</span></div>
-			</div>
-			<div id="tab-context-close-others" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Close Others<span class="shortcut"></span></div>
-			</div>
-			<div id="tab-context-close-right" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Close to the Right<span class="shortcut"></span></div>
-			</div>
-			<div id="tab-context-close-all" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Close All<span class="shortcut"></span></div>
-			</div>
-		</div>
+    <div id="tab-context-menu" class="dropdown">
+      <div id="tab-context-close" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Close<span class="shortcut">Ctrl+W</span></div>
+      </div>
+      <div id="tab-context-close-others" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Close Others<span class="shortcut"></span></div>
+      </div>
+      <div id="tab-context-close-right" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Close to the Right<span class="shortcut"></span></div>
+      </div>
+      <div id="tab-context-close-all" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Close All<span class="shortcut"></span></div>
+      </div>
+    </div>
 
-		<div id="tree-context-menu" class="dropdown">
-			<div id="tree-context-cut" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Cut<span class="shortcut">Ctrl+X</span></div>
-			</div>
-			<div id="tree-context-copy" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Copy<span class="shortcut">Ctrl+C</span></div>
-			</div>
-			<div id="tree-context-paste" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Paste<span class="shortcut">Ctrl+V</span></div>
-			</div>
-			<div id="tree-context-rename" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Rename<span class="shortcut">F2</span></div>
-			</div>
-			<div id="tree-context-delete" class="dropdown-item">
-				<span class="checkbox"></span>
-				<div class="text">Delete<span class="shortcut">DELETE</span></div>
-			</div>
-		</div>
+    <div id="tree-context-menu" class="dropdown">
+      <div id="tree-context-cut" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Cut<span class="shortcut">Ctrl+X</span></div>
+      </div>
+      <div id="tree-context-copy" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Copy<span class="shortcut">Ctrl+C</span></div>
+      </div>
+      <div id="tree-context-paste" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Paste<span class="shortcut">Ctrl+V</span></div>
+      </div>
+      <div id="tree-context-rename" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Rename<span class="shortcut">F2</span></div>
+      </div>
+      <div id="tree-context-delete" class="dropdown-item">
+        <span class="checkbox"></span>
+        <div class="text">Delete<span class="shortcut">DELETE</span></div>
+      </div>
+    </div>
 
-		<div id="container">
-			<div id="title" class="drag">
-				<span id="logo" class="no-drag">
-					<img src="src/shared/logo/logo.png" />
-				</span>
+    <div id="container">
+      <div id="title" class="drag">
+        <span id="logo" class="no-drag">
+          <img src="src/shared/logo/logo.png" />
+        </span>
 
-				<div id="menu-container" class="no-drag">
-					<div class="menu-item" tabindex="0">
-						File
-						<div class="dropdown">
-							<div id="file-menu-new-tab" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">New Tab<span class="shortcut">Ctrl+T</span></div>
-							</div>
-							<div id="file-menu-open-file" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Open File<span class="shortcut">Ctrl+O</span></div>
-							</div>
-							<div id="file-menu-open-directory" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Open Folder<span class="shortcut">Ctrl+Shift+O</span></div>
-							</div>
-							<div id="file-menu-save" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Save<span class="shortcut">Ctrl+S</span></div>
-							</div>
-							<div id="file-menu-save-as" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Save As<span class="shortcut">Ctrl+Shift+S</span></div>
-							</div>
-							<div id="file-menu-save-all" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Save All<span class="shortcut"></span></div>
-							</div>
-							<div class="dropdown-divider"></div>
-							<div id="file-menu-settings" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Settings<span class="shortcut">Ctrl+,</span></div>
-							</div>
-							<div id="file-menu-exit" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Exit<span class="shortcut">Alt+F4</span></div>
-							</div>
-						</div>
-					</div>
+        <div id="menu-container" class="no-drag">
+          <div class="menu-item" tabindex="0">
+            File
+            <div class="dropdown">
+              <div id="file-menu-new-tab" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">New Tab<span class="shortcut">Ctrl+T</span></div>
+              </div>
+              <div id="file-menu-open-file" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Open File<span class="shortcut">Ctrl+O</span></div>
+              </div>
+              <div id="file-menu-open-directory" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Open Folder<span class="shortcut">Ctrl+Shift+O</span></div>
+              </div>
+              <div id="file-menu-save" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Save<span class="shortcut">Ctrl+S</span></div>
+              </div>
+              <div id="file-menu-save-as" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Save As<span class="shortcut">Ctrl+Shift+S</span></div>
+              </div>
+              <div id="file-menu-save-all" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Save All<span class="shortcut"></span></div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div id="file-menu-settings" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Settings<span class="shortcut">Ctrl+,</span></div>
+              </div>
+              <div id="file-menu-exit" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Exit<span class="shortcut">Alt+F4</span></div>
+              </div>
+            </div>
+          </div>
 
-					<div class="menu-item" tabindex="0">
-						Edit
-						<div class="dropdown">
-							<div id="edit-menu-undo" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Undo<span class="shortcut">Ctrl+Z</span></div>
-							</div>
-							<div id="edit-menu-redo" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Redo<span class="shortcut">Ctrl+Shift+Z</span></div>
-							</div>
-							<div class="dropdown-divider"></div>
-							<div id="edit-menu-cut" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Cut<span class="shortcut">Ctrl+X</span></div>
-							</div>
-							<div id="edit-menu-copy" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Copy<span class="shortcut">Ctrl+C</span></div>
-							</div>
-							<div id="edit-menu-paste" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Paste<span class="shortcut">Ctrl+V</span></div>
-							</div>
-							<div class="dropdown-divider"></div>
-							<div id="edit-menu-find" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Find<span class="shortcut">Ctrl+F</span></div>
-							</div>
-							<div id="edit-menu-replace" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Replace<span class="shortcut">Ctrl+H</span></div>
-							</div>
-						</div>
-					</div>
+          <div class="menu-item" tabindex="0">
+            Edit
+            <div class="dropdown">
+              <div id="edit-menu-undo" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Undo<span class="shortcut">Ctrl+Z</span></div>
+              </div>
+              <div id="edit-menu-redo" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Redo<span class="shortcut">Ctrl+Shift+Z</span></div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div id="edit-menu-cut" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Cut<span class="shortcut">Ctrl+X</span></div>
+              </div>
+              <div id="edit-menu-copy" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Copy<span class="shortcut">Ctrl+C</span></div>
+              </div>
+              <div id="edit-menu-paste" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Paste<span class="shortcut">Ctrl+V</span></div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div id="edit-menu-find" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Find<span class="shortcut">Ctrl+F</span></div>
+              </div>
+              <div id="edit-menu-replace" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Replace<span class="shortcut">Ctrl+H</span></div>
+              </div>
+            </div>
+          </div>
 
-					<div class="menu-item" tabindex="0">
-						View
-						<div class="dropdown">
-							<div id="view-menu-zoom-in" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Zoom In<span class="shortcut">Ctrl++</span></div>
-							</div>
-							<div id="view-menu-zoom-out" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Zoom Out<span class="shortcut">Ctrl+-</span></div>
-							</div>
-							<div id="view-menu-zoom-reset" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Reset Zoom<span class="shortcut">Ctrl+0</span></div>
-							</div>
-							<div class="dropdown-divider"></div>
-							<div id="view-menu-file-tree" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">File Tree<span class="shortcut"></span></div>
-							</div>
-						</div>
-					</div>
+          <div class="menu-item" tabindex="0">
+            View
+            <div class="dropdown">
+              <div id="view-menu-zoom-in" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Zoom In<span class="shortcut">Ctrl++</span></div>
+              </div>
+              <div id="view-menu-zoom-out" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Zoom Out<span class="shortcut">Ctrl+-</span></div>
+              </div>
+              <div id="view-menu-zoom-reset" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Reset Zoom<span class="shortcut">Ctrl+0</span></div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div id="view-menu-file-tree" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">File Tree<span class="shortcut"></span></div>
+              </div>
+            </div>
+          </div>
 
-					<div class="menu-item" tabindex="0">
-						Help
-						<div class="dropdown">
-							<div id="help-information" class="dropdown-item">
-								<span class="checkbox"></span>
-								<div class="text">Information<span class="shortcut">F1</span></div>
-							</div>
-						</div>
-					</div>
-				</div>
+          <div class="menu-item" tabindex="0">
+            Help
+            <div class="dropdown">
+              <div id="help-information" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Information<span class="shortcut">F1</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-				<div id="window" class="no-drag">
-					<button id="minimizeWindow">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<line x1="5" y1="12" x2="19" y2="12" stroke="black" stroke-width="2" stroke-linecap="round" />
-						</svg>
-					</button>
-					<button id="maximizeWindow">
-						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<rect
-								x="5"
-								y="5"
-								width="14"
-								height="14"
-								stroke="black"
-								stroke-width="2"
-								fill="none"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							/>
-						</svg>
-					</button>
-					<button id="title-exit">
-						<svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
-							<path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
-						</svg>
-					</button>
-				</div>
-			</div>
+        <div id="window" class="no-drag">
+          <button id="minimizeWindow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="5" y1="12" x2="19" y2="12" stroke="black" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+          <button id="maximizeWindow">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect
+                x="5"
+                y="5"
+                width="14"
+                height="14"
+                stroke="black"
+                stroke-width="2"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <button id="title-exit">
+            <svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
+              <path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
 
-			<div id="content">
-				<div id="side">
-					<div id="tree">
-						<div id="tree-top">
-							<span id="tree-top-name"></span>
-							<div id="tree-top-icons">
-								<button id="tree-top-add-file" class="tooltip-btn">
-									<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
-										<path d="M5 5 L65 5 L85 25 L85 105 L5 105 Z" fill="white" stroke="black" stroke-width="2" />
-										<path d="M65 5 L65 25 L85 25" fill="none" stroke="black" stroke-width="2" />
-										<line x1="20" y1="45" x2="70" y2="45" stroke="black" stroke-width="1.5" />
-										<line x1="20" y1="60" x2="70" y2="60" stroke="black" stroke-width="1.5" />
-										<line x1="20" y1="75" x2="55" y2="75" stroke="black" stroke-width="1.5" />
-									</svg>
-									<span class="tooltip tooltip-bottom-left">Add File</span>
-								</button>
-								<button id="tree-top-add-directory" class="tooltip-btn">
-									<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
-										<path
-											d="M5 15 L5 5 L40 5 L50 15 L85 15 L85 105 L5 105 Z"
-											fill="white"
-											stroke="black"
-											stroke-width="2"
-										/>
-									</svg>
-									<span class="tooltip tooltip-bottom-left">Add Folder</span>
-								</button>
-							</div>
-						</div>
+      <div id="content">
+        <div id="side">
+          <div id="tree">
+            <div id="tree-top">
+              <span id="tree-top-name"></span>
+              <div id="tree-top-icons">
+                <button id="tree-top-add-file" class="tooltip-btn">
+                  <svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 5 L65 5 L85 25 L85 105 L5 105 Z" fill="white" stroke="black" stroke-width="2" />
+                    <path d="M65 5 L65 25 L85 25" fill="none" stroke="black" stroke-width="2" />
+                    <line x1="20" y1="45" x2="70" y2="45" stroke="black" stroke-width="1.5" />
+                    <line x1="20" y1="60" x2="70" y2="60" stroke="black" stroke-width="1.5" />
+                    <line x1="20" y1="75" x2="55" y2="75" stroke="black" stroke-width="1.5" />
+                  </svg>
+                  <span class="tooltip tooltip-bottom-left">Add File</span>
+                </button>
+                <button id="tree-top-add-directory" class="tooltip-btn">
+                  <svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M5 15 L5 5 L40 5 L50 15 L85 15 L85 105 L5 105 Z"
+                      fill="white"
+                      stroke="black"
+                      stroke-width="2"
+                    />
+                  </svg>
+                  <span class="tooltip tooltip-bottom-left">Add Folder</span>
+                </button>
+              </div>
+            </div>
 
-						<div id="tree-node-container" data-simplebar></div>
-					</div>
+            <div id="tree-node-container" data-simplebar></div>
+          </div>
 
-					<div id="side-resizer"></div>
-				</div>
+          <div id="side-resizer"></div>
+        </div>
 
-				<div id="workspace">
-					<div id="tab-container"></div>
-					<div id="editor-container"></div>
-				</div>
-			</div>
-		</div>
-		<script type="module" src="src/renderer/renderer.ts"></script>
-	</body>
+        <div id="workspace">
+          <div id="tab-container"></div>
+          <div id="editor-container"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="src/renderer/renderer.ts"></script>
+  </body>
 </html>

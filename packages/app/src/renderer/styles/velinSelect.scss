@@ -3,122 +3,125 @@ $velin-select-item-height: 26px;
 // The host is the visual box (like a native input): it carries the border so
 // container rules such as `.setting-node > *` don't stack a second box on top.
 velin-select {
-	position: relative;
-	display: inline-block;
-	width: var(--velin-select-width, 170px);
-	font-size: 0.9rem;
+  position: relative;
+  display: inline-block;
+  width: var(--velin-select-width, 170px);
+  font-size: 0.9rem;
 
-	border: 1px solid var(--setting-node-border-color);
-	transition: border-color 120ms ease;
+  border: 1px solid var(--setting-node-border-color);
+  transition: border-color 120ms ease;
 
-	&:hover,
-	&:focus-within {
-		border-color: var(--accent);
-	}
+  &:hover,
+  &:focus-within {
+    border-color: var(--accent);
+  }
 
-	> velin-option {
-		display: none; // data source only; rendered as panel items
-	}
+  > velin-option {
+    display: none; // data source only; rendered as panel items
+  }
 }
 
 .velin-select-trigger {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 
-	width: 100%;
-	height: 100%;
-	padding: 0 8px 0 10px;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px 0 10px;
 
-	font: inherit;
-	text-align: left;
-	color: var(--app-font-color);
-	background: none;
-	border: none;
-	cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: var(--app-font-color);
+  background: none;
+  border: none;
+  cursor: pointer;
 
-	&:focus {
-		outline: none;
-	}
+  &:focus {
+    outline: none;
+  }
 }
 
 .velin-select-label {
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .velin-select-chevron {
-	display: flex;
-	align-items: center;
-	flex-shrink: 0;
-	color: var(--app-font-color);
-	transition: transform 160ms ease;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--app-font-color);
+  transition: transform 160ms ease;
 
-	velin-select.open & {
-		transform: rotate(180deg);
-	}
+  velin-select.open & {
+    transform: rotate(180deg);
+  }
 }
 
 .velin-select-panel {
-	position: absolute;
-	top: calc(100% + 4px);
-	left: -1px; // align with the host border edge
-	right: -1px;
-	z-index: 96; // same layer as .dropdown
+  position: absolute;
+  top: calc(100% + 4px);
+  left: -1px; // align with the host border edge
+  right: -1px;
+  z-index: 96; // same layer as .dropdown
 
-	margin: 0;
-	padding: 4px;
-	list-style: none;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
 
-	background-color: var(--dropdown-bg);
-	border: 1px solid var(--dropdown-border);
-	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background-color: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 
-	max-height: calc(#{$velin-select-item-height} * 6.5 + 8px);
-	overflow-y: auto;
-	scrollbar-width: thin;
+  max-height: calc(#{$velin-select-item-height} * 6.5 + 8px);
+  overflow-y: auto;
+  scrollbar-width: thin;
 
-	visibility: hidden;
-	opacity: 0;
-	transform: translateY(-4px);
-	transition: opacity 140ms ease, transform 140ms ease, visibility 140ms;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 140ms;
 
-	velin-select.open & {
-		visibility: visible;
-		opacity: 1;
-		transform: none;
-	}
+  velin-select.open & {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .velin-select-item {
-	position: relative;
+  position: relative;
 
-	display: block;
-	line-height: $velin-select-item-height;
-	padding: 0 8px 0 12px;
+  display: block;
+  line-height: $velin-select-item-height;
+  padding: 0 8px 0 12px;
 
-	color: var(--app-font-color);
-	cursor: pointer;
+  color: var(--app-font-color);
+  cursor: pointer;
 
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
-	&:hover,
-	&.highlight {
-		background-color: var(--menu-item-hover);
-	}
+  &:hover,
+  &.highlight {
+    background-color: var(--menu-item-hover);
+  }
 
-	&.selected::before {
-		content: "";
-		position: absolute;
-		left: 3px;
-		top: 6px;
-		bottom: 6px;
-		width: 3px;
-		border-radius: 2px;
-		background-color: var(--accent);
-	}
+  &.selected::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 6px;
+    bottom: 6px;
+    width: 3px;
+    border-radius: 2px;
+    background-color: var(--accent);
+  }
 }

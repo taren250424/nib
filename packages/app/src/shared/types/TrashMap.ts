@@ -1,4 +1,4 @@
 export default interface TrashMap {
-	originalPath: string
-	trashPath: string
+  originalPath: string
+  trashPath: string
 }

@@ -1,14 +1,14 @@
 {
-	"extends": "../../tsconfig.json",
-	"compilerOptions": {
-		"composite": true,
-		"moduleResolution": "node",
-		"types": ["vite/client"],
-		"jsx": "react-jsx",
-		"paths": {
-			"@styles/*": ["./src/styles/*"]
-		}
-	},
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "moduleResolution": "node",
+    "types": ["vite/client"],
+    "jsx": "react-jsx",
+    "paths": {
+      "@styles/*": ["./src/styles/*"]
+    }
+  },
 
-	"include": ["src"]
+  "include": ["src"]
 }

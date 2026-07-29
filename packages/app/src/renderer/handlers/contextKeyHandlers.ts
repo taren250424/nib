@@ -8,9 +8,9 @@ import type { ContextKeyService, FocusManager } from "@renderer/core"
  * without a producer.
  */
 export function handleContextKeys(focusManager: FocusManager, contextKeyService: ContextKeyService) {
-	contextKeyService.set("focusedTask", focusManager.getFocusedTask())
+  contextKeyService.set("focusedTask", focusManager.getFocusedTask())
 
-	focusManager.onDidChangeFocus((task) => {
-		contextKeyService.set("focusedTask", task)
-	})
+  focusManager.onDidChangeFocus((task) => {
+    contextKeyService.set("focusedTask", task)
+  })
 }

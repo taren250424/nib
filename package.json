@@ -1,36 +1,36 @@
 {
-	"name": "velin-monorepo",
-	"private": true,
-	"workspaces": [
-		"packages/*"
-	],
-	"scripts": {
-		"app:start": "npm run start --workspace=packages/app",
-		"app:test": "npm run test --workspace=packages/app",
-		"app:lint": "npm run lint --workspace=packages/app",
-		"app:build:renderer": "npm run build:renderer --workspace=packages/app",
-		"app:build:main": "npm run build:main --workspace=packages/app",
-		"app:build:preload": "npm run build:preload --workspace=packages/app",
-		"app:build": "npm run build --workspace=packages/app",
-		"app:kill": "npm run kill --workspace=packages/app",
-		"app:clean": "npm run clean --workspace=packages/app",
-		"app:package": "npm run package --workspace=packages/app",
-		"site:dev": "npm run dev --workspace=packages/site",
-		"site:build": "npm run build --workspace=packages/site",
-		"site:deploy": "npm run deploy --workspace=packages/site",
-		"site:preview": "npm run preview --workspace=packages/site",
-		"lint": "eslint . --ext .ts,.tsx"
-	},
-	"devDependencies": {
-		"@types/node": "^25.0.3",
-		"@typescript-eslint/eslint-plugin": "^5.62.0",
-		"@typescript-eslint/parser": "^5.62.0",
-		"eslint": "^8.57.1",
-		"eslint-import-resolver-typescript": "^4.4.4",
-		"eslint-plugin-import": "^2.31.0",
-		"ts-node": "^10.9.2",
-		"typescript": "^5.9.3",
-		"vite": "^5.4.19",
-		"vitest": "^3.2.4"
-	}
+  "name": "velin-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "app:start": "npm run start --workspace=packages/app",
+    "app:test": "npm run test --workspace=packages/app",
+    "app:lint": "npm run lint --workspace=packages/app",
+    "app:build:renderer": "npm run build:renderer --workspace=packages/app",
+    "app:build:main": "npm run build:main --workspace=packages/app",
+    "app:build:preload": "npm run build:preload --workspace=packages/app",
+    "app:build": "npm run build --workspace=packages/app",
+    "app:kill": "npm run kill --workspace=packages/app",
+    "app:clean": "npm run clean --workspace=packages/app",
+    "app:package": "npm run package --workspace=packages/app",
+    "site:dev": "npm run dev --workspace=packages/site",
+    "site:build": "npm run build --workspace=packages/site",
+    "site:deploy": "npm run deploy --workspace=packages/site",
+    "site:preview": "npm run preview --workspace=packages/site",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.57.1",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.31.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.19",
+    "vitest": "^3.2.4"
+  }
 }

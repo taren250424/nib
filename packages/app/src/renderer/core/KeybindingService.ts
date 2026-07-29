@@ -16,44 +16,44 @@ import { getKeyString, REPEATABLE_KEYS } from "./keys"
  */
 @injectable()
 export class KeybindingService {
-	private readonly bindings = new Map<string, Keybinding[]>()
+  private readonly bindings = new Map<string, Keybinding[]>()
 
-	constructor(@inject(DI.CommandRegistry) private readonly commandRegistry: CommandRegistry) {}
+  constructor(@inject(DI.CommandRegistry) private readonly commandRegistry: CommandRegistry) {}
 
-	register(binding: Keybinding) {
-		const existing = this.bindings.get(binding.key)
-		if (existing) existing.push(binding)
-		else this.bindings.set(binding.key, [binding])
-	}
+  register(binding: Keybinding) {
+    const existing = this.bindings.get(binding.key)
+    if (existing) existing.push(binding)
+    else this.bindings.set(binding.key, [binding])
+  }
 
-	registerAll(bindings: readonly Keybinding[]) {
-		for (const binding of bindings) this.register(binding)
-	}
+  registerAll(bindings: readonly Keybinding[]) {
+    for (const binding of bindings) this.register(binding)
+  }
 
-	/** The bindings on a key, in the order they are tried. */
-	bindingsFor(key: string): readonly Keybinding[] {
-		return this.bindings.get(key) ?? []
-	}
+  /** The bindings on a key, in the order they are tried. */
+  bindingsFor(key: string): readonly Keybinding[] {
+    return this.bindings.get(key) ?? []
+  }
 
-	/** The binding a key press resolves to right now, or undefined if none applies. */
-	resolve(key: string): Keybinding | undefined {
-		const candidates = this.bindings.get(key)
-		if (!candidates) return undefined
+  /** The binding a key press resolves to right now, or undefined if none applies. */
+  resolve(key: string): Keybinding | undefined {
+    const candidates = this.bindings.get(key)
+    if (!candidates) return undefined
 
-		const command = this.commandRegistry.firstEnabled(candidates.map((binding) => binding.command))
-		return candidates.find((binding) => binding.command === command)
-	}
+    const command = this.commandRegistry.firstEnabled(candidates.map((binding) => binding.command))
+    return candidates.find((binding) => binding.command === command)
+  }
 
-	handleKeyEvent(e: KeyboardEvent): void {
-		const key = getKeyString(e)
+  handleKeyEvent(e: KeyboardEvent): void {
+    const key = getKeyString(e)
 
-		const binding = this.resolve(key)
-		if (!binding) return
+    const binding = this.resolve(key)
+    if (!binding) return
 
-		if (!binding.passThrough) e.preventDefault()
+    if (!binding.passThrough) e.preventDefault()
 
-		if (e.repeat && !REPEATABLE_KEYS.has(key)) return
+    if (e.repeat && !REPEATABLE_KEYS.has(key)) return
 
-		void this.commandRegistry.execute(binding.command, ...(binding.args ?? []))
-	}
+    void this.commandRegistry.execute(binding.command, ...(binding.args ?? []))
+  }
 }

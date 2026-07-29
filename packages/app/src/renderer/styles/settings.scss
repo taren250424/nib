@@ -9,17 +9,17 @@ $setting-node-select-width: 200px;
 $divider: color-mix(in srgb, var(--setting-node-border-color) 55%, transparent);
 
 #settings-overlay {
-	display: none;
+  display: none;
 }
 
 #settings-container {
-	width: min(760px, 84vw);
-	height: min(560px, 84vh);
+  width: min(760px, 84vw);
+  height: min(560px, 84vh);
 
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-	overflow: hidden; // cause settings-top.
+  overflow: hidden; // cause settings-top.
 }
 
 //
@@ -27,48 +27,50 @@ $divider: color-mix(in srgb, var(--setting-node-border-color) 55%, transparent);
 //
 
 #settings-top {
-	flex-shrink: 0;
-	height: 46px;
-	padding: 0 10px 0 18px;
+  flex-shrink: 0;
+  height: 46px;
+  padding: 0 10px 0 18px;
 
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-	background-color: var(--title-bg);
-	border-bottom: 1px solid #{$divider};
+  background-color: var(--title-bg);
+  border-bottom: 1px solid #{$divider};
 }
 
 #settings-title {
-	font-size: 0.95rem;
-	font-weight: 600;
-	letter-spacing: 0.02em;
-	color: var(--app-font-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--app-font-color);
 }
 
 #settings-exit {
-	width: 30px;
-	height: 30px;
+  width: 30px;
+  height: 30px;
 
-	display: flex;
-	align-items: center;
-	justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-	border: none;
-	border-radius: 6px;
-	background: none;
-	color: var(--close-btn);
-	transition: background-color 120ms ease, color 120ms ease;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--close-btn);
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
 }
 
 #settings-exit:hover {
-	background-color: var(--warning-color);
-	color: var(--hover-foreground-color);
+  background-color: var(--warning-color);
+  color: var(--hover-foreground-color);
 }
 
 #settings-exit svg {
-	width: 16px;
-	height: 16px;
+  width: 16px;
+  height: 16px;
 }
 
 //
@@ -76,88 +78,88 @@ $divider: color-mix(in srgb, var(--setting-node-border-color) 55%, transparent);
 //
 
 #settings-section {
-	flex: 1;
-	display: flex;
-	min-height: 0; // allow inner scroll areas to shrink
+  flex: 1;
+  display: flex;
+  min-height: 0; // allow inner scroll areas to shrink
 }
 
 #settings-menus {
-	flex-shrink: 0;
-	width: $settings-menu-width;
+  flex-shrink: 0;
+  width: $settings-menu-width;
 
-	display: flex;
-	flex-direction: column;
-	gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 
-	padding: 14px 10px;
+  padding: 14px 10px;
 
-	background-color: var(--settings-menu-container);
-	border-right: 1px solid #{$divider};
+  background-color: var(--settings-menu-container);
+  border-right: 1px solid #{$divider};
 }
 
 .settings-nav-item {
-	position: relative;
+  position: relative;
 
-	width: 100%;
-	height: $settings-nav-item-height;
-	padding: 0 12px;
+  width: 100%;
+  height: $settings-nav-item-height;
+  padding: 0 12px;
 
-	display: flex;
-	align-items: center;
+  display: flex;
+  align-items: center;
 
-	font-size: 0.85rem;
-	text-align: left;
-	color: var(--app-font-color);
+  font-size: 0.85rem;
+  text-align: left;
+  color: var(--app-font-color);
 
-	border: none;
-	border-radius: 6px;
-	background: none;
-	transition: background-color 120ms ease;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  transition: background-color 120ms ease;
 }
 
 .settings-nav-item:hover {
-	background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .settings-nav-item.selected {
-	font-weight: 600;
-	background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  font-weight: 600;
+  background-color: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .settings-nav-item.selected::before {
-	content: "";
-	position: absolute;
-	left: 4px;
-	top: 8px;
-	bottom: 8px;
-	width: 3px;
-	border-radius: 2px;
-	background-color: var(--accent);
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background-color: var(--accent);
 }
 
 #settings-contents {
-	flex: 1;
-	min-width: 0;
-	background-color: var(--settings-contents);
+  flex: 1;
+  min-width: 0;
+  background-color: var(--settings-contents);
 }
 
 #settings-contents > div {
-	width: 100%;
-	height: 100%;
-	padding: 22px 28px;
-	overflow-y: auto;
-	display: none;
+  width: 100%;
+  height: 100%;
+  padding: 22px 28px;
+  overflow-y: auto;
+  display: none;
 }
 
 .settings-panel-title {
-	margin: 0 0 8px;
-	padding-bottom: 12px;
+  margin: 0 0 8px;
+  padding-bottom: 12px;
 
-	font-size: 1.1rem;
-	font-weight: 600;
-	color: var(--app-font-color);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--app-font-color);
 
-	border-bottom: 1px solid #{$divider};
+  border-bottom: 1px solid #{$divider};
 }
 
 //
@@ -165,49 +167,52 @@ $divider: color-mix(in srgb, var(--setting-node-border-color) 55%, transparent);
 //
 
 #settings-bottom {
-	flex-shrink: 0;
+  flex-shrink: 0;
 
-	display: flex;
-	justify-content: flex-end;
-	gap: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 
-	padding: 12px 16px;
+  padding: 12px 16px;
 
-	background-color: var(--title-bg);
-	border-top: 1px solid #{$divider};
+  background-color: var(--title-bg);
+  border-top: 1px solid #{$divider};
 }
 
 #settings-bottom button {
-	min-width: 88px;
-	height: 32px;
-	padding: 0 18px;
+  min-width: 88px;
+  height: 32px;
+  padding: 0 18px;
 
-	font-size: 0.85rem;
-	font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 500;
 
-	border: 1px solid transparent;
-	border-radius: 6px;
-	transition: background-color 120ms ease, border-color 120ms ease, filter 120ms ease;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    filter 120ms ease;
 }
 
 #settings-close-btn {
-	color: var(--app-font-color);
-	background-color: var(--overlay-surface-button-bg);
-	border-color: #{$divider};
+  color: var(--app-font-color);
+  background-color: var(--overlay-surface-button-bg);
+  border-color: #{$divider};
 }
 
 #settings-close-btn:hover {
-	background-color: var(--overlay-surface-button-hover-bg);
-	border-color: var(--setting-node-border-color);
+  background-color: var(--overlay-surface-button-hover-bg);
+  border-color: var(--setting-node-border-color);
 }
 
 #settings-apply-btn.primary {
-	color: var(--accent-contrast);
-	background-color: var(--accent);
+  color: var(--accent-contrast);
+  background-color: var(--accent);
 }
 
 #settings-apply-btn.primary:hover {
-	filter: brightness(1.08);
+  filter: brightness(1.08);
 }
 
 //
@@ -215,72 +220,74 @@ $divider: color-mix(in srgb, var(--setting-node-border-color) 55%, transparent);
 //
 
 .setting-node {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 
-	min-height: 52px;
-	padding: 8px 0;
+  min-height: 52px;
+  padding: 8px 0;
 
-	border-bottom: 1px solid #{$divider};
+  border-bottom: 1px solid #{$divider};
 }
 
 .setting-node:last-child {
-	border-bottom: none;
+  border-bottom: none;
 }
 
 .setting-node-disabled {
-	cursor: default;
-	opacity: 0.55;
+  cursor: default;
+  opacity: 0.55;
 }
 
 .setting-node > label {
-	font-size: 0.9rem;
-	color: var(--app-font-color);
+  font-size: 0.9rem;
+  color: var(--app-font-color);
 }
 
 .setting-node > input {
-	height: 32px;
-	padding: 0 10px;
+  height: 32px;
+  padding: 0 10px;
 
-	font: inherit;
-	font-size: 0.88rem;
-	text-align: left;
-	color: var(--app-font-color);
+  font: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  color: var(--app-font-color);
 
-	background-color: var(--overlay-surface-button-bg);
-	border: 1px solid var(--setting-node-border-color);
-	border-radius: 6px;
+  background-color: var(--overlay-surface-button-bg);
+  border: 1px solid var(--setting-node-border-color);
+  border-radius: 6px;
 
-	transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .setting-node > input:hover {
-	border-color: var(--accent);
+  border-color: var(--accent);
 }
 
 .setting-node > input:focus {
-	border-color: var(--accent);
-	box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .setting-node > input[type="number"] {
-	width: $setting-node-input-number-width;
+  width: $setting-node-input-number-width;
 
-	&::-webkit-outer-spin-button,
-	&::-webkit-inner-spin-button {
-		-webkit-appearance: none;
-		margin: 0;
-	}
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 .setting-node > input[type="string"] {
-	width: $setting-node-input-string-width;
+  width: $setting-node-input-string-width;
 }
 
 .setting-node > velin-select {
-	--velin-select-width: #{$setting-node-select-width};
-	height: 32px;
-	border-radius: 6px;
+  --velin-select-width: #{$setting-node-select-width};
+  height: 32px;
+  border-radius: 6px;
 }

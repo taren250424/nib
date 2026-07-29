@@ -16,63 +16,63 @@ import { electronAPI } from "@shared/constants/electronAPI/electronAPI"
 import { getBoundsByWindowSession } from "../actions/windowActions"
 
 export async function loadedRenderer(
-	mainWindow: BrowserWindow,
-	fileManager: IFileManager,
-	fileWatcher: IFileWatcher,
-	windowRepository: IWindowRepository,
-	settingsRepository: ISettingsRepository,
-	sideRepository: ISideRepository,
-	tabRepository: ITabRepository,
-	treeRepository: ITreeRepository,
-	windowUtils: IWindowUtils,
-	settingsUtils: ISettingsUtils,
-	tabUtils: ITabUtils,
-	treeUtils: ITreeUtils
+  mainWindow: BrowserWindow,
+  fileManager: IFileManager,
+  fileWatcher: IFileWatcher,
+  windowRepository: IWindowRepository,
+  settingsRepository: ISettingsRepository,
+  sideRepository: ISideRepository,
+  tabRepository: ITabRepository,
+  treeRepository: ITreeRepository,
+  windowUtils: IWindowUtils,
+  settingsUtils: ISettingsUtils,
+  tabUtils: ITabUtils,
+  treeUtils: ITreeUtils
 ) {
-	// session.
-	const windowSession = await windowRepository.readWindowSession()
-	const windowBoundsModel = getBoundsByWindowSession(windowSession)
-	mainWindow.setBounds({
-		x: windowBoundsModel.x,
-		y: windowBoundsModel.y,
-		width: windowBoundsModel.width,
-		height: windowBoundsModel.height,
-	})
-	if (windowSession?.maximize) mainWindow.maximize()
+  // session.
+  const windowSession = await windowRepository.readWindowSession()
+  const windowBoundsModel = getBoundsByWindowSession(windowSession)
+  mainWindow.setBounds({
+    x: windowBoundsModel.x,
+    y: windowBoundsModel.y,
+    width: windowBoundsModel.width,
+    height: windowBoundsModel.height,
+  })
+  if (windowSession?.maximize) mainWindow.maximize()
 
-	const settingsSession = await settingsRepository.readSettingsSession()
+  const settingsSession = await settingsRepository.readSettingsSession()
 
-	const sideSession = await sideRepository.readSideSession()
+  const sideSession = await sideRepository.readSideSession()
 
-	const tabSession = await tabRepository.readTabSession()
-	const newTabSession = tabSession ? await tabUtils.syncSessionWithFs(tabSession) : null
-	if (newTabSession) await tabRepository.writeTabSession(newTabSession)
+  const tabSession = await tabRepository.readTabSession()
+  const newTabSession = tabSession ? await tabUtils.syncSessionWithFs(tabSession) : null
+  if (newTabSession) await tabRepository.writeTabSession(newTabSession)
 
-	const treeSession = await treeRepository.readTreeSession()
-	const newTreeSession = treeSession ? await treeUtils.syncWithFs(treeSession) : null
-	if (newTreeSession) await treeRepository.writeTreeSession(newTreeSession)
+  const treeSession = await treeRepository.readTreeSession()
+  const newTreeSession = treeSession ? await treeUtils.syncWithFs(treeSession) : null
+  if (newTreeSession) await treeRepository.writeTreeSession(newTreeSession)
 
-	const windowDto = windowSession ? windowUtils.toWindowDto(windowSession) : null
-	const settingsDto = settingsSession ? settingsUtils.toSettingsDto(settingsSession) : null
-	const sideDto = sideSession ? (sideSession as SideDto) : null
-	const tabDto = newTabSession ? await tabUtils.toTabEditorsDto(newTabSession) : null
-	const treeDto = newTreeSession ? (newTreeSession as TreeDto) : null
+  const windowDto = windowSession ? windowUtils.toWindowDto(windowSession) : null
+  const settingsDto = settingsSession ? settingsUtils.toSettingsDto(settingsSession) : null
+  const sideDto = sideSession ? (sideSession as SideDto) : null
+  const tabDto = newTabSession ? await tabUtils.toTabEditorsDto(newTabSession) : null
+  const treeDto = newTreeSession ? (newTreeSession as TreeDto) : null
 
-	const version = app.getVersion()
+  const version = app.getVersion()
 
-	mainWindow.webContents.send(
-		electronAPI.events.mainToRenderer.session,
-		windowDto,
-		settingsDto,
-		sideDto,
-		tabDto,
-		treeDto,
-		version
-	)
-	fileManager.cleanTrash()
+  mainWindow.webContents.send(
+    electronAPI.events.mainToRenderer.session,
+    windowDto,
+    settingsDto,
+    sideDto,
+    tabDto,
+    treeDto,
+    version
+  )
+  fileManager.cleanTrash()
 
-	if (newTreeSession) fileWatcher.watch(newTreeSession.path)
+  if (newTreeSession) fileWatcher.watch(newTreeSession.path)
 
-	// info.
-	mainWindow.webContents.send(electronAPI.events.mainToRenderer.info, version)
+  // info.
+  mainWindow.webContents.send(electronAPI.events.mainToRenderer.info, version)
 }

@@ -1,4 +1,4 @@
 export interface RouteConfig {
-	path: string
-	element: React.ReactNode
+  path: string
+  element: React.ReactNode
 }
