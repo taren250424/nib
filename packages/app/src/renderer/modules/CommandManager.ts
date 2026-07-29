@@ -564,30 +564,17 @@ export class CommandManager {
 		this.performCutEditor()
 	}
 
+	// The clipboard holds selection roots only. Main's paste copies a directory
+	// recursively, so listing a descendant here would paste it a second time as a
+	// sibling of its own parent. Descendants are not marked as cut either — the
+	// wrapper's colour is inherited by the child nodes it wraps.
 	performCutTree() {
 		this.treeFacade.clearClipboardPaths()
 		this.treeFacade.clipboardMode = "cut"
-		const selectedIndices = this.treeFacade.getSelectedIndices()
 
-		for (const idx of selectedIndices) {
+		for (const idx of this.treeFacade.getSelectedIndices()) {
 			this.treeFacade.getTreeWrapperByIndex(idx).classList.add(DOM.CLASS_CUT)
 			this.treeFacade.addClipboardPaths(this.treeFacade.getTreeViewModelByIndex(idx).path)
-			const viewModel = this.treeFacade.getTreeViewModelByIndex(idx)
-
-			if (viewModel.directory) {
-				for (let i = idx + 1; i < this.treeFacade.flattenTree.length; i++) {
-					const isChildViewModel = this.treeFacade.getTreeViewModelByIndex(i)
-
-					if (viewModel.indent < isChildViewModel.indent) {
-						// note: We skip adding CLASS_CUT to children, as parent visually affects them
-						// this.treeFacade.getTreeWrapperByIndex(i).classList.add(CLASS_CUT)
-						this.treeFacade.addClipboardPaths(this.treeFacade.getTreeViewModelByIndex(idx).path)
-						continue
-					}
-
-					break
-				}
-			}
 		}
 	}
 
@@ -599,27 +586,13 @@ export class CommandManager {
 		await window.rendererToMain.copyEditor(selectedText)
 	}
 
+	/** Roots only, for the same reason as {@link performCutTree}. */
 	performCopyTree() {
 		this.treeFacade.clearClipboardPaths()
 		this.treeFacade.clipboardMode = "copy"
-		const selectedIndices = this.treeFacade.getSelectedIndices()
 
-		for (const idx of selectedIndices) {
+		for (const idx of this.treeFacade.getSelectedIndices()) {
 			this.treeFacade.addClipboardPaths(this.treeFacade.getTreeViewModelByIndex(idx).path)
-			const viewModel = this.treeFacade.getTreeViewModelByIndex(idx)
-
-			if (viewModel.directory) {
-				for (let i = idx + 1; i < this.treeFacade.flattenTree.length; i++) {
-					const isChildViewModel = this.treeFacade.getTreeViewModelByIndex(i)
-
-					if (viewModel.indent < isChildViewModel.indent) {
-						this.treeFacade.addClipboardPaths(this.treeFacade.getTreeViewModelByIndex(idx).path)
-						continue
-					}
-
-					break
-				}
-			}
 		}
 	}
 
