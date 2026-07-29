@@ -795,7 +795,7 @@ export class CommandManager {
     }
 
     this.tabEditorFacade.findAndReplaceContainer.style.display = "flex"
-    this.tabEditorFacade.replaceBox.style.display = showReplace ? "flex" : "none"
+    this.tabEditorFacade.setReplaceRowVisible(showReplace)
     this.tabEditorFacade.findReplaceOpen = true
     this.contextKeyService.set("findReplaceOpen", true)
     this.tabEditorFacade.replaceInfo.textContent = ""
@@ -817,6 +817,10 @@ export class CommandManager {
   private _setSearchQuery(query: string) {
     this.tabEditorFacade.searchQuery = query
     this.contextKeyService.set("hasSearchQuery", query.length > 0)
+  }
+
+  performToggleReplaceRow() {
+    this.tabEditorFacade.setReplaceRowVisible(!this.tabEditorFacade.isReplaceRowVisible())
   }
 
   performSearchQueryChanged(query: string) {

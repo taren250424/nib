@@ -180,6 +180,12 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     // Ctrl+Alt+Enter would rewrite the document with a stale query, and Esc
     // would consume a key the editor wants for its own purposes.
     "find.replaceAll": { when: (ctx) => ctx.findReplaceOpen, run: () => commandManager.performReplaceAll() },
+    // Folds the replace row away without closing the box, which is what the
+    // chevron is for; Ctrl+H opens the box and is a different question.
+    "find.toggleReplaceRow": {
+      when: (ctx) => ctx.findReplaceOpen,
+      run: () => commandManager.performToggleReplaceRow(),
+    },
     "find.close": { when: (ctx) => ctx.findReplaceOpen, run: () => commandManager.performCloseFindReplaceBox() },
     "find.submit": {
       when: inTask("find-replace"),

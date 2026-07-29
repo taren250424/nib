@@ -12,6 +12,10 @@ $offset: $mark-size + $mark-gap;
 
   overflow: hidden;
   background-color: var(--tab-selected);
+
+  // The find widget is positioned against this, so it sits over the document
+  // it searches rather than at a fixed spot in the window.
+  position: relative;
 }
 
 .editor-box {

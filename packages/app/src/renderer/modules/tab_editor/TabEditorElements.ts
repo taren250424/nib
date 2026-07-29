@@ -26,6 +26,7 @@ export class TabEditorElements {
   public readonly findDown: HTMLElement
   public readonly replaceCurrent: HTMLElement
   public readonly replaceAll: HTMLElement
+  public readonly findReplaceToggle: HTMLElement
   public readonly closeFindReplace: HTMLElement
 
   constructor() {
@@ -53,6 +54,7 @@ export class TabEditorElements {
     this.findDown = document.querySelector("#find-down") as HTMLElement
     this.replaceCurrent = document.querySelector("#replace-current") as HTMLElement
     this.replaceAll = document.querySelector("#replace-all") as HTMLElement
+    this.findReplaceToggle = document.querySelector("#find-replace-toggle") as HTMLElement
     this.closeFindReplace = document.querySelector("#close-find-replace") as HTMLElement
   }
 }

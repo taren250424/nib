@@ -250,6 +250,24 @@ export class TabEditorFacade {
     return this.renderer.replaceInfo
   }
 
+  get findReplaceToggle() {
+    return this.renderer.findReplaceToggle
+  }
+
+  /**
+   * Shows or hides the replace row. Both opening the widget with replace and
+   * the chevron come through here, so the chevron cannot end up pointing the
+   * wrong way at a row it did not open.
+   */
+  setReplaceRowVisible(visible: boolean) {
+    this.replaceBox.style.display = visible ? "flex" : "none"
+    this.findReplaceToggle.classList.toggle(DOM.CLASS_EXPANDED, visible)
+  }
+
+  isReplaceRowVisible(): boolean {
+    return this.replaceBox.style.display !== "none"
+  }
+
   get findOptionCase() {
     return this.renderer.findOptionCase
   }

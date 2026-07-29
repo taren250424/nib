@@ -69,92 +69,6 @@
       </div>
     </div>
 
-    <div id="find-replace-container">
-      <div id="find">
-        <input id="find-input" type="text" />
-
-        <button id="find-option-case" class="tooltip-btn find-option-btn">
-          Aa
-          <span class="tooltip tooltip-bottom">Match case</span>
-        </button>
-        <button id="find-option-word" class="tooltip-btn find-option-btn">
-          ab
-          <span class="tooltip tooltip-bottom">Whole word</span>
-        </button>
-        <button id="find-option-regex" class="tooltip-btn find-option-btn">
-          .*
-          <span class="tooltip tooltip-bottom">Use regex</span>
-        </button>
-
-        <button id="find-up" class="tooltip-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-            <path
-              d="M12 19V5M5 12L12 5L19 12"
-              stroke="black"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              fill="none"
-            />
-          </svg>
-          <span class="tooltip tooltip-bottom">Find up (Shift+Enter)</span>
-        </button>
-        <button id="find-down" class="tooltip-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-            <path
-              d="M12 5V19M5 12L12 19L19 12"
-              stroke="black"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              fill="none"
-            />
-          </svg>
-          <span class="tooltip tooltip-bottom">Find down (Enter)</span>
-        </button>
-        <button id="close-find-replace">
-          <svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
-            <path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
-          </svg>
-        </button>
-
-        <span id="find-info"></span>
-      </div>
-
-      <div id="replace">
-        <input id="replace-input" type="text" />
-
-        <button id="replace-current" class="tooltip-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-            <path
-              d="M7 19V5H13C15.2091 5 17 6.79086 17 9C17 11.2091 15.2091 13 13 13H7M13 13L17 19"
-              stroke="black"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              fill="none"
-            />
-          </svg>
-          <span class="tooltip tooltip-bottom">Replace (Enter)</span>
-        </button>
-        <button id="replace-all" class="tooltip-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-            <path
-              d="M5 19L12 5L19 19M7 14H17"
-              stroke="black"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              fill="none"
-            />
-          </svg>
-          <span class="tooltip tooltip-bottom">Replace All (Ctrl+Alt+Enter)</span>
-        </button>
-
-        <span id="replace-info"></span>
-      </div>
-    </div>
-
     <div id="info-overlay" class="overlay">
       <div id="info-container" class="overlay-surface">
         <div id="info-top"></div>
@@ -395,7 +309,106 @@
 
         <div id="workspace">
           <div id="tab-container"></div>
-          <div id="editor-container"></div>
+          <div id="editor-container">
+            <div id="find-replace-container">
+              <div id="find">
+                <button id="find-replace-toggle" class="tooltip-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                    <path
+                      d="M9 6L15 12L9 18"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                  <span class="tooltip tooltip-bottom">Toggle Replace</span>
+                </button>
+                <input id="find-input" type="text" />
+
+                <button id="find-option-case" class="tooltip-btn find-option-btn">
+                  Aa
+                  <span class="tooltip tooltip-bottom">Match case</span>
+                </button>
+                <button id="find-option-word" class="tooltip-btn find-option-btn">
+                  ab
+                  <span class="tooltip tooltip-bottom">Whole word</span>
+                </button>
+                <button id="find-option-regex" class="tooltip-btn find-option-btn">
+                  .*
+                  <span class="tooltip tooltip-bottom">Use regex</span>
+                </button>
+
+                <button id="find-up" class="tooltip-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                    <path
+                      d="M12 19V5M5 12L12 5L19 12"
+                      stroke="black"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                  <span class="tooltip tooltip-bottom">Find up (Shift+Enter)</span>
+                </button>
+                <button id="find-down" class="tooltip-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                    <path
+                      d="M12 5V19M5 12L12 19L19 12"
+                      stroke="black"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                  <span class="tooltip tooltip-bottom">Find down (Enter)</span>
+                </button>
+                <button id="close-find-replace">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
+                  </svg>
+                </button>
+
+                <span id="find-info"></span>
+              </div>
+
+              <div id="replace">
+                <input id="replace-input" type="text" />
+
+                <button id="replace-current" class="tooltip-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                    <path
+                      d="M7 19V5H13C15.2091 5 17 6.79086 17 9C17 11.2091 15.2091 13 13 13H7M13 13L17 19"
+                      stroke="black"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                  <span class="tooltip tooltip-bottom">Replace (Enter)</span>
+                </button>
+                <button id="replace-all" class="tooltip-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+                    <path
+                      d="M5 19L12 5L19 19M7 14H17"
+                      stroke="black"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                  <span class="tooltip tooltip-bottom">Replace All (Ctrl+Alt+Enter)</span>
+                </button>
+
+                <span id="replace-info"></span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

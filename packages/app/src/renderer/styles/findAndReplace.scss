@@ -16,9 +16,12 @@ $info-horizontal-padding: 4px;
   flex-direction: column;
   gap: $container-gap;
 
-  position: fixed;
-  top: 10%;
-  right: 10%;
+  // Anchored to the editor container, not the window: at a fixed viewport
+  // position it drifted over the file tree, and off the editor entirely once
+  // the side panel was wide enough.
+  position: absolute;
+  top: 0;
+  right: dimensions.$scrollbar-size;
   z-index: 95;
 
   padding: $container-padding;
@@ -109,4 +112,13 @@ $info-horizontal-padding: 4px;
 
 .search-highlight-current {
   background-color: var(--search-highlight-current);
+}
+
+// The chevron folds the replace row away; it points down once the row is open.
+#find-replace-toggle svg {
+  transition: transform 0.15s linear;
+}
+
+#find-replace-toggle.expanded svg {
+  transform: rotate(90deg);
 }

@@ -56,6 +56,7 @@ export type CommandId =
   | "find.next"
   | "find.replace"
   | "find.replaceAll"
+  | "find.toggleReplaceRow"
   | "find.close"
   | "find.submit"
   | "find.submitBackward"
