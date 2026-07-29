@@ -214,23 +214,31 @@ function bindMousemoveEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabE
 }
 
 function bindMouseupEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
-	emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, async () => {
-		if (!tabEditorFacade.isDrag()) {
-			tabEditorFacade.setMouseDown(false)
-			return
-		}
-
-		const from = tabEditorFacade.getTabEditorViewIndexById(tabEditorFacade.getTargetTabId())
-		const to = tabEditorFacade.getInsertIndex()
-		tabEditorFacade.moveTabEditorViewAndUpdateActiveIndex(from, to)
-
-		tabEditorFacade.clearDrag()
-
-		const tabEditorsDto = tabEditorFacade.getTabEditorsDto()
-		const response = await window.rendererToMain.syncTabSessionFromRenderer(tabEditorsDto)
-
-		if (!response) tabEditorFacade.moveTabEditorViewAndUpdateActiveIndex(to, from)
+	// EventEmitter neither awaits nor catches async listeners, so the drop has to
+	// terminate its own promise or a failing session sync becomes an unhandled rejection.
+	emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, () => {
+		dropDraggedTab(tabEditorFacade).catch((err) => {
+			console.error("[tabEditorHandlers] tab drag drop failed:", err)
+		})
 	})
+}
+
+async function dropDraggedTab(tabEditorFacade: TabEditorFacade) {
+	if (!tabEditorFacade.isDrag()) {
+		tabEditorFacade.setMouseDown(false)
+		return
+	}
+
+	const from = tabEditorFacade.getTabEditorViewIndexById(tabEditorFacade.getTargetTabId())
+	const to = tabEditorFacade.getInsertIndex()
+	tabEditorFacade.moveTabEditorViewAndUpdateActiveIndex(from, to)
+
+	tabEditorFacade.clearDrag()
+
+	const tabEditorsDto = tabEditorFacade.getTabEditorsDto()
+	const response = await window.rendererToMain.syncTabSessionFromRenderer(tabEditorsDto)
+
+	if (!response) tabEditorFacade.moveTabEditorViewAndUpdateActiveIndex(to, from)
 }
 
 function bindMouseleaveEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {

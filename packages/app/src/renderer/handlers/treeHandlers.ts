@@ -271,23 +271,31 @@ function bindMousemoveEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacad
 }
 
 function bindMouseupEventsForDrag(dispatcher: Dispatcher, emitter: EventEmitter, treeFacade: TreeFacade) {
-	emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, async () => {
-		if (!treeFacade.isDrag()) {
-			treeFacade.setMouseDown(false)
-			return
-		}
-
-		const dropPath = treeFacade.getInsertPath()
-		const canDrop = dropPath !== ""
-
-		treeFacade.clearDrag()
-
-		if (canDrop) {
-			treeFacade.setSelectedDragIndexByPath(dropPath)
-			await dispatcher.dispatch("cut", "drag")
-			await dispatcher.dispatch("paste", "drag")
-		}
+	// EventEmitter neither awaits nor catches async listeners, so the drop has to
+	// terminate its own promise or a failing move becomes an unhandled rejection.
+	emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, () => {
+		dropDraggedTreeNodes(dispatcher, treeFacade).catch((err) => {
+			console.error("[treeHandlers] drag drop failed:", err)
+		})
 	})
+}
+
+async function dropDraggedTreeNodes(dispatcher: Dispatcher, treeFacade: TreeFacade) {
+	if (!treeFacade.isDrag()) {
+		treeFacade.setMouseDown(false)
+		return
+	}
+
+	const dropPath = treeFacade.getInsertPath()
+	const canDrop = dropPath !== ""
+
+	treeFacade.clearDrag()
+
+	if (canDrop) {
+		treeFacade.setSelectedDragIndexByPath(dropPath)
+		await dispatcher.dispatch("cut", "drag")
+		await dispatcher.dispatch("paste", "drag")
+	}
 }
 
 function bindMouseleaveEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacade) {
