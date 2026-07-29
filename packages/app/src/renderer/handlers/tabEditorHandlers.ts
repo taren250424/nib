@@ -86,21 +86,11 @@ function bindFindReplaceEvents(run: RunCommand, tabEditorFacade: TabEditorFacade
     replaceInput,
     findOptionCase,
     findOptionWord,
-    findOptionRegex,
   } = tabEditorFacade.renderer.elements
 
   // Prevent buttons from stealing focus from the input when clicked.
   // This keeps the find/replace input focused so keyboard shortcuts (e.g. Enter) work correctly.
-  ;[
-    findUp,
-    findDown,
-    replaceCurrent,
-    replaceAll,
-    findOptionCase,
-    findOptionWord,
-    findOptionRegex,
-    findReplaceToggle,
-  ].forEach((btn) => {
+  ;[findUp, findDown, replaceCurrent, replaceAll, findOptionCase, findOptionWord, findReplaceToggle].forEach((btn) => {
     btn.addEventListener("mousedown", (e) => e.preventDefault())
   })
 
@@ -110,10 +100,6 @@ function bindFindReplaceEvents(run: RunCommand, tabEditorFacade: TabEditorFacade
 
   findOptionWord.addEventListener("click", async () => {
     await run("find.toggleOption", "wholeWord")
-  })
-
-  findOptionRegex.addEventListener("click", async () => {
-    await run("find.toggleOption", "useRegex")
   })
 
   findUp.addEventListener("click", async () => {

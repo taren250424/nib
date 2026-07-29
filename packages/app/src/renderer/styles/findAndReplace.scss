@@ -46,12 +46,6 @@ $info-horizontal-padding: 4px;
   background: var(--find-replace-input);
 }
 
-// A regex that will not compile. Marked on the input rather than only in the
-// counter, because the query is what has to be fixed.
-#find > input.invalid {
-  outline: 1px solid var(--find-replace-invalid);
-}
-
 #find > button,
 #replace > button {
   margin: 0 $button-horizontal-margin;

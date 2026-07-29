@@ -20,7 +20,6 @@ export class TabEditorStore {
   private _searchOptions: SearchOptions = {
     matchCase: false,
     wholeWord: false,
-    useRegex: false,
   }
 
   private _autoSaveMode = "off"

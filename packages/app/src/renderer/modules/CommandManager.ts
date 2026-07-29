@@ -846,13 +846,12 @@ export class CommandManager {
     this.tabEditorFacade.replaceInfo.textContent = ""
   }
 
-  performToggleSearchOption(option: "matchCase" | "wholeWord" | "useRegex") {
+  performToggleSearchOption(option: "matchCase" | "wholeWord") {
     const enabled = this.tabEditorFacade.toggleSearchOption(option)
 
     const buttons = {
       matchCase: this.tabEditorFacade.findOptionCase,
       wholeWord: this.tabEditorFacade.findOptionWord,
-      useRegex: this.tabEditorFacade.findOptionRegex,
     }
     buttons[option].classList.toggle(DOM.CLASS_SELECTED, enabled)
 
@@ -909,7 +908,6 @@ export class CommandManager {
     this.tabEditorFacade.findAndReplaceContainer.style.display = "none"
 
     this.tabEditorFacade.clearAllSearches()
-    this.tabEditorFacade.markSearchInvalid(null)
     this.tabEditorFacade.replaceInfo.textContent = ""
 
     this.tabEditorFacade.findReplaceOpen = false

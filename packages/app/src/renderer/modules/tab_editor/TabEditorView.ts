@@ -9,16 +9,12 @@ import { redo, undo } from "prosemirror-history"
 import type { Node } from "prosemirror-model"
 
 import { CLASS_SELECTED, DATASET_ATTR_TAB_ID } from "../../constants/dom"
-import { buildSearchRegex, expandReplacement, wordAt, INLINE_NODE_PLACEHOLDER } from "./search"
+import { buildSearchRegex, wordAt, INLINE_NODE_PLACEHOLDER } from "./search"
 import type { SearchOptions } from "./search"
 
 type SearchMatch = {
   from: number
   to: number
-  // What the match consumed and what it captured, kept so a replacement can
-  // refer back to them with $& and $1 without re-running the search.
-  text: string
-  groups: (string | undefined)[]
 }
 
 type SearchState = {
@@ -27,9 +23,6 @@ type SearchState = {
   currentIndex: number
   // Doc the matches were computed against; edits make them stale.
   doc: Node
-  // What produced these matches. Only a regex search captures groups, so this
-  // is also what decides whether a replacement expands $1 or inserts it.
-  options: SearchOptions
 }
 
 type SearchHighlightMeta = {
@@ -299,7 +292,6 @@ export class TabEditorView {
     if (!searchText) return matches
 
     const regex = buildSearchRegex(searchText, options)
-    if (!regex) return matches
 
     doc.descendants((node, pos) => {
       if (!node.isTextblock) return true
@@ -315,20 +307,15 @@ export class TabEditorView {
       const contentStart = pos + 1
       regex.lastIndex = 0
 
+      // The query is escaped literal text and never empty, so every match
+      // consumes at least one character — the loop cannot stall.
       let m: RegExpExecArray | null
       while ((m = regex.exec(text)) !== null) {
-        // A regex can produce empty matches (e.g. "a*"); step past them.
-        if (m[0].length === 0) {
-          regex.lastIndex++
-          continue
-        }
         // Matches spanning a non-text inline node are not real text.
         if (!m[0].includes(INLINE_NODE_PLACEHOLDER)) {
           matches.push({
             from: contentStart + m.index,
             to: contentStart + m.index + m[0].length,
-            text: m[0],
-            groups: m.slice(1),
           })
         }
       }
@@ -384,7 +371,6 @@ export class TabEditorView {
       matches,
       currentIndex: targetIndex,
       doc: state.doc,
-      options,
     })
 
     this.focusCurrentMatch()
@@ -415,7 +401,6 @@ export class TabEditorView {
       matches,
       currentIndex: targetIndex,
       doc: state.doc,
-      options,
     })
 
     this.focusCurrentMatch()
@@ -446,7 +431,7 @@ export class TabEditorView {
     let currentIndex = matches.findIndex((match) => match.to >= caret)
     if (currentIndex === -1) currentIndex = matches.length - 1
 
-    this.updateSearchState({ query, matches, currentIndex, doc: view.state.doc, options })
+    this.updateSearchState({ query, matches, currentIndex, doc: view.state.doc })
 
     this._ensureSearchHighlightPlugin(view)
     // Meta only: no selection, no scroll. Repainting the highlights must not
@@ -521,7 +506,7 @@ export class TabEditorView {
     // Matches computed against an older doc must not rewrite arbitrary ranges.
     if (this.isSearchStateStale()) return false
 
-    const { matches, currentIndex, options } = this._searchState
+    const { matches, currentIndex } = this._searchState
     if (currentIndex < 0 || currentIndex >= matches.length) return false
 
     let replaced = false
@@ -529,19 +514,18 @@ export class TabEditorView {
     this._editor!.action((ctx) => {
       const view = ctx.get(editorViewCtx)
       const state = view.state
-      const match = matches[currentIndex]
-      const { from, to } = match
-
-      const text = options.useRegex ? expandReplacement(replaceText, match.text, match.groups) : replaceText
+      const { from, to } = matches[currentIndex]
 
       // Carry the match's own marks over, or replacing a word inside bold,
       // a link or code would silently flatten it to plain text.
       const marks = state.doc.resolve(from).marksAcross(state.doc.resolve(to))
 
       // schema.text("") throws; an empty replacement means deletion.
-      let tr = text ? state.tr.replaceWith(from, to, state.schema.text(text, marks)) : state.tr.delete(from, to)
+      let tr = replaceText
+        ? state.tr.replaceWith(from, to, state.schema.text(replaceText, marks))
+        : state.tr.delete(from, to)
 
-      const cursorPos = tr.mapping.map(from) + text.length
+      const cursorPos = tr.mapping.map(from) + replaceText.length
       tr = tr.setSelection(TextSelection.create(tr.doc, cursorPos))
 
       view.dispatch(tr)
@@ -568,17 +552,14 @@ export class TabEditorView {
 
       // Replace backwards to avoid shifting positional indices for upcoming matches
       for (let i = matches.length - 1; i >= 0; i--) {
-        const match = matches[i]
-        const { from, to } = match
+        const { from, to } = matches[i]
 
         // Marks resolve against the pre-edit doc the matches were found in;
         // going backwards keeps those positions valid.
         const marks = state.doc.resolve(from).marksAcross(state.doc.resolve(to))
 
-        const text = options.useRegex ? expandReplacement(replaceText, match.text, match.groups) : replaceText
-
         // schema.text("") throws; an empty replacement means deletion.
-        tr = text ? tr.replaceWith(from, to, state.schema.text(text, marks)) : tr.delete(from, to)
+        tr = replaceText ? tr.replaceWith(from, to, state.schema.text(replaceText, marks)) : tr.delete(from, to)
         replacedCount++
       }
 

@@ -167,7 +167,7 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "find.queryChanged": { run: (query: string) => commandManager.performSearchQueryChanged(query) },
     "find.replaceQueryChanged": { run: (query: string) => commandManager.performReplaceQueryChanged(query) },
     "find.toggleOption": {
-      run: (option: "matchCase" | "wholeWord" | "useRegex") => commandManager.performToggleSearchOption(option),
+      run: (option: "matchCase" | "wholeWord") => commandManager.performToggleSearchOption(option),
     },
     // Reachable from F3 with the box closed, so it carries the whole condition
     // for searching: a document to search and a query to search for.

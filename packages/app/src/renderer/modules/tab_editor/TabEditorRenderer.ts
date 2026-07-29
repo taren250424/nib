@@ -372,10 +372,6 @@ export class TabEditorRenderer {
     return this.elements.findOptionWord
   }
 
-  get findOptionRegex() {
-    return this.elements.findOptionRegex
-  }
-
   get findReplaceToggle() {
     return this.elements.findReplaceToggle
   }
