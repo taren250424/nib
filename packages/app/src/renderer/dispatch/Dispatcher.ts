@@ -22,6 +22,9 @@ export class Dispatcher {
 		this._handlers = {
 			//
 
+			// Replace leaves focus inside the find/replace widget, and the shortcut
+			// registry does preventDefault outside the editor zone, so without a
+			// "find-replace" entry Ctrl+Z right after a replacement did nothing at all.
 			undo: {
 				editor: {
 					shortcut: () => {
@@ -30,6 +33,7 @@ export class Dispatcher {
 					default: async () => this.commandManager.performUndoEditor(),
 				},
 				tree: { default: async () => await this.commandManager.performUndoTree() },
+				"find-replace": { default: async () => this.commandManager.performUndoEditor() },
 			},
 			redo: {
 				editor: {
@@ -39,6 +43,7 @@ export class Dispatcher {
 					default: async () => this.commandManager.performRedoEditor(),
 				},
 				tree: { default: async () => await this.commandManager.performRedoTree() },
+				"find-replace": { default: async () => this.commandManager.performRedoEditor() },
 			},
 
 			//
