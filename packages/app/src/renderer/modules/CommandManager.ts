@@ -142,7 +142,16 @@ export class CommandManager {
 		if (!openDirectoryResponse.data) return
 
 		const responseViewModel = this.treeFacade.toTreeViewModel(openDirectoryResponse.data)
+
+		// Everything below indexes into the tree that is being replaced, so it has to
+		// be dropped with it: stale wrappers, selection indices pointing past the end
+		// of the new tree, and a clipboard naming paths from the old directory.
+		this.treeFacade.clearPathToTreeWrapper() // Must clear map manually before render (no built-in clear).
 		this.treeFacade.render(responseViewModel)
+
+		this.treeFacade.removeLastSelectedIndex()
+		this.treeFacade.clearSelectedIndices()
+		this.treeFacade.clearClipboard()
 		this.treeFacade.setRootTreeViewModel(responseViewModel)
 
 		// Cleanup previous tabs.
