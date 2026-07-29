@@ -2,6 +2,7 @@ import { inject, injectable } from "inversify"
 
 import type Response from "@shared/types/Response"
 import type { TreeDto } from "@shared/dto/TreeDto"
+import type { TreeViewModel } from "../viewmodels/TreeViewModel"
 import type { TabEditorDto, TabEditorsDto } from "@shared/dto/TabEditorDto"
 
 import type { ICommand } from "../commands/"
@@ -709,14 +710,38 @@ export class CommandManager {
 		await this._enqueuePasteTree(this.treeFacade.selectedDragIndex)
 	}
 
-	private _enqueuePasteTree(targetIndex: number): Promise<void> {
-		if (targetIndex === -1) return Promise.resolve()
+	private async _enqueuePasteTree(targetIndex: number): Promise<void> {
+		if (targetIndex === -1) return
 
 		// Capture the target as a path: the index may shift before the queued task runs.
 		const targetViewModel = this.treeFacade.getTreeViewModelByIndex(targetIndex)
-		if (!targetViewModel) return Promise.resolve()
+		if (!targetViewModel) return
+
+		await this._expandPasteTarget(targetIndex, targetViewModel)
 
 		return this.commandQueue.enqueue(() => this._doPasteTree(targetViewModel.path))
+	}
+
+	/**
+	 * Opens a collapsed target before pasting into it, the way create already does.
+	 *
+	 * The file otherwise lands somewhere the user cannot see, and a collapsed parent
+	 * keeps its children out of the flatten tree, so an undo could not find the node
+	 * the paste had just added. Expanding first puts the paste on the ordinary path.
+	 *
+	 * Runs before the queue: opening a directory enqueues, and enqueueing from
+	 * inside a queued task would deadlock the chain.
+	 */
+	private async _expandPasteTarget(targetIndex: number, targetViewModel: TreeViewModel) {
+		// Index 0 is the root, which has no node element of its own and is never
+		// collapsed. A file target redirects to its parent, which is already open —
+		// its child is on screen.
+		if (targetIndex <= 0 || !targetViewModel.directory || targetViewModel.expanded) return
+
+		// Pasting onto one of the cut nodes redirects to its parent instead.
+		if (this.treeFacade.getClipboardPaths().includes(targetViewModel.path)) return
+
+		await this.performOpenDirectoryByTreeNode(this.treeFacade.getTreeNodeByIndex(targetIndex))
 	}
 
 	private async _doPasteTree(targetPath: string) {
