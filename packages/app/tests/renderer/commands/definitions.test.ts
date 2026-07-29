@@ -101,6 +101,23 @@ describe("createCommandDescriptors", () => {
     expect(byId.get("tree.create")!.when!(context.snapshot())).toBe(true)
   })
 
+  // F3 reaches this with the widget closed, so the query cannot come from
+  // reading the box — searching for nothing would swallow the key.
+  it("needs a document and a query before stepping through matches", () => {
+    const { byId } = descriptorsById()
+    const when = byId.get("find.next")!.when!
+    const context = new ContextKeyService()
+
+    context.update({ hasActiveEditor: true, hasSearchQuery: false })
+    expect(when(context.snapshot())).toBe(false)
+
+    context.update({ hasActiveEditor: false, hasSearchQuery: true })
+    expect(when(context.snapshot())).toBe(false)
+
+    context.update({ hasActiveEditor: true, hasSearchQuery: true })
+    expect(when(context.snapshot())).toBe(true)
+  })
+
   // Replace leaves focus in the find widget, and undo there belongs to the
   // editor history the replacement was written into.
   it("lets editor history apply from the find widget as well", () => {

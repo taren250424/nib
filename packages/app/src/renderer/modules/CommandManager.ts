@@ -790,7 +790,7 @@ export class CommandManager {
     // Seed the query from the editor selection, like most editors do.
     const selectedText = activeView.getSelectedText()
     if (selectedText && !selectedText.includes("\n")) {
-      this.tabEditorFacade.searchQuery = selectedText
+      this._setSearchQuery(selectedText)
       this.tabEditorFacade.findInput.value = selectedText
     }
 
@@ -809,8 +809,18 @@ export class CommandManager {
     this._refreshFind()
   }
 
-  performSearchQueryChanged(query: string) {
+  /**
+   * The query is the whole of what F3 needs, so whether there is one is
+   * published from wherever it is assigned rather than read from the box —
+   * F3 works with the box closed, on the query it was last given.
+   */
+  private _setSearchQuery(query: string) {
     this.tabEditorFacade.searchQuery = query
+    this.contextKeyService.set("hasSearchQuery", query.length > 0)
+  }
+
+  performSearchQueryChanged(query: string) {
+    this._setSearchQuery(query)
     this.tabEditorFacade.replaceInfo.textContent = ""
     // The input event is debounced, so it can arrive after the box was
     // closed (e.g. Esc committing an IME composition); searching then

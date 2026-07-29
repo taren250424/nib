@@ -62,6 +62,9 @@ export const KEYBINDINGS: readonly Keybinding[] = [
   // Find and replace
   { key: "Ctrl+F", command: "find.toggle", args: [false] },
   { key: "Ctrl+H", command: "find.toggle", args: [true] },
+  // Step through matches without the widget, on the query it was last given.
+  { key: "F3", command: "find.next", args: ["down"] },
+  { key: "Shift+F3", command: "find.next", args: ["up"] },
   { key: "Ctrl+Alt+ENTER", command: "find.replaceAll" },
   // Esc closes the find box if it is open, and otherwise calls off a pending
   // tree cut. Neither applies with both closed and empty, so the key falls

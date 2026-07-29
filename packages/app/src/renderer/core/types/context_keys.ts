@@ -21,6 +21,7 @@ export type ContextKeyMap = {
   editorIsBinary: boolean
   editorIsDirty: boolean
   findReplaceOpen: boolean
+  hasSearchQuery: boolean
 
   sideOpen: boolean
 }
@@ -40,6 +41,7 @@ export const DEFAULT_CONTEXT_KEYS: ContextKeyMap = {
   editorIsBinary: false,
   editorIsDirty: false,
   findReplaceOpen: false,
+  hasSearchQuery: false,
 
   sideOpen: false,
 }

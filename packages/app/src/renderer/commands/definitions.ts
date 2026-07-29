@@ -169,7 +169,12 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "find.toggleOption": {
       run: (option: "matchCase" | "wholeWord" | "useRegex") => commandManager.performToggleSearchOption(option),
     },
-    "find.next": { run: (direction: "up" | "down") => commandManager.performFind(direction) },
+    // Reachable from F3 with the box closed, so it carries the whole condition
+    // for searching: a document to search and a query to search for.
+    "find.next": {
+      when: (ctx) => ctx.hasActiveEditor && ctx.hasSearchQuery,
+      run: (direction: "up" | "down") => commandManager.performFind(direction),
+    },
     "find.replace": { run: () => commandManager.performReplace() },
     // Both are reachable from a global key, so neither may act on a closed box:
     // Ctrl+Alt+Enter would rewrite the document with a stale query, and Esc
