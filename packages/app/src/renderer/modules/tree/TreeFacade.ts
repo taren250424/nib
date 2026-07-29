@@ -542,8 +542,13 @@ export class TreeFacade {
     // still act on all of it.
     if (index === undefined) return
 
-    if (this.store.isSelected(path)) this.focusIndex(index)
-    else this.setSelection([index], index)
+    if (!this.store.isSelected(path)) this.setSelection([index], index)
+
+    // Focus the row in both cases. A right-click does not move focus on its own
+    // the way a left-click does, so without this the tree is not the focused
+    // zone — and every item in the menu about to open reads focusedTask through
+    // its `when` and greys itself out.
+    this.focusIndex(index)
 
     this.store.contextPath = path
 

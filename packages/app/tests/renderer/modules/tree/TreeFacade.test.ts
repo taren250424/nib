@@ -258,6 +258,18 @@ describe("tree context menu", () => {
     expect(harness.facade.focusedIndex).toBe(indexOf(harness, B))
   })
 
+  // A right-click does not move focus the way a left-click does. Without the
+  // tree being the focused zone, every item in the menu greys itself out — and
+  // so does every tree shortcut pressed afterwards.
+  it("focuses the right-clicked row whether or not it was already selected", () => {
+    rightClick(README)
+    expect(document.activeElement).toBe(rowOf(harness, README))
+
+    harness.facade.setSelection([indexOf(harness, A)])
+    rightClick(A)
+    expect(document.activeElement).toBe(rowOf(harness, A))
+  })
+
   it("forgets the right-clicked node when the menu closes", () => {
     rightClick(A)
     harness.facade.handleHideContextmenu()
