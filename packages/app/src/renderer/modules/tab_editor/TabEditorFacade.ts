@@ -466,10 +466,8 @@ export class TabEditorFacade {
     this.contextTabId = parseInt(tab.dataset[DOM.DATASET_ATTR_TAB_ID]!)
   }
 
+  /** Hides the menu, and only that — same reasoning as the tree's. */
   handleHideContextmenu() {
-    // Same reason as the tree's: whether the menu is showing is the menu's own
-    // state, so hiding it must not depend on the right-clicked id still resolving.
-    this.contextTabId = -1
     this.renderer.elements.tabContextMenu.classList.remove(DOM.CLASS_SELECTED)
   }
 
@@ -866,33 +864,41 @@ export class TabEditorFacade {
     this.findDirection = direction
   }
 
-  focusCurrentMatch(tabEditorView: TabEditorView) {
-    tabEditorView.focusCurrentMatch()
-
-    const state = tabEditorView.searchState
-    if (state && state.matches.length > 0) {
-      this.findInfo.textContent = `${state.currentIndex + 1} of ${state.matches.length}`
-    } else {
-      this.findInfo.textContent = `No results`
-    }
-  }
-
   /**
-   * Keeps the match list and the counter describing the document as it is being
-   * typed in, rather than the one the last search ran against.
+   * Brings a view's highlights and the counter up to date with the query.
    *
-   * Deliberately not a re-search: stepping to a match would drag the caret away
-   * from what is being written. Only the highlights and the count move.
+   * Deliberately not a step to the next match: the caret is already on the
+   * current one, so advancing from it walks one match further every time — which
+   * is what made the count alternate as tabs were switched back and forth.
    */
-  private _refreshSearchAfterEdit(view: TabEditorView) {
+  private _syncSearchTo(view: TabEditorView) {
     if (!this.findReplaceOpen || !this.searchQuery) return
-    if (view.isBinary || view !== this.getActiveTabEditorView()) return
+    if (view.isBinary) return
     if (compileSearchRegex(this.searchQuery, this.searchOptions).error) return
 
     const count = view.refreshMatches(this.searchQuery, this.searchOptions)
     const state = view.searchState
 
     this.findInfo.textContent = count > 0 && state ? `${state.currentIndex + 1} of ${count}` : `No results`
+  }
+
+  /**
+   * Keeps the match list and the counter describing the document as it is being
+   * typed in, rather than the one the last search ran against.
+   *
+   * Deferred, because this arrives from inside the editor's own
+   * dispatchTransaction: dispatching another transaction there updates the state
+   * without repainting, so the count moved while the highlights did not.
+   */
+  private _refreshSearchAfterEdit(view: TabEditorView) {
+    if (!this.findReplaceOpen || !this.searchQuery) return
+
+    queueMicrotask(() => {
+      // Re-checked on the way out: the tab may have been closed or switched
+      // away from while this was waiting.
+      if (view !== this.getActiveTabEditorView()) return
+      this._syncSearchTo(view)
+    })
   }
 
   /**
@@ -919,12 +925,6 @@ export class TabEditorFacade {
       return
     }
 
-    if (this.findReplaceOpen && this.searchQuery) {
-      if (view.searchState?.query === this.searchQuery && !view.isSearchStateStale()) {
-        this.focusCurrentMatch(view)
-      } else {
-        this.findNextMatch()
-      }
-    }
+    this._syncSearchTo(view)
   }
 }

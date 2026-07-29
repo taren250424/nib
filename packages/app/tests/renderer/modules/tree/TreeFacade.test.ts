@@ -270,12 +270,18 @@ describe("tree context menu", () => {
     expect(document.activeElement).toBe(rowOf(harness, A))
   })
 
-  it("forgets the right-clicked node when the menu closes", () => {
+  // Closing is only about the menu. The node it was opened on outlives it,
+  // because the command runs after the close and paste still needs to know
+  // where it was pointed; the next right-click overwrites it.
+  it("hides the menu without forgetting the node it was opened on", () => {
     rightClick(A)
     harness.facade.handleHideContextmenu()
 
-    expect(harness.facade.contextTreeIndex).toBe(-1)
     expect(harness.elements.treeContextMenu.classList.contains(DOM.CLASS_SELECTED)).toBe(false)
+    expect(harness.facade.contextTreeIndex).toBe(indexOf(harness, A))
+
+    rightClick(README)
+    expect(harness.facade.contextTreeIndex).toBe(indexOf(harness, README))
   })
 })
 
@@ -284,10 +290,12 @@ describe("tree context menu enablement", () => {
   let registry: CommandRegistry
   let focusManager: FocusManager
   let ran: string[]
+  let menuOpenWhileRunning: boolean
 
   beforeEach(() => {
     harness = setup()
     ran = []
+    menuOpenWhileRunning = true
 
     focusManager = new FocusManager()
     // What contextKeyHandlers wires in the app: focus is pushed into the keys
@@ -295,7 +303,15 @@ describe("tree context menu enablement", () => {
     focusManager.onDidChangeFocus((task) => harness.contextKeyService.set("focusedTask", task))
 
     const record = () =>
-      new Proxy({}, { get: (_t, property: string) => () => ran.push(property) }) as unknown as CommandDeps["treeFacade"]
+      new Proxy(
+        {},
+        {
+          get: (_t, property: string) => () => {
+            ran.push(property)
+            menuOpenWhileRunning = harness.elements.treeContextMenu.classList.contains(DOM.CLASS_SELECTED)
+          },
+        }
+      ) as unknown as CommandDeps["treeFacade"]
 
     registry = new CommandRegistry(harness.contextKeyService)
     registry.registerAll(
@@ -343,15 +359,32 @@ describe("tree context menu enablement", () => {
     expect(greyed("treeContextPaste")).toBe(false)
   })
 
-  it("runs the command behind an item and closes the menu", async () => {
+  // Rename opens a prompt and does not resolve until the user has finished with
+  // it, so a menu closed after the command sat on top of the input it opened.
+  it("closes the menu before running the command, not after", async () => {
     focusManager.setFocusedTask("tree")
     openMenuOn(README)
 
-    harness.elements.treeContextDelete.click()
+    harness.elements.treeContextRename.click()
     await flush()
 
-    expect(ran).toEqual(["performDelete"])
-    expect(harness.facade.contextTreeIndex).toBe(-1)
+    expect(ran).toEqual(["performRename"])
+    expect(menuOpenWhileRunning).toBe(false)
+    expect(harness.elements.treeContextMenu.classList.contains(DOM.CLASS_SELECTED)).toBe(false)
+  })
+
+  // Paste reads the node the menu was opened on, which is why closing first
+  // must not forget it.
+  it("still knows the right-clicked node while the command runs", async () => {
+    focusManager.setFocusedTask("tree")
+    harness.facade.setClipboard([A], "cut")
+    openMenuOn(README)
+
+    harness.elements.treeContextPaste.click()
+    await flush()
+
+    expect(ran).toEqual(["performPasteTreeWithContextmenu"])
+    expect(harness.facade.contextTreeIndex).toBe(indexOf(harness, README))
   })
 
   it("does nothing but close when a greyed-out item is clicked", async () => {

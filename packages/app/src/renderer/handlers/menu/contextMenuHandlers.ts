@@ -19,17 +19,21 @@ export function bindContextMenu<E extends object>(
   for (const binding of bindings) {
     const element = elements[binding.element] as HTMLElement
 
-    // The menu closes after the command, not before: paste and close-one read
-    // the right-clicked target, and closing forgets it. A failed command still
-    // closes, and so does a click on a greyed-out item.
+    // The menu closes before the command runs, not after. Rename opens a prompt
+    // and does not resolve until the user is done with it, so closing afterwards
+    // left the menu sitting on top of the input it had just opened.
+    //
+    // Which item was right-clicked survives the close for the same reason —
+    // paste and close-one read it — and is overwritten by the next right-click.
     element.addEventListener("click", async () => {
+      const command = commandRegistry.firstEnabled(binding.commands)
+      hide()
+      if (!command) return
+
       try {
-        const command = commandRegistry.firstEnabled(binding.commands)
-        if (command) await commandRegistry.execute(command, ...(binding.args ?? []))
+        await commandRegistry.execute(command, ...(binding.args ?? []))
       } catch (err) {
         console.error(`[contextMenuHandlers] ${binding.commands.join("/")} failed:`, err)
-      } finally {
-        hide()
       }
     })
   }

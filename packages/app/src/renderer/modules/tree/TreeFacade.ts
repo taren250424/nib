@@ -561,11 +561,15 @@ export class TreeFacade {
     adjustMenuPosition(e, treeContextMenu)
   }
 
+  /**
+   * Hides the menu, and only that.
+   *
+   * Whether the menu is showing is the menu's own state — gating this on the
+   * right-clicked node once left the menu on screen after deleting it. The node
+   * itself outlives the close because the command runs after it, and is
+   * overwritten by the next right-click.
+   */
   handleHideContextmenu() {
-    // Not conditional on the context path: deleting the node it pointed at
-    // clears it, and gating the hide on it left the menu on screen afterwards.
-    // Whether the menu is showing is the menu's own state.
-    this.store.contextPath = null
     this.renderer.elements.treeContextMenu.classList.remove(CLASS_SELECTED)
   }
 
