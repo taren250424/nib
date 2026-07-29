@@ -3,26 +3,26 @@ import { TreeFacade } from "../modules"
 import { DOM, CUSTOM_EVENTS } from "../constants"
 import { TREE_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
 import type { CommandRegistry, FocusManager } from "@renderer/core"
-import { Dispatcher } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 import { bindContextMenu, renderContextMenuState } from "./menu"
+import type { RunCommand } from "./runCommand"
 
 export function handleTree(
-  dispatcher: Dispatcher,
+  run: RunCommand,
   emitter: EventEmitter,
   commandRegistry: CommandRegistry,
   focusManager: FocusManager,
   treeFacade: TreeFacade
 ) {
-  bindTreeTopMenuEvents(dispatcher, treeFacade)
+  bindTreeTopMenuEvents(run, treeFacade)
 
-  bindContainerClickEvent(dispatcher, treeFacade)
+  bindContainerClickEvent(run, treeFacade)
 
   bindContextmenuToggleEvents(emitter, commandRegistry, focusManager, treeFacade)
 
   bindMousedownEventsForDrag(emitter, treeFacade)
   bindMousemoveEventsForDrag(emitter, treeFacade)
-  bindMouseupEventsForDrag(dispatcher, emitter, treeFacade)
+  bindMouseupEventsForDrag(run, emitter, treeFacade)
   bindMouseleaveEventsForDrag(emitter, treeFacade)
 }
 
@@ -31,21 +31,21 @@ export function handleTree(
 // stays true while focus is away; how they look when the tree is not the active
 // zone is a `.tree-active` rule in tree.scss.
 
-function bindTreeTopMenuEvents(dispatcher: Dispatcher, treeFacade: TreeFacade) {
+function bindTreeTopMenuEvents(run: RunCommand, treeFacade: TreeFacade) {
   const { treeTopAddFile, treeTopAddDirectory } = treeFacade.renderer.elements
 
   treeTopAddFile.addEventListener("click", async () => {
-    await dispatcher.dispatch("create", "element", false)
+    await run("tree.create", false)
   })
 
   treeTopAddDirectory.addEventListener("click", async () => {
-    await dispatcher.dispatch("create", "element", true)
+    await run("tree.create", true)
   })
 }
 
 //
 
-function bindContainerClickEvent(dispatcher: Dispatcher, treeFacade: TreeFacade) {
+function bindContainerClickEvent(run: RunCommand, treeFacade: TreeFacade) {
   const { treeNodeContainer } = treeFacade.renderer.elements
 
   treeNodeContainer.addEventListener("click", async (e) => {
@@ -85,8 +85,8 @@ function bindContainerClickEvent(dispatcher: Dispatcher, treeFacade: TreeFacade)
 
     const viewModel = treeFacade.getTreeViewModelByPath(path)
     if (!viewModel) return
-    if (viewModel.directory) await dispatcher.dispatch("openDirectoryByTreeNode", "element", treeNode)
-    else await dispatcher.dispatch("openFile", "element", path)
+    if (viewModel.directory) await run("tree.expandDirectory", treeNode)
+    else await run("file.open", path)
 
     // Opening a file hands focus to the editor, and a click in the tree is not
     // a request to leave it — the arrow keys have to keep moving the selection.
@@ -163,17 +163,17 @@ function bindMousemoveEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacad
   })
 }
 
-function bindMouseupEventsForDrag(dispatcher: Dispatcher, emitter: EventEmitter, treeFacade: TreeFacade) {
+function bindMouseupEventsForDrag(run: RunCommand, emitter: EventEmitter, treeFacade: TreeFacade) {
   // EventEmitter neither awaits nor catches async listeners, so the drop has to
   // terminate its own promise or a failing move becomes an unhandled rejection.
   emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, () => {
-    dropDraggedTreeNodes(dispatcher, treeFacade).catch((err) => {
+    dropDraggedTreeNodes(run, treeFacade).catch((err) => {
       console.error("[treeHandlers] drag drop failed:", err)
     })
   })
 }
 
-async function dropDraggedTreeNodes(dispatcher: Dispatcher, treeFacade: TreeFacade) {
+async function dropDraggedTreeNodes(run: RunCommand, treeFacade: TreeFacade) {
   if (!treeFacade.isDrag()) {
     treeFacade.setMouseDown(false)
     return
@@ -186,8 +186,8 @@ async function dropDraggedTreeNodes(dispatcher: Dispatcher, treeFacade: TreeFaca
 
   if (canDrop) {
     treeFacade.setSelectedDragIndexByPath(dropPath)
-    await dispatcher.dispatch("cut", "drag")
-    await dispatcher.dispatch("paste", "drag")
+    await run("tree.cut")
+    await run("tree.pasteFromDrag")
   }
 }
 

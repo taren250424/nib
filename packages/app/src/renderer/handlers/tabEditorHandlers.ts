@@ -4,23 +4,23 @@ import { CUSTOM_EVENTS, DOM } from "../constants"
 import { TabEditorFacade } from "../modules"
 import { TAB_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
 import type { CommandRegistry, FocusManager } from "@renderer/core"
-import { Dispatcher } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 import { debounce } from "@renderer/utils"
 import { bindContextMenu, renderContextMenuState } from "./menu"
+import type { RunCommand } from "./runCommand"
 
 export function handleTabEditor(
-  dispatcher: Dispatcher,
+  run: RunCommand,
   emitter: EventEmitter,
   commandRegistry: CommandRegistry,
   focusManager: FocusManager,
   tabEditorFacade: TabEditorFacade
 ) {
-  bindContainerClickEvent(dispatcher, tabEditorFacade)
+  bindContainerClickEvent(run, tabEditorFacade)
 
   bindContextmenuToggleEvents(emitter, commandRegistry, focusManager, tabEditorFacade)
 
-  bindFindReplaceEvents(dispatcher, tabEditorFacade)
+  bindFindReplaceEvents(run, tabEditorFacade)
 
   bindMousedownEventsForDrag(emitter, tabEditorFacade)
   bindMousemoveEventsForDrag(emitter, tabEditorFacade)
@@ -32,7 +32,7 @@ export function handleTabEditor(
 
 //
 
-function bindContainerClickEvent(dispatcher: Dispatcher, tabEditorFacade: TabEditorFacade) {
+function bindContainerClickEvent(run: RunCommand, tabEditorFacade: TabEditorFacade) {
   const { tabContainer } = tabEditorFacade.renderer.elements
 
   tabContainer.addEventListener("click", async (e) => {
@@ -42,7 +42,7 @@ function bindContainerClickEvent(dispatcher: Dispatcher, tabEditorFacade: TabEdi
 
     if (target.tagName === "BUTTON") {
       const id = parseInt(tabBox.dataset[DOM.DATASET_ATTR_TAB_ID]!)
-      await dispatcher.dispatch("closeTab", "button", id)
+      await run("tab.close", id)
     } else if (target.tagName === "SPAN") {
       const id = parseInt(tabBox.dataset[DOM.DATASET_ATTR_TAB_ID]!)
       tabEditorFacade.activateTabEditorById(id)
@@ -74,7 +74,7 @@ function bindContextmenuToggleEvents(
 
 //
 
-function bindFindReplaceEvents(dispatcher: Dispatcher, tabEditorFacade: TabEditorFacade) {
+function bindFindReplaceEvents(run: RunCommand, tabEditorFacade: TabEditorFacade) {
   const {
     findUp,
     findDown,
@@ -95,48 +95,48 @@ function bindFindReplaceEvents(dispatcher: Dispatcher, tabEditorFacade: TabEdito
   })
 
   findOptionCase.addEventListener("click", async () => {
-    await dispatcher.dispatch("toggleSearchOption", "menu", "matchCase")
+    await run("find.toggleOption", "matchCase")
   })
 
   findOptionWord.addEventListener("click", async () => {
-    await dispatcher.dispatch("toggleSearchOption", "menu", "wholeWord")
+    await run("find.toggleOption", "wholeWord")
   })
 
   findOptionRegex.addEventListener("click", async () => {
-    await dispatcher.dispatch("toggleSearchOption", "menu", "useRegex")
+    await run("find.toggleOption", "useRegex")
   })
 
   findUp.addEventListener("click", async () => {
-    await dispatcher.dispatch("find", "menu", "up")
+    await run("find.next", "up")
   })
 
   findDown.addEventListener("click", async () => {
-    await dispatcher.dispatch("find", "menu", "down")
+    await run("find.next", "down")
   })
 
   replaceCurrent.addEventListener("click", async () => {
-    await dispatcher.dispatch("replace", "menu")
+    await run("find.replace")
   })
 
   replaceAll.addEventListener("click", async () => {
-    await dispatcher.dispatch("replaceAll", "menu")
+    await run("find.replaceAll")
   })
 
   closeFindReplace.addEventListener("click", async () => {
-    await dispatcher.dispatch("closeFindReplace", "menu")
+    await run("find.close")
   })
 
   findInput.addEventListener(
     "input",
     debounce(async (e: Event) => {
       const value = (e.target as HTMLInputElement).value
-      await dispatcher.dispatch("searchQueryChanged", "menu", value)
+      await run("find.queryChanged", value)
     }, 300)
   )
 
   replaceInput.addEventListener("input", async (e: Event) => {
     const value = (e.target as HTMLInputElement).value
-    await dispatcher.dispatch("replaceQueryChanged", "menu", value)
+    await run("find.replaceQueryChanged", value)
   })
 }
 

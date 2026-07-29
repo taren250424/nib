@@ -7,7 +7,7 @@ import type { SideDto } from "@shared/dto/SideDto"
 import { DOM } from "@renderer/constants"
 
 import { toggleSide } from "@renderer/actions"
-import { Dispatcher } from "../dispatch"
+import type { RunCommand } from "./runCommand"
 
 import {
   MenuElements,
@@ -20,7 +20,7 @@ import {
 } from "../modules"
 
 export function handleLoad(
-  dispatcher: Dispatcher,
+  run: RunCommand,
   windowFacade: WindowFacade,
   settingsFacade: SettingsFacade,
   tabEditorFacade: TabEditorFacade,
@@ -44,7 +44,7 @@ export function handleLoad(
       processTabEditorSession(tabEditorFacade, tabEditorsDto)
       processTreeSession(treeFacade, treeDto)
 
-      initSettings(dispatcher, settingsFacade)
+      initSettings(run, settingsFacade)
       initSide(sideFacade, menuElements)
       initInfo(infoFacade, version)
       initWindow(windowFacade)
@@ -92,14 +92,17 @@ function processTreeSession(facade: TreeFacade, dto: TreeDto) {
 
 //
 
-async function initSettings(dispatcher: Dispatcher, settingsFacade: SettingsFacade) {
+async function initSettings(run: RunCommand, settingsFacade: SettingsFacade) {
   const { menus, contents } = settingsFacade.renderer.elements
   menus[0].classList.add(DOM.CLASS_SELECTED)
   contents[0].style.display = "block"
 
   const viewModel = settingsFacade.getSettingsValue()
   settingsFacade.render(viewModel)
-  await dispatcher.dispatch("applySettings", "programmatic", viewModel)
+  // Invoked at session load rather than by any UI element, so it must not
+  // depend on which zone happens to hold focus — restored tabs focus the
+  // editor before this runs. settings.apply carries no `when` for that reason.
+  await run("settings.apply", viewModel)
 }
 
 function initSide(sideFacade: SideFacade, menuElements: MenuElements) {

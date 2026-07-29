@@ -1,7 +1,7 @@
-import type { CommandRegistry } from "@renderer/core"
 import type { WindowFacade } from "@renderer/modules"
+import type { RunCommand } from "./runCommand"
 
-export function handleWindow(windowFacade: WindowFacade, commandRegistry: CommandRegistry) {
+export function handleWindow(windowFacade: WindowFacade, run: RunCommand) {
   const { maximizeBtn, minimizeBtn, exitBtn } = windowFacade.renderer.elements
 
   window.mainToRenderer.onMaximizeWindow(() => {
@@ -21,6 +21,6 @@ export function handleWindow(windowFacade: WindowFacade, commandRegistry: Comman
     window.rendererToMain.requestMinimizeWindow()
   })
   exitBtn.addEventListener("click", () => {
-    void commandRegistry.execute("app.exit")
+    void run("app.exit")
   })
 }

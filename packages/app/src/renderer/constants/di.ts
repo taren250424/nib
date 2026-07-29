@@ -42,6 +42,5 @@ export const DI = {
 
   CommandManager: Symbol("CommandManager"),
   CommandQueue: Symbol("CommandQueue"),
-  Dispatcher: Symbol("Dispatcher"),
   EventEmitter: Symbol("EventEmitter"),
 }

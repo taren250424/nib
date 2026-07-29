@@ -11,7 +11,6 @@ import "./components/VelinSelect"
 import { CommandQueue, CommandRegistry, ContextKeyService, FocusManager, KeybindingService } from "./core"
 import { createCommandDescriptors } from "./commands"
 import { KEYBINDINGS } from "./commands/keybindings"
-import { Dispatcher } from "./dispatch"
 import { EventEmitter } from "events"
 
 import {
@@ -39,6 +38,7 @@ import {
   handleTree,
   handleWindow,
   handleSync,
+  createCommandRunner,
 } from "./handlers"
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -57,11 +57,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const sideFacade = diContainer.get<SideFacade>(DI.SideFacade)
   const windowFacade = diContainer.get<WindowFacade>(DI.WindowFacade)
 
-  const dispatcher = diContainer.get<Dispatcher>(DI.Dispatcher)
   const emitter = diContainer.get<EventEmitter>(DI.EventEmitter)
 
   // Commands and their bindings must exist before any input can reach one,
-  // including the dispatches session load performs.
+  // including the ones session load runs.
   const commandRegistry = diContainer.get<CommandRegistry>(DI.CommandRegistry)
   const commandManager = diContainer.get<CommandManager>(DI.CommandManager)
   commandRegistry.registerAll(
@@ -77,29 +76,24 @@ window.addEventListener("DOMContentLoaded", () => {
   )
   keybindingService.registerAll(KEYBINDINGS)
 
+  // How the remaining UI elements — buttons, the find widget, tree clicks, a
+  // drop — reach a command now that the keyboard and the menus have tables.
+  const run = createCommandRunner(commandRegistry, focusManager)
+
   handleContextKeys(focusManager, contextKeyService)
   handleGlobalInput(emitter, focusManager, keybindingService)
   handleMenuItems(emitter, menuElements)
   handleCommandMenus(commandRegistry, contextKeyService, menuElements)
 
-  handleTabEditor(dispatcher, emitter, commandRegistry, focusManager, tabEditorFacade)
+  handleTabEditor(run, emitter, commandRegistry, focusManager, tabEditorFacade)
   handleInfo(infoFacade)
-  handleWindow(windowFacade, commandRegistry)
-  handleTree(dispatcher, emitter, commandRegistry, focusManager, treeFacade)
+  handleWindow(windowFacade, run)
+  handleTree(run, emitter, commandRegistry, focusManager, treeFacade)
   handleSide(emitter, sideFacade)
-  handleSettings(dispatcher, settingsFacade)
+  handleSettings(run, settingsFacade)
   handleSync(commandQueue, tabEditorFacade, treeFacade)
 
-  handleLoad(
-    dispatcher,
-    windowFacade,
-    settingsFacade,
-    tabEditorFacade,
-    treeFacade,
-    sideFacade,
-    infoFacade,
-    menuElements
-  )
+  handleLoad(run, windowFacade, settingsFacade, tabEditorFacade, treeFacade, sideFacade, infoFacade, menuElements)
 
   window.rendererToMain.loadedRenderer()
 })

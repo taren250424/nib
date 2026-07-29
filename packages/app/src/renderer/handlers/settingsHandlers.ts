@@ -1,8 +1,8 @@
 import { DOM } from "../constants"
 import { SettingsFacade } from "../modules"
-import { Dispatcher } from "../dispatch"
+import type { RunCommand } from "./runCommand"
 
-export function handleSettings(dispatcher: Dispatcher, settingsFacade: SettingsFacade) {
+export function handleSettings(run: RunCommand, settingsFacade: SettingsFacade) {
   const { menus, contents, exit, apply, close } = settingsFacade.renderer.elements
 
   menus.forEach((el, idx) => {
@@ -20,7 +20,7 @@ export function handleSettings(dispatcher: Dispatcher, settingsFacade: SettingsF
   })
 
   apply.addEventListener("click", async () => {
-    await dispatcher.dispatch("applyAndSaveSettings", "button", settingsFacade.getChangeSet())
+    await run("settings.applyAndSave", settingsFacade.getChangeSet())
   })
 
   close.addEventListener("click", () => {
