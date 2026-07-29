@@ -88,9 +88,12 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "file.saveAs": { run: () => commandManager.performSaveAs() },
     "file.saveAll": { run: () => commandManager.performSaveAll() },
 
-    // Tabs
+    // Tabs. Close takes its target from wherever the user pointed, so the close
+    // button and the right-clicked tab are separate ids rather than one command
+    // that has to work out which channel called it.
     "tab.close": { run: (id: number) => commandManager.performCloseTab(id) },
     "tab.closeActive": { when: (ctx) => ctx.hasActiveEditor, run: () => commandManager.performCloseActiveTab() },
+    "tab.closeFromContextMenu": { when: inTask("tab"), run: () => commandManager.performCloseContextTab() },
     "tab.closeOthers": { when: inTask("tab"), run: () => commandManager.performCloseOtherTabs() },
     "tab.closeToRight": { when: inTask("tab"), run: () => commandManager.performCloseTabsToRight() },
     "tab.closeAll": { when: inTask("tab"), run: () => commandManager.performCloseAllTabs() },

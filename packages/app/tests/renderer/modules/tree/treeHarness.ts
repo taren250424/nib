@@ -17,7 +17,13 @@ export function createTreeHarness() {
   document.body.innerHTML = `
     <div id="tree-top"><span id="tree-top-name"></span></div>
     <div id="tree-node-container"><div id="content"></div></div>
-    <div id="tree-context-menu"><div id="tree-context-paste"></div></div>
+    <div id="tree-context-menu">
+      <div id="tree-context-cut"></div>
+      <div id="tree-context-copy"></div>
+      <div id="tree-context-paste"></div>
+      <div id="tree-context-rename"></div>
+      <div id="tree-context-delete"></div>
+    </div>
   `
 
   const treeNodeContainer = document.querySelector("#tree-node-container") as HTMLElement
@@ -28,7 +34,11 @@ export function createTreeHarness() {
     treeTop: document.querySelector("#tree-top") as HTMLElement,
     treeTopName: document.querySelector("#tree-top-name") as HTMLElement,
     treeContextMenu: document.querySelector("#tree-context-menu") as HTMLElement,
+    treeContextCut: document.querySelector("#tree-context-cut") as HTMLElement,
+    treeContextCopy: document.querySelector("#tree-context-copy") as HTMLElement,
     treeContextPaste: document.querySelector("#tree-context-paste") as HTMLElement,
+    treeContextRename: document.querySelector("#tree-context-rename") as HTMLElement,
+    treeContextDelete: document.querySelector("#tree-context-delete") as HTMLElement,
     simpleBar: {
       getContentElement: () => content,
       // Scrollbar geometry; nothing here depends on it.

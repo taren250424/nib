@@ -2,16 +2,23 @@ import "@milkdown/theme-nord/style.css"
 
 import { CUSTOM_EVENTS, DOM } from "../constants"
 import { TabEditorFacade } from "../modules"
+import { TAB_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
+import type { CommandRegistry, FocusManager } from "@renderer/core"
 import { Dispatcher } from "@renderer/dispatch"
-import type { AppEvents } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 import { debounce } from "@renderer/utils"
+import { bindContextMenu, renderContextMenuState } from "./menu"
 
-export function handleTabEditor(dispatcher: Dispatcher, emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
+export function handleTabEditor(
+  dispatcher: Dispatcher,
+  emitter: EventEmitter,
+  commandRegistry: CommandRegistry,
+  focusManager: FocusManager,
+  tabEditorFacade: TabEditorFacade
+) {
   bindContainerClickEvent(dispatcher, tabEditorFacade)
 
-  bindContextmenuToggleEvents(emitter, tabEditorFacade)
-  bindContextmenuClickEvents(dispatcher, tabEditorFacade)
+  bindContextmenuToggleEvents(emitter, commandRegistry, focusManager, tabEditorFacade)
 
   bindFindReplaceEvents(dispatcher, tabEditorFacade)
 
@@ -45,40 +52,24 @@ function bindContainerClickEvent(dispatcher: Dispatcher, tabEditorFacade: TabEdi
 
 //
 
-function bindContextmenuToggleEvents(emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
-  const { tabContainer } = tabEditorFacade.renderer.elements
+function bindContextmenuToggleEvents(
+  emitter: EventEmitter,
+  commandRegistry: CommandRegistry,
+  focusManager: FocusManager,
+  tabEditorFacade: TabEditorFacade
+) {
+  const elements = tabEditorFacade.renderer.elements
 
-  tabContainer.addEventListener("contextmenu", (e: MouseEvent) => {
+  bindContextMenu(commandRegistry, TAB_CONTEXT_MENU_BINDINGS, elements, () => tabEditorFacade.handleHideContextmenu())
+
+  elements.tabContainer.addEventListener("contextmenu", (e: MouseEvent) => {
     tabEditorFacade.handleShowContextmenu(e)
+    renderContextMenuState(commandRegistry, focusManager, TAB_CONTEXT_MENU_BINDINGS, elements)
   })
 
   emitter.on(CUSTOM_EVENTS.MOUSE_DOWN.OUT.TAB_CONTEXTMENU, () => {
     tabEditorFacade.handleHideContextmenu()
   })
-}
-
-function bindContextmenuClickEvents(dispatcher: Dispatcher, tabEditorFacade: TabEditorFacade) {
-  const { tabContextClose, tabContextCloseOthers, tabContextCloseRight, tabContextCloseAll } =
-    tabEditorFacade.renderer.elements
-
-  // Closing happens after the command, since close-one reads the right-clicked
-  // id. A failed command still closes the menu.
-  const bindItem = (element: HTMLElement, event: AppEvents, arg?: () => unknown) => {
-    element.addEventListener("click", async () => {
-      try {
-        await dispatcher.dispatch(event, "context-menu", ...(arg ? [arg()] : []))
-      } catch (err) {
-        console.error(`[tabEditorHandlers] ${event} from the context menu failed:`, err)
-      } finally {
-        tabEditorFacade.handleHideContextmenu()
-      }
-    })
-  }
-
-  bindItem(tabContextClose, "closeTab", () => tabEditorFacade.contextTabId)
-  bindItem(tabContextCloseOthers, "closeOtherTabs")
-  bindItem(tabContextCloseRight, "closeTabsToRight")
-  bindItem(tabContextCloseAll, "closeAllTabs")
 }
 
 //

@@ -188,6 +188,10 @@ export class CommandManager {
     return this.performCloseTab(this.tabEditorFacade.activeTabId)
   }
 
+  performCloseContextTab() {
+    return this.performCloseTab(this.tabEditorFacade.contextTabId)
+  }
+
   performOpenSettings() {
     this.settingsFacade.openSettings()
   }

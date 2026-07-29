@@ -547,14 +547,11 @@ export class TreeFacade {
 
     this.store.contextPath = path
 
-    const { treeContextMenu, treeContextPaste } = this.renderer.elements
-
-    // What paste consumes is the clipboard, not the current selection: cutting and
-    // then clicking elsewhere used to grey the item out with a full clipboard. The
-    // target need not be a directory either — paste redirects to the parent folder.
-    const isPasteDisabled = this.getClipboardPaths().length === 0
-
-    treeContextPaste.classList.toggle(DOM.CLASS_DEACTIVE, isPasteDisabled)
+    // Which items apply is not decided here. It is one `when` per command now,
+    // read by the handler that wired the clicks — the copy of those rules that
+    // used to live at this spot had already drifted from the commands it was
+    // describing.
+    const { treeContextMenu } = this.renderer.elements
     treeContextMenu.classList.add(DOM.CLASS_SELECTED)
     adjustMenuPosition(e, treeContextMenu)
   }

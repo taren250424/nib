@@ -82,10 +82,10 @@ window.addEventListener("DOMContentLoaded", () => {
   handleMenuItems(emitter, menuElements)
   handleCommandMenus(commandRegistry, contextKeyService, menuElements)
 
-  handleTabEditor(dispatcher, emitter, tabEditorFacade)
+  handleTabEditor(dispatcher, emitter, commandRegistry, focusManager, tabEditorFacade)
   handleInfo(infoFacade)
   handleWindow(windowFacade, commandRegistry)
-  handleTree(dispatcher, emitter, treeFacade)
+  handleTree(dispatcher, emitter, commandRegistry, focusManager, treeFacade)
   handleSide(emitter, sideFacade)
   handleSettings(dispatcher, settingsFacade)
   handleSync(commandQueue, tabEditorFacade, treeFacade)

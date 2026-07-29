@@ -23,6 +23,7 @@ export type CommandId =
   //
   | "tab.close"
   | "tab.closeActive"
+  | "tab.closeFromContextMenu"
   | "tab.closeOthers"
   | "tab.closeToRight"
   | "tab.closeAll"

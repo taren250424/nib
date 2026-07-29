@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from "vitest"
 
+import { createCommandDescriptors } from "@renderer/commands"
+import { TREE_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
+import type { CommandDeps } from "@renderer/commands/definitions"
 import { DOM } from "@renderer/constants"
+import { CommandRegistry, FocusManager } from "@renderer/core"
+import { bindContextMenu, renderContextMenuState } from "@renderer/handlers/menu"
 
 import { buildDto, createTreeHarness, installWindowUtils, loadTree, rowOf, wrapperOf } from "./treeHarness"
 
@@ -38,6 +43,11 @@ function setup() {
 /** Index of a path in the flat list, which is what the facade's API speaks. */
 function indexOf(harness: ReturnType<typeof setup>, path: string) {
   return harness.facade.getFlattenIndexByPath(path)
+}
+
+/** Lets an async click listener run to its finally block. */
+function flush() {
+  return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
 describe("tree selection", () => {
@@ -253,6 +263,93 @@ describe("tree context menu", () => {
     harness.facade.handleHideContextmenu()
 
     expect(harness.facade.contextTreeIndex).toBe(-1)
+    expect(harness.elements.treeContextMenu.classList.contains(DOM.CLASS_SELECTED)).toBe(false)
+  })
+})
+
+describe("tree context menu enablement", () => {
+  let harness: ReturnType<typeof setup>
+  let registry: CommandRegistry
+  let focusManager: FocusManager
+  let ran: string[]
+
+  beforeEach(() => {
+    harness = setup()
+    ran = []
+
+    focusManager = new FocusManager()
+    // What contextKeyHandlers wires in the app: focus is pushed into the keys
+    // the `when` conditions read.
+    focusManager.onDidChangeFocus((task) => harness.contextKeyService.set("focusedTask", task))
+
+    const record = () =>
+      new Proxy({}, { get: (_t, property: string) => () => ran.push(property) }) as unknown as CommandDeps["treeFacade"]
+
+    registry = new CommandRegistry(harness.contextKeyService)
+    registry.registerAll(
+      createCommandDescriptors({
+        commandManager: record(),
+        zoomManager: record(),
+        sideFacade: record(),
+        infoFacade: record(),
+        menuElements: record(),
+        tabEditorFacade: record(),
+        treeFacade: record(),
+      } as unknown as CommandDeps)
+    )
+
+    bindContextMenu(registry, TREE_CONTEXT_MENU_BINDINGS, harness.elements, () =>
+      harness.facade.handleHideContextmenu()
+    )
+  })
+
+  function openMenuOn(path: string) {
+    const event = new MouseEvent("contextmenu", { clientX: 10, clientY: 10, bubbles: true })
+    rowOf(harness, path).dispatchEvent(event)
+    harness.facade.handleShowContextmenu(event)
+    renderContextMenuState(registry, focusManager, TREE_CONTEXT_MENU_BINDINGS, harness.elements)
+  }
+
+  function greyed(element: "treeContextCut" | "treeContextPaste" | "treeContextDelete") {
+    return harness.elements[element].classList.contains(DOM.CLASS_DEACTIVE)
+  }
+
+  // The greying has to be computed after the right-click has moved the
+  // selection, since that is what most of these commands apply to.
+  it("enables the selection commands once the right-click has selected something", () => {
+    focusManager.setFocusedTask("tree")
+
+    openMenuOn(README)
+
+    expect(greyed("treeContextCut")).toBe(false)
+    expect(greyed("treeContextDelete")).toBe(false)
+    // Nothing on the clipboard yet.
+    expect(greyed("treeContextPaste")).toBe(true)
+
+    harness.facade.setClipboard([A], "cut")
+    openMenuOn(README)
+    expect(greyed("treeContextPaste")).toBe(false)
+  })
+
+  it("runs the command behind an item and closes the menu", async () => {
+    focusManager.setFocusedTask("tree")
+    openMenuOn(README)
+
+    harness.elements.treeContextDelete.click()
+    await flush()
+
+    expect(ran).toEqual(["performDelete"])
+    expect(harness.facade.contextTreeIndex).toBe(-1)
+  })
+
+  it("does nothing but close when a greyed-out item is clicked", async () => {
+    focusManager.setFocusedTask("tree")
+    openMenuOn(README)
+
+    harness.elements.treeContextPaste.click()
+    await flush()
+
+    expect(ran).toEqual([])
     expect(harness.elements.treeContextMenu.classList.contains(DOM.CLASS_SELECTED)).toBe(false)
   })
 })

@@ -1,17 +1,24 @@
 import "@milkdown/theme-nord/style.css"
 import { TreeFacade } from "../modules"
 import { DOM, CUSTOM_EVENTS } from "../constants"
+import { TREE_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
+import type { CommandRegistry, FocusManager } from "@renderer/core"
 import { Dispatcher } from "@renderer/dispatch"
-import type { AppEvents } from "@renderer/dispatch"
 import { EventEmitter } from "events"
+import { bindContextMenu, renderContextMenuState } from "./menu"
 
-export function handleTree(dispatcher: Dispatcher, emitter: EventEmitter, treeFacade: TreeFacade) {
+export function handleTree(
+  dispatcher: Dispatcher,
+  emitter: EventEmitter,
+  commandRegistry: CommandRegistry,
+  focusManager: FocusManager,
+  treeFacade: TreeFacade
+) {
   bindTreeTopMenuEvents(dispatcher, treeFacade)
 
   bindContainerClickEvent(dispatcher, treeFacade)
 
-  bindContextmenuToggleEvents(emitter, treeFacade)
-  bindContextmenuClickEvents(dispatcher, treeFacade)
+  bindContextmenuToggleEvents(emitter, commandRegistry, focusManager, treeFacade)
 
   bindMousedownEventsForDrag(emitter, treeFacade)
   bindMousemoveEventsForDrag(emitter, treeFacade)
@@ -92,41 +99,27 @@ function bindContainerClickEvent(dispatcher: Dispatcher, treeFacade: TreeFacade)
 
 //
 
-function bindContextmenuToggleEvents(emitter: EventEmitter, treeFacade: TreeFacade) {
-  const { treeNodeContainer } = treeFacade.renderer.elements
+function bindContextmenuToggleEvents(
+  emitter: EventEmitter,
+  commandRegistry: CommandRegistry,
+  focusManager: FocusManager,
+  treeFacade: TreeFacade
+) {
+  const elements = treeFacade.renderer.elements
 
-  treeNodeContainer.addEventListener("contextmenu", (e) => {
+  bindContextMenu(commandRegistry, TREE_CONTEXT_MENU_BINDINGS, elements, () => treeFacade.handleHideContextmenu())
+
+  elements.treeNodeContainer.addEventListener("contextmenu", (e) => {
+    // Opening the menu moves the selection to the right-clicked node, and the
+    // selection is what half of these commands apply to — so the greying is
+    // computed after it, not before.
     treeFacade.handleShowContextmenu(e)
+    renderContextMenuState(commandRegistry, focusManager, TREE_CONTEXT_MENU_BINDINGS, elements)
   })
 
   emitter.on(CUSTOM_EVENTS.MOUSE_DOWN.OUT.TREE_CONTEXTMENU, () => {
     treeFacade.handleHideContextmenu()
   })
-}
-
-function bindContextmenuClickEvents(dispatcher: Dispatcher, treeFacade: TreeFacade) {
-  const { treeContextCut, treeContextCopy, treeContextPaste, treeContextRename, treeContextDelete } =
-    treeFacade.renderer.elements
-
-  // Closing happens after the command, not before, because paste reads the
-  // right-clicked index and closing clears it. A failed command still closes.
-  const bindItem = (element: HTMLElement, event: AppEvents) => {
-    element.addEventListener("click", async () => {
-      try {
-        await dispatcher.dispatch(event, "context-menu")
-      } catch (err) {
-        console.error(`[treeHandlers] ${event} from the context menu failed:`, err)
-      } finally {
-        treeFacade.handleHideContextmenu()
-      }
-    })
-  }
-
-  bindItem(treeContextCut, "cut")
-  bindItem(treeContextCopy, "copy")
-  bindItem(treeContextPaste, "paste")
-  bindItem(treeContextRename, "rename")
-  bindItem(treeContextDelete, "delete")
 }
 
 //
