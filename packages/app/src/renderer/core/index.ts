@@ -4,6 +4,9 @@ export { UI_ZONES, UI_ZONES_VALUES } from "./types"
 export type { ContextKey, ContextKeyMap } from "./types"
 export { DEFAULT_CONTEXT_KEYS } from "./types"
 
+export type { CommandContext, ICommandDescriptor } from "./types"
+
+export { CommandRegistry } from "./CommandRegistry"
 export { ContextKeyService } from "./ContextKeyService"
 export { FocusManager } from "./FocusManager"
 export { ShortcutRegistry } from "./ShortcutRegistry"

@@ -2,6 +2,7 @@ import "reflect-metadata"
 import { DI } from "./constants"
 import { Container } from "inversify"
 
+import { CommandRegistry } from "./core/CommandRegistry"
 import { ContextKeyService } from "./core/ContextKeyService"
 import { FocusManager } from "./core/FocusManager"
 import { ShortcutRegistry } from "./core/ShortcutRegistry"
@@ -50,6 +51,7 @@ const diContainer = new Container()
 
 diContainer.bind(DI.FocusManager).to(FocusManager).inSingletonScope()
 diContainer.bind(DI.ContextKeyService).to(ContextKeyService).inSingletonScope()
+diContainer.bind(DI.CommandRegistry).to(CommandRegistry).inSingletonScope()
 diContainer.bind(DI.ShortcutRegistry).to(ShortcutRegistry).inSingletonScope()
 
 diContainer.bind(DI.MenuElements).to(MenuElements).inSingletonScope()

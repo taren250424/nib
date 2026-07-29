@@ -3,6 +3,7 @@ export const DI = {
 
 	FocusManager: Symbol("FocusManager"),
 	ContextKeyService: Symbol("ContextKeyService"),
+	CommandRegistry: Symbol("CommandRegistry"),
 
 	ZoomManager: Symbol("ZoomManager"),
 
