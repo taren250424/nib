@@ -804,6 +804,11 @@ export class CommandManager {
 		this.tabEditorFacade.replaceInfo.textContent = ""
 
 		this.tabEditorFacade.findReplaceOpen = false
+
+		// Hand focus back so typing continues in the document instead of the input
+		// that was just hidden. Closing the last tab also closes the box, and then
+		// there is no view left to focus.
+		this.tabEditorFacade.getActiveTabEditorView()?.focus()
 	}
 
 	//
