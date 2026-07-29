@@ -15,6 +15,7 @@ export function handleGlobalInput(
 	shortcutRegistry: ShortcutRegistry
 ) {
 	bindDocumentMousedownEvnet(focusManager, emitter)
+	bindDocumentFocusEvents(focusManager)
 
 	bindDocumentMousedownEvnetForDrag(emitter)
 	bindDocumentMousemoveEvnetForDrag(emitter)
@@ -45,7 +46,19 @@ function bindDocumentMousedownEvnet(focusManager: FocusManager, emitter: EventEm
 				emitter.emit(item.outEvent, e)
 			}
 		})
+
+		focusManager.syncFocus()
 	})
+}
+
+// Keyboard navigation moves focus without any mousedown, so the zone has to be
+// re-read from focus events too. focusout fires before the next element is
+// focused, hence the microtask: it lets activeElement settle before we look.
+function bindDocumentFocusEvents(focusManager: FocusManager) {
+	const sync = () => queueMicrotask(() => focusManager.syncFocus())
+
+	document.addEventListener("focusin", sync)
+	document.addEventListener("focusout", sync)
 }
 
 //
