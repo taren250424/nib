@@ -1,176 +1,98 @@
 import { inject, injectable } from "inversify"
 import type { Task } from "../core"
-import { FocusManager } from "../core"
+import { CommandRegistry, FocusManager } from "../core"
 import { DI } from "../constants"
-import { CommandManager } from "../modules"
+import type { CommandId } from "../commands/ids"
 import { assert } from "../utils"
 import type { AppEvents, Source } from "./types"
-import type { SettingsViewModel } from "@renderer/viewmodels/SettingsViewModel"
 
+/**
+ * Resolves a UI event to the command it invokes.
+ *
+ * This is the transitional half of the command work: the table below now only
+ * names commands, while what they do and when they apply lives in the registry.
+ * Once keybindings and menus address command ids directly, both the task and
+ * source dimensions become properties of the binding rather than lookups, and
+ * this class goes away.
+ */
 @injectable()
 export class Dispatcher {
-	private readonly _handlers: {
-		[E in AppEvents]: Partial<
-			Record<Task | "default", Partial<Record<Source | "default", (...args: any[]) => void | Promise<void>>>>
-		>
+	private readonly _commandIds: {
+		[E in AppEvents]: Partial<Record<Task | "default", Partial<Record<Source | "default", CommandId>>>>
 	}
 
 	constructor(
 		@inject(DI.FocusManager) private readonly focusManager: FocusManager,
-		@inject(DI.CommandManager) private readonly commandManager: CommandManager
+		@inject(DI.CommandRegistry) private readonly commandRegistry: CommandRegistry
 	) {
-		this._handlers = {
+		this._commandIds = {
 			//
 
-			// Replace leaves focus inside the find/replace widget, and the shortcut
-			// registry does preventDefault outside the editor zone, so without a
-			// "find-replace" entry Ctrl+Z right after a replacement did nothing at all.
 			undo: {
-				editor: {
-					shortcut: () => {
-						/* intentional no-op */
-					},
-					default: async () => this.commandManager.performUndoEditor(),
-				},
-				tree: { default: async () => await this.commandManager.performUndoTree() },
-				"find-replace": { default: async () => this.commandManager.performUndoEditor() },
+				editor: { shortcut: "editor.undo.native", default: "editor.undo" },
+				tree: { default: "tree.undo" },
+				// Replace leaves focus in the widget, so Ctrl+Z there has to reach the
+				// editor history the replacement was written into.
+				"find-replace": { default: "editor.undo" },
 			},
 			redo: {
-				editor: {
-					shortcut: () => {
-						/* intentional no-op */
-					},
-					default: async () => this.commandManager.performRedoEditor(),
-				},
-				tree: { default: async () => await this.commandManager.performRedoTree() },
-				"find-replace": { default: async () => this.commandManager.performRedoEditor() },
+				editor: { shortcut: "editor.redo.native", default: "editor.redo" },
+				tree: { default: "tree.redo" },
+				"find-replace": { default: "editor.redo" },
 			},
 
 			//
 
-			newTab: { default: { default: async () => await this.commandManager.performNewTab() } },
-			openFile: { default: { default: (path) => this.commandManager.performOpenFile(path) } },
-			openDirectoryByDialog: {
-				default: { default: async () => await this.commandManager.performOpenDirectoryByDialog() },
-			},
-			openDirectoryByTreeNode: {
-				default: { default: async (node) => await this.commandManager.performOpenDirectoryByTreeNode(node) },
-			},
-			save: { default: { default: async () => await this.commandManager.performSave() } },
-			saveAs: { default: { default: async () => await this.commandManager.performSaveAs() } },
-			saveAll: { default: { default: async () => await this.commandManager.performSaveAll() } },
+			newTab: { default: { default: "file.newTab" } },
+			openFile: { default: { default: "file.open" } },
+			openDirectoryByDialog: { default: { default: "file.openDirectory" } },
+			openDirectoryByTreeNode: { default: { default: "tree.expandDirectory" } },
+			save: { default: { default: "file.save" } },
+			saveAs: { default: { default: "file.saveAs" } },
+			saveAll: { default: { default: "file.saveAll" } },
 
 			//
 
-			closeTab: {
-				default: {
-					default: (id: number) => this.commandManager.performCloseTab(id),
-				},
-			},
-			closeOtherTabs: {
-				tab: {
-					default: () => this.commandManager.performCloseOtherTabs(),
-				},
-			},
-			closeTabsToRight: {
-				tab: {
-					default: () => this.commandManager.performCloseTabsToRight(),
-				},
-			},
-			closeAllTabs: {
-				tab: {
-					default: () => this.commandManager.performCloseAllTabs(),
-				},
-			},
+			closeTab: { default: { default: "tab.close" } },
+			closeOtherTabs: { tab: { default: "tab.closeOthers" } },
+			closeTabsToRight: { tab: { default: "tab.closeToRight" } },
+			closeAllTabs: { tab: { default: "tab.closeAll" } },
 
 			//
 
-			create: {
-				tree: {
-					default: (directory: boolean) => this.commandManager.performCreate(directory),
-				},
-			},
-			rename: {
-				tree: {
-					default: async () => await this.commandManager.performRename(),
-				},
-			},
-			delete: {
-				tree: {
-					default: async () => await this.commandManager.performDelete(),
-				},
-			},
+			create: { tree: { default: "tree.create" } },
+			rename: { tree: { default: "tree.rename" } },
+			delete: { tree: { default: "tree.delete" } },
 
 			//
 
 			cut: {
-				editor: {
-					shortcut: async () => this.commandManager.performCutEditor(),
-					menu: async () => await this.commandManager.performCutEditorManual(),
-				},
-				tree: { default: async () => this.commandManager.performCutTree() },
+				editor: { shortcut: "editor.cut.native", menu: "editor.cut" },
+				tree: { default: "tree.cut" },
 			},
 			copy: {
-				editor: {
-					menu: async () => await this.commandManager.performCopyEditor(),
-				},
-				tree: { default: async () => this.commandManager.performCopyTree() },
+				editor: { menu: "editor.copy" },
+				tree: { default: "tree.copy" },
 			},
 			paste: {
-				editor: {
-					shortcut: async () => this.commandManager.performPasteEditor(),
-					menu: async () => await this.commandManager.performPasteEditorManual(),
-				},
+				editor: { shortcut: "editor.paste.native", menu: "editor.paste" },
 				tree: {
-					"context-menu": async () => await this.commandManager.performPasteTreeWithContextmenu(),
-					shortcut: async () => await this.commandManager.performPasteTreeWithShortcut(),
-					drag: async () => await this.commandManager.performPasteTreeWithDrag(),
+					"context-menu": "tree.pasteFromContextMenu",
+					shortcut: "tree.pasteFromShortcut",
+					drag: "tree.pasteFromDrag",
 				},
 			},
 
 			//
 
-			toggleFindReplace: {
-				default: {
-					default: (replace) => this.commandManager.toggleFindReplaceBox(replace),
-				},
-			},
-			searchQueryChanged: {
-				default: {
-					menu: (query: string) => this.commandManager.performSearchQueryChanged(query),
-				},
-			},
-			replaceQueryChanged: {
-				default: {
-					menu: (query: string) => this.commandManager.performReplaceQueryChanged(query),
-				},
-			},
-			toggleSearchOption: {
-				default: {
-					menu: (option: "matchCase" | "wholeWord" | "useRegex") =>
-						this.commandManager.performToggleSearchOption(option),
-				},
-			},
-			find: {
-				default: {
-					default: (direction: "up" | "down") => this.commandManager.performFind(direction),
-				},
-			},
-			replace: {
-				default: {
-					default: async () => this.commandManager.performReplace(),
-				},
-			},
-			replaceAll: {
-				default: {
-					default: async () => this.commandManager.performReplaceAll(),
-				},
-			},
-			closeFindReplace: {
-				default: {
-					default: async () => this.commandManager.performCloseFindReplaceBox(),
-				},
-			},
+			toggleFindReplace: { default: { default: "find.toggle" } },
+			searchQueryChanged: { default: { menu: "find.queryChanged" } },
+			replaceQueryChanged: { default: { menu: "find.replaceQueryChanged" } },
+			toggleSearchOption: { default: { menu: "find.toggleOption" } },
+			find: { default: { default: "find.next" } },
+			replace: { default: { default: "find.replace" } },
+			replaceAll: { default: { default: "find.replaceAll" } },
+			closeFindReplace: { default: { default: "find.close" } },
 
 			//
 
@@ -178,15 +100,9 @@ export class Dispatcher {
 				// Dispatched programmatically (e.g. session load), so it must not
 				// depend on which UI zone happens to hold focus at that moment —
 				// restored tabs focus the editor before initSettings runs.
-				default: {
-					programmatic: (viewModel: SettingsViewModel) => this.commandManager.performApplySettings(viewModel),
-				},
+				default: { programmatic: "settings.apply" },
 			},
-			applyAndSaveSettings: {
-				default: {
-					default: (viewModel: SettingsViewModel) => this.commandManager.performApplyAndSaveSettings(viewModel),
-				},
-			},
+			applyAndSaveSettings: { default: { default: "settings.applyAndSave" } },
 
 			//
 
@@ -194,30 +110,28 @@ export class Dispatcher {
 				// Closing must work from any zone: clicking the tab bar or tree
 				// leaves the task there (activeElement can be body), and a
 				// per-zone table would silently swallow Esc in those cases.
-				default: {
-					shortcut: async () => this.commandManager.performCloseFindReplaceBox(),
-				},
+				default: { shortcut: "find.close" },
 			},
 			enter: {
-				"find-replace": {
-					shortcut: async () => this.commandManager.performFindOrReplaceByActiveElement("down"),
-				},
-				tree: {
-					shortcut: async () => await this.commandManager.performOpenFileOrDirectoryByLastSelectedIndex(),
-				},
+				"find-replace": { shortcut: "find.submit" },
+				tree: { shortcut: "tree.open" },
 			},
 			shiftEnter: {
-				"find-replace": {
-					shortcut: async () => this.commandManager.performFindOrReplaceByActiveElement("up"),
-				},
+				"find-replace": { shortcut: "find.submitBackward" },
 			},
 		}
 	}
 
 	async dispatch(event: AppEvents, source: Source, ...args: any[]) {
+		// The table resolves by the focused task while the command's `when` reads it
+		// from the context keys, so the two have to be looking at the same moment.
+		// Focus events publish on a microtask, which a synchronous dispatch can
+		// outrun; syncing here closes that gap and costs nothing when unchanged.
+		this.focusManager.syncFocus()
+
 		const task = this.focusManager.getFocusedTask()
 
-		const eventNode = this._handlers[event]
+		const eventNode = this._commandIds[event]
 		assert(eventNode, `Missing event: ${event}`)
 
 		const taskNode = eventNode[task] || eventNode["default"]
@@ -227,13 +141,13 @@ export class Dispatcher {
 			return
 		}
 
-		const handler = taskNode[source] || taskNode["default"]
-		if (!handler) {
+		const commandId = taskNode[source] || taskNode["default"]
+		if (!commandId) {
 			if (source === "shortcut") return
-			assert(handler, `Missing handler: ${event} > ${task} > ${source}`)
+			assert(commandId, `Missing handler: ${event} > ${task} > ${source}`)
 			return
 		}
 
-		await handler(...args)
+		await this.commandRegistry.execute(commandId, ...args)
 	}
 }

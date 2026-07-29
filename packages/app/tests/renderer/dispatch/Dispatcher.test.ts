@@ -1,12 +1,15 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { Dispatcher } from "@renderer/dispatch/Dispatcher"
+import { CommandRegistry, ContextKeyService } from "@renderer/core"
 import type { FocusManager, Task } from "@renderer/core"
+import { createCommandDescriptors } from "@renderer/commands"
 import type { CommandManager } from "@renderer/modules"
 
 /**
- * Snapshot of the [event][task][source] routing the dispatcher performs today,
- * so the move to a command registry can be checked against it.
+ * Exercises the whole path an event takes: the dispatcher's [event][task][source]
+ * table, the command it names, that command's `when`, and the CommandManager call
+ * it ends in.
  */
 function createDispatcher(task: Task) {
 	const calls: string[] = []
@@ -22,9 +25,18 @@ function createDispatcher(task: Task) {
 		}
 	) as unknown as CommandManager
 
-	const focusManager = { getFocusedTask: () => task } as FocusManager
+	const contextKeyService = new ContextKeyService()
+	contextKeyService.set("focusedTask", task)
 
-	return { dispatcher: new Dispatcher(focusManager, commandManager), calls }
+	const commandRegistry = new CommandRegistry(contextKeyService)
+	commandRegistry.registerAll(createCommandDescriptors(commandManager))
+
+	const focusManager = {
+		getFocusedTask: () => task,
+		syncFocus: () => contextKeyService.set("focusedTask", task),
+	} as unknown as FocusManager
+
+	return { dispatcher: new Dispatcher(focusManager, commandRegistry), calls }
 }
 
 describe("Dispatcher routing", () => {
@@ -97,19 +109,45 @@ describe("Dispatcher routing", () => {
 		await expect(dispatcher.dispatch("create", "menu")).rejects.toThrow(/Missing task node/)
 	})
 
-	it("awaits the handler so callers can sequence work after it", async () => {
+	it("awaits the command so callers can sequence work after it", async () => {
 		const order: string[] = []
-		const commandManager = {
-			performSave: async () => {
-				await Promise.resolve()
-				order.push("handler")
-			},
-		} as unknown as CommandManager
-		const focusManager = { getFocusedTask: () => "editor" as Task } as FocusManager
 
-		await new Dispatcher(focusManager, commandManager).dispatch("save", "menu")
+		const commandRegistry = new CommandRegistry(new ContextKeyService())
+		commandRegistry.register({
+			id: "file.save",
+			run: async () => {
+				await Promise.resolve()
+				order.push("command")
+			},
+		})
+		const focusManager = {
+			getFocusedTask: () => "editor" as Task,
+			syncFocus: () => undefined,
+		} as unknown as FocusManager
+
+		await new Dispatcher(focusManager, commandRegistry).dispatch("save", "menu")
 		order.push("after")
 
-		expect(order).toEqual(["handler", "after"])
+		expect(order).toEqual(["command", "after"])
+	})
+
+	// The table selects by task and the command re-checks it through its `when`;
+	// a command reached in a context it does not apply to must not run.
+	it("skips a command whose when does not hold", async () => {
+		const contextKeyService = new ContextKeyService()
+		contextKeyService.set("focusedTask", "editor")
+
+		const run = vi.fn()
+		const commandRegistry = new CommandRegistry(contextKeyService)
+		commandRegistry.register({ id: "tree.undo", when: (ctx) => ctx.focusedTask === "tree", run })
+
+		const focusManager = {
+			getFocusedTask: () => "tree" as Task,
+			syncFocus: () => undefined,
+		} as unknown as FocusManager
+
+		await new Dispatcher(focusManager, commandRegistry).dispatch("undo", "shortcut")
+
+		expect(run).not.toHaveBeenCalled()
 	})
 })

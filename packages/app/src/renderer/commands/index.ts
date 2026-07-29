@@ -1,4 +1,6 @@
 export type { ICommand } from "./ICommand"
+export type { CommandId } from "./ids"
+export { createCommandDescriptors } from "./definitions"
 export { CreateCommand } from "./CreateCommand"
 export { DeleteCommand } from "./DeleteCommand"
 export { PasteCommand } from "./PasteCommand"
