@@ -35,12 +35,13 @@ export function handleSync(commandQueue: CommandQueue, tabEditorFacade: TabEdito
           } else if (treeDto) {
             const viewModel = treeFacade.toTreeViewModel(treeDto)
 
-            treeFacade.clearPathToTreeWrapper() // Must clear map manually before render (no built-in clear).
-            treeFacade.render(viewModel)
-
-            treeFacade.removeLastSelectedIndex()
-            treeFacade.clearSelectedIndices()
+            // Cleared before the render, not after: the renderer paints each
+            // node's selected/cut marks from this state, and paths from the
+            // outgoing tree would mark same-named nodes of the incoming one.
+            treeFacade.clearSelection()
             treeFacade.clearClipboard()
+
+            treeFacade.render(viewModel)
             treeFacade.setRootTreeViewModel(viewModel)
           }
         })

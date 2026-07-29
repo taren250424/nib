@@ -9,15 +9,25 @@ export class TreeStore {
   private _flattenTree: TreeViewModel[] = []
   private _pathToFlattenTreeIndex: Map<string, number> = new Map()
 
-  private _contextTreeIndex = -1
-  private _lastSelectedIndex = -1
-  private _selectedDragIndex = -1
-
-  // Set of user-selected indices (no children included). For just ui.
-  private _selectedIndices = new Set<number>()
+  // Selection state is keyed by path, not by flattenTree index.
+  //
+  // Indices shift on every create, delete, expand and collapse, so an index kept
+  // here means something different a moment later. That drift is where the
+  // "the command acted on a node other than the highlighted one" bugs came from.
+  // Paths only move on rename, which is the one operation that has to remap them
+  // (see renamePath).
+  //
+  // `focused` is the current item: the anchor for keyboard movement and the
+  // single target of rename, create and paste. `anchor` is where a Shift range
+  // starts from, and stays put while the range grows.
+  private _selectedPaths = new Set<string>()
+  private _focusedPath: string | null = null
+  private _anchorPath: string | null = null
+  private _contextPath: string | null = null
+  private _dragTargetPath: string | null = null
 
   // Set of full paths that have been copied (including all nested children).
-  // Unlike selectedIndices, this persists even if folders are collapsed.
+  // Unlike the selection, this persists even if folders are collapsed.
   // Used during copy/cut commands to track exactly what to paste later.
   // Always resolved at the time of the command (not tied to UI state).
   private _clipboardPaths = new Set<string>()
@@ -45,7 +55,6 @@ export class TreeStore {
       indent: dto.indent,
       directory: dto.directory,
       expanded: dto.expanded,
-      selected: false,
       children: dto.children ? dto.children.map((child) => this.toTreeViewModel(child)) : null,
     }
   }
@@ -140,20 +149,23 @@ export class TreeStore {
     this.updatePathToFlattenTreeIndex(index + 1)
   }
 
-  removeChildNodes(parent: TreeViewModel) {
+  /** Collapses a directory out of the flat list. Returns the paths that left it. */
+  removeChildNodes(parent: TreeViewModel): string[] {
     const index = this._pathToFlattenTreeIndex.get(parent.path)!
 
-    let removeCount = 0
+    const removedPaths: string[] = []
     for (let i = index + 1; i < this._flattenTree.length; i++) {
       if (this._flattenTree[i].indent <= parent.indent) break
+      removedPaths.push(this._flattenTree[i].path)
       this._pathToFlattenTreeIndex.delete(this._flattenTree[i].path)
-      removeCount++
     }
 
-    if (removeCount > 0) {
-      this._flattenTree.splice(index + 1, removeCount)
+    if (removedPaths.length > 0) {
+      this._flattenTree.splice(index + 1, removedPaths.length)
       this.updatePathToFlattenTreeIndex(index + 1)
     }
+
+    return removedPaths
   }
 
   //
@@ -231,54 +243,56 @@ export class TreeStore {
 
   //
 
-  get lastSelectedIndex() {
-    return this._lastSelectedIndex
+  getSelectedPaths(): string[] {
+    return [...this._selectedPaths]
   }
 
-  set lastSelectedIndex(index: number) {
-    this._lastSelectedIndex = index
+  setSelectedPaths(paths: Iterable<string>) {
+    this._selectedPaths = new Set(paths)
   }
 
-  removeLastSelectedIndex() {
-    this._lastSelectedIndex = -1
-  }
-
-  //
-
-  get contextTreeIndex() {
-    return this._contextTreeIndex
-  }
-
-  set contextTreeIndex(index: number) {
-    this._contextTreeIndex = index
-  }
-
-  removeContextTreeIndex() {
-    this._contextTreeIndex = -1
+  isSelected(path: string): boolean {
+    return this._selectedPaths.has(path)
   }
 
   //
 
-  get selectedDragIndex() {
-    return this._selectedDragIndex
+  get focusedPath() {
+    return this._focusedPath
   }
 
-  set selectedDragIndex(index: number) {
-    this._selectedDragIndex = index
+  set focusedPath(path: string | null) {
+    this._focusedPath = path
+  }
+
+  isFocused(path: string): boolean {
+    return this._focusedPath === path
+  }
+
+  get anchorPath() {
+    return this._anchorPath
+  }
+
+  set anchorPath(path: string | null) {
+    this._anchorPath = path
   }
 
   //
 
-  addSelectedIndices(index: number) {
-    this._selectedIndices.add(index)
+  get contextPath() {
+    return this._contextPath
   }
 
-  getSelectedIndices(): number[] {
-    return [...this._selectedIndices]
+  set contextPath(path: string | null) {
+    this._contextPath = path
   }
 
-  clearSelectedIndices() {
-    this._selectedIndices.clear()
+  get dragTargetPath() {
+    return this._dragTargetPath
+  }
+
+  set dragTargetPath(path: string | null) {
+    this._dragTargetPath = path
   }
 
   //
@@ -291,15 +305,58 @@ export class TreeStore {
     this._clipboardMode = mode
   }
 
-  addClipboardPaths(path: string) {
-    this._clipboardPaths.add(path)
-  }
-
   getClipboardPaths(): string[] {
     return [...this._clipboardPaths]
   }
 
-  clearClipboardPaths() {
-    this._clipboardPaths.clear()
+  setClipboardPaths(paths: Iterable<string>) {
+    this._clipboardPaths = new Set(paths)
+  }
+
+  /**
+   * Whether the node is one of the roots waiting to be moved.
+   *
+   * Only cut greys nodes out; a copy leaves its sources looking untouched, which
+   * is also why the mode is part of the answer rather than the path set alone.
+   */
+  isCut(path: string): boolean {
+    return this._clipboardMode === "cut" && this._clipboardPaths.has(path)
+  }
+
+  //
+
+  /**
+   * The node is hidden but still exists (its parent collapsed). It drops out of
+   * the selection — a command must never act on something off screen — while the
+   * clipboard keeps it, since a cut folder can be collapsed and still pasted.
+   */
+  deselectPath(path: string) {
+    this._selectedPaths.delete(path)
+    if (this._focusedPath === path) this._focusedPath = null
+    if (this._anchorPath === path) this._anchorPath = null
+    if (this._contextPath === path) this._contextPath = null
+    if (this._dragTargetPath === path) this._dragTargetPath = null
+  }
+
+  /** The node is gone from the tree entirely, so the clipboard loses it too. */
+  forgetPath(path: string) {
+    this.deselectPath(path)
+    this._clipboardPaths.delete(path)
+  }
+
+  /** Rename is the only thing that moves a path, so it is the only remapper. */
+  renamePath(oldPath: string, newPath: string) {
+    const swap = (set: Set<string>) => {
+      if (!set.delete(oldPath)) return
+      set.add(newPath)
+    }
+
+    swap(this._selectedPaths)
+    swap(this._clipboardPaths)
+
+    if (this._focusedPath === oldPath) this._focusedPath = newPath
+    if (this._anchorPath === oldPath) this._anchorPath = newPath
+    if (this._contextPath === oldPath) this._contextPath = newPath
+    if (this._dragTargetPath === oldPath) this._dragTargetPath = newPath
   }
 }

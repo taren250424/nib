@@ -45,7 +45,7 @@ describe("MENU_BINDINGS", () => {
     const { registry, context } = registryWithAllCommands()
     const cut = MENU_BINDINGS.find((binding) => binding.element === "cut")!.commands
 
-    context.update({ focusedTask: "tree" })
+    context.update({ focusedTask: "tree", treeHasSelection: true })
     expect(registry.firstEnabled(cut)).toBe("tree.cut")
 
     context.update({ focusedTask: "editor", hasActiveEditor: true })

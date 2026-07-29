@@ -5,6 +5,8 @@ export const CLASS_FOCUSED = "focused"
 export const CLASS_SELECTED = "selected"
 export const CLASS_EXPANDED = "expanded"
 export const CLASS_TREE_DRAG_OVERLAY = "tree-drag-overlay"
+/** On the tree container while the tree is the zone commands act on. */
+export const CLASS_TREE_ACTIVE = "tree-active"
 export const CLASS_BINARY = "binary"
 export const CLASS_DEACTIVE = "deactive"
 export const CLASS_CUT = "cut"

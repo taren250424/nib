@@ -6,8 +6,6 @@ import type { AppEvents } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 
 export function handleTree(dispatcher: Dispatcher, emitter: EventEmitter, treeFacade: TreeFacade) {
-  bindMousedownEvents(emitter, treeFacade)
-
   bindTreeTopMenuEvents(dispatcher, treeFacade)
 
   bindContainerClickEvent(dispatcher, treeFacade)
@@ -21,31 +19,10 @@ export function handleTree(dispatcher: Dispatcher, emitter: EventEmitter, treeFa
   bindMouseleaveEventsForDrag(emitter, treeFacade)
 }
 
-function bindMousedownEvents(emitter: EventEmitter, treeFacade: TreeFacade) {
-  const { treeNodeContainer, treeTop } = treeFacade.renderer.elements
-
-  treeNodeContainer.addEventListener("mousedown", () => {
-    treeFacade.blur(treeFacade.lastSelectedIndex)
-    treeFacade.blur(treeFacade.contextTreeIndex)
-  })
-
-  treeTop.addEventListener("mousedown", () => {
-    treeFacade.blur(treeFacade.lastSelectedIndex)
-    treeFacade.blur(treeFacade.contextTreeIndex)
-  })
-
-  emitter.on(CUSTOM_EVENTS.MOUSE_DOWN.OUT.SIDE, (e) => {
-    const target = e.target as HTMLElement
-    const isInTreeContextMenu = !!target.closest(DOM.SELECTOR_TREE_CONTEXT_MENU)
-    if (!isInTreeContextMenu) {
-      // out of tree system.
-      treeFacade.blur(treeFacade.contextTreeIndex)
-      treeFacade.blur(treeFacade.lastSelectedIndex)
-    }
-  })
-}
-
-//
+// NOTE: nothing here clears the selected/focused marks when a click lands
+// elsewhere. The marks say which node the tree's commands would act on, which
+// stays true while focus is away; how they look when the tree is not the active
+// zone is a `.tree-active` rule in tree.scss.
 
 function bindTreeTopMenuEvents(dispatcher: Dispatcher, treeFacade: TreeFacade) {
   const { treeTopAddFile, treeTopAddDirectory } = treeFacade.renderer.elements
@@ -73,48 +50,36 @@ function bindContainerClickEvent(dispatcher: Dispatcher, treeFacade: TreeFacade)
   })
 
   function _processContainer() {
-    treeNodeContainer.classList.add(DOM.CLASS_FOCUSED)
-    treeFacade.clearTreeSelected()
-    treeFacade.lastSelectedIndex = 0
+    // The root row does not exist as an element, so clicking the empty area
+    // below the tree means "the root is the current item" — that is what a
+    // create with nothing selected falls back to.
+    treeFacade.setSelection([], 0)
   }
 
   async function _processNode(e: MouseEvent, treeNode: HTMLElement) {
-    treeNode.classList.add(DOM.CLASS_FOCUSED)
     const path = treeNode.dataset[DOM.DATASET_ATTR_TREE_PATH]!
+    const index = treeFacade.getFlattenIndexByPath(path)
+    if (index === undefined) return
 
-    if (e.shiftKey && treeFacade.lastSelectedIndex > 0) {
-      const startIndex = treeFacade.lastSelectedIndex
-      const endIndex = treeFacade.getFlattenIndexByPath(path)
-      treeFacade.setLastSelectedIndexByPath(path)
-
-      const [start, end] = [startIndex, endIndex].sort((a, b) => a - b)
-      for (let i = start; i <= end; i++) {
-        treeFacade.addSelectedIndices(i)
-        treeFacade.getTreeNodeByIndex(i).classList.add(DOM.CLASS_SELECTED)
-      }
-    } else if (e.ctrlKey) {
-      treeNode.classList.add(DOM.CLASS_SELECTED)
-
-      treeFacade.setLastSelectedIndexByPath(path)
-
-      const index = treeFacade.getFlattenIndexByPath(path)
-      treeFacade.addSelectedIndices(index)
-    } else {
-      treeFacade.clearTreeSelected()
-      treeNode.classList.add(DOM.CLASS_SELECTED)
-
-      const viewModel = treeFacade.getTreeViewModelByPath(path)
-      if (!viewModel) return
-      if (viewModel.directory) await dispatcher.dispatch("openDirectoryByTreeNode", "element", treeNode)
-      else await dispatcher.dispatch("openFile", "element", path)
-
-      // The node may have been deleted while the open waited in the command queue.
-      const index = treeFacade.getFlattenIndexByPath(path)
-      if (index === undefined) return
-
-      treeFacade.setLastSelectedIndexByPath(path)
-      treeFacade.addSelectedIndices(index)
+    if (e.shiftKey) {
+      treeFacade.extendSelectionTo(index)
+      return
     }
+
+    if (e.ctrlKey) {
+      treeFacade.toggleSelection(index)
+      return
+    }
+
+    // Select before opening, not after: the open goes through the command
+    // queue, and until it comes back the highlight would still be on whatever
+    // was selected before the click.
+    treeFacade.setSelection([index])
+
+    const viewModel = treeFacade.getTreeViewModelByPath(path)
+    if (!viewModel) return
+    if (viewModel.directory) await dispatcher.dispatch("openDirectoryByTreeNode", "element", treeNode)
+    else await dispatcher.dispatch("openFile", "element", path)
   }
 }
 
@@ -170,9 +135,9 @@ function bindMousedownEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacad
     let count = treeFacade.getSelectedIndices().length
     if (count === 0) {
       const path = node.dataset[DOM.DATASET_ATTR_TREE_PATH]!
-      const idx = treeFacade.getFlattenIndexByPath(path)!
-      treeFacade.lastSelectedIndex = idx
-      treeFacade.addSelectedIndices(idx)
+      const idx = treeFacade.getFlattenIndexByPath(path)
+      if (idx === undefined) return
+      treeFacade.setSelection([idx])
       count = 1
     }
 

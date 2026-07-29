@@ -5,5 +5,4 @@ export interface TreeViewModel {
   directory: boolean
   expanded: boolean
   children: TreeViewModel[] | null
-  selected: boolean
 }

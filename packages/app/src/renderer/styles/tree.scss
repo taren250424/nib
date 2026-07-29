@@ -118,15 +118,24 @@ $tree-top-min-height: 25px;
   background-color: var(--tree-node-selected-hover);
 }
 
-// Only the tree nodes are focusable, so :focus-within tells us whether this
-// selection is the one being acted on or one left behind when focus moved to
-// the editor. Dim the latter.
-#tree-node-container:not(:focus-within) .tree-node.selected {
+// .tree-active says the tree is the zone commands act on, which is the same
+// answer the `when` conditions get from focusedTask. Without it the selection
+// is one left behind when focus moved to the editor — still there, but not
+// what the next keystroke will touch. Dim it, and drop the current-item border.
+//
+// Not :focus-within: opening the tree's own context menu takes focus out of the
+// container while the selection is very much still the target.
+#tree-node-container:not(.tree-active) .tree-node.selected {
   background-color: var(--tree-node-selected-inactive);
 }
 
-#tree-node-container:not(:focus-within) .tree-node.selected:hover {
+#tree-node-container:not(.tree-active) .tree-node.selected:hover {
   background-color: var(--tree-node-selected);
+}
+
+#tree-node-container:not(.tree-active) .tree-node.focused {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
 }
 
 .tree-node > span {

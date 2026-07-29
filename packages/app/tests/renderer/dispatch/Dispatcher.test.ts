@@ -96,7 +96,7 @@ describe("Dispatcher routing", () => {
   })
 
   it("falls back to the default source when the given one has no entry", async () => {
-    const { dispatcher, calls } = createDispatcher("tree")
+    const { dispatcher, calls } = createDispatcher("tree", { treeHasSelection: true })
     await dispatcher.dispatch("cut", "element")
     expect(calls).toEqual(["performCutTree"])
   })

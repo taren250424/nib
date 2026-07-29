@@ -168,15 +168,14 @@ export class CommandManager {
 
     const responseViewModel = this.treeFacade.toTreeViewModel(openDirectoryResponse.data)
 
-    // Everything below indexes into the tree that is being replaced, so it has to
-    // be dropped with it: stale wrappers, selection indices pointing past the end
-    // of the new tree, and a clipboard naming paths from the old directory.
-    this.treeFacade.clearPathToTreeWrapper() // Must clear map manually before render (no built-in clear).
-    this.treeFacade.render(responseViewModel)
-
-    this.treeFacade.removeLastSelectedIndex()
-    this.treeFacade.clearSelectedIndices()
+    // Everything below names the tree that is being replaced, so it has to be
+    // dropped before the render: a selection or clipboard still holding paths
+    // from the old directory would paint marks onto same-named nodes of the new
+    // one. (The wrapper map is cleared by the full render itself.)
+    this.treeFacade.clearSelection()
     this.treeFacade.clearClipboard()
+
+    this.treeFacade.render(responseViewModel)
     this.treeFacade.setRootTreeViewModel(responseViewModel)
 
     // Cleanup previous tabs.
@@ -199,32 +198,25 @@ export class CommandManager {
   // the selection instead of replacing it.
 
   performFocusTreeUp(extend: boolean) {
-    const index = this.treeFacade.lastSelectedIndex
+    const index = this.treeFacade.focusedIndex
     if (index <= 0) return
     this._moveTreeFocus(index, -1, extend)
   }
 
   performFocusTreeDown(extend: boolean) {
-    const index = this.treeFacade.lastSelectedIndex
+    const index = this.treeFacade.focusedIndex
     if (index >= this.treeFacade.flattenTree.length - 1) return
     this._moveTreeFocus(index, 1, extend)
   }
 
   private _moveTreeFocus(fromIndex: number, delta: number, extend: boolean) {
-    this.treeFacade.getTreeNodeByIndex(fromIndex).classList.remove(DOM.CLASS_FOCUSED)
-
     const index = fromIndex + delta
-    // Assigning this focuses the node, which is what scrolls it into view.
-    this.treeFacade.lastSelectedIndex = index
 
-    const node = this.treeFacade.getTreeNodeByIndex(index)
-    node.classList.add(DOM.CLASS_FOCUSED)
+    if (extend) this.treeFacade.extendSelectionTo(index)
+    else this.treeFacade.setSelection([index])
 
-    if (!extend) this.treeFacade.clearTreeSelected()
-
-    node.classList.add(DOM.CLASS_SELECTED)
-    this.treeFacade.addSelectedIndices(index)
-    this.treeFacade.lastSelectedIndex = index
+    // Real DOM focus is what scrolls the row into view.
+    this.treeFacade.focusIndex(index)
   }
 
   //
@@ -267,25 +259,25 @@ export class CommandManager {
 
   //
 
-  performOpenFileOrDirectoryByLastSelectedIndex() {
-    return this.commandQueue.enqueue(() => this._doOpenFileOrDirectoryByLastSelectedIndex())
+  performOpenFocusedTreeNode() {
+    return this.commandQueue.enqueue(() => this._doOpenFocusedTreeNode())
   }
 
-  private async _doOpenFileOrDirectoryByLastSelectedIndex() {
-    const idx = Math.max(this.treeFacade.lastSelectedIndex, 0)
+  private async _doOpenFocusedTreeNode() {
+    const idx = Math.max(this.treeFacade.focusedIndex, 0)
     const viewModel = this.treeFacade.getTreeViewModelByIndex(idx)
     if (!viewModel) return
 
     if (viewModel.directory) {
+      if (idx === 0) return
       const treeNode = this.treeFacade.getTreeNodeByIndex(idx)
       await this._doOpenDirectoryByTreeNode(treeNode)
     } else {
       await this._doOpenFile(viewModel.path)
     }
 
-    // Re-focus the tree node to reclaim focus lost to the editor during the opening process.
-    const treeNode = this.treeFacade.getTreeNodeByIndex(idx)
-    treeNode.focus()
+    // Reclaim the focus the editor took during the open.
+    this.treeFacade.focusIndex(idx)
   }
 
   //
@@ -400,7 +392,7 @@ export class CommandManager {
   }
 
   private async _resolveParentDirectory() {
-    let idx = Math.max(this.treeFacade.lastSelectedIndex, 0)
+    let idx = Math.max(this.treeFacade.focusedIndex, 0)
     let viewModel = this.treeFacade.getTreeViewModelByIndex(idx)
 
     if (!viewModel.directory) {
@@ -473,13 +465,11 @@ export class CommandManager {
   }
 
   private _selectTreeNodeAfterCreate(filePath: string) {
-    this.treeFacade.clearTreeSelected()
     const idx = this.treeFacade.getFlattenIndexByPath(filePath)
     if (idx === undefined) return
-    this.treeFacade.addSelectedIndices(idx)
-    this.treeFacade.lastSelectedIndex = idx
-    const node = this.treeFacade.getTreeNodeByIndex(idx)
-    node.classList.add(DOM.CLASS_FOCUSED, DOM.CLASS_SELECTED)
+
+    this.treeFacade.setSelection([idx])
+    this.treeFacade.focusIndex(idx)
   }
 
   private async _openTabEditorAfterCreate(filePath: string, cmd: CreateCommand) {
@@ -515,7 +505,13 @@ export class CommandManager {
   }
 
   private _resolveRenameTarget() {
-    const treeNode = this.treeFacade.getTreeNodeByIndex(this.treeFacade.lastSelectedIndex)
+    // Index 0 is the root, which has no row of its own and is not the app's to
+    // rename; -1 is nothing selected. Both would otherwise reach for an element
+    // that is not the current item.
+    const index = this.treeFacade.focusedIndex
+    if (index <= 0) return null
+
+    const treeNode = this.treeFacade.getTreeNodeByIndex(index)
     const oldPath = treeNode.dataset[DOM.DATASET_ATTR_TREE_PATH]!
     const viewModel = this.treeFacade.getTreeViewModelByPath(oldPath)
     return { treeNode, oldPath, isDirectory: viewModel.directory }
@@ -592,6 +588,10 @@ export class CommandManager {
     restoreSpan.classList.add(DOM.CLASS_TREE_NODE_TEXT, "ellipsis")
     restoreSpan.textContent = window.utils.getBaseName(path)
     treeNode.replaceChild(restoreSpan, treeNodeInput)
+
+    // Opening the input dropped the current-item border; the node is still the
+    // current item, so put back what the state says.
+    this.treeFacade.refreshNodeState(path)
   }
 
   //
@@ -601,13 +601,9 @@ export class CommandManager {
   }
 
   private async _doDelete() {
-    // Capture paths, not indices: the command re-resolves them at apply time,
-    // so overlapping/stale requests can never delete the wrong nodes.
-    const selectedPaths: string[] = []
-    for (const idx of this.treeFacade.getSelectedIndices()) {
-      const viewModel = this.treeFacade.getTreeViewModelByIndex(idx)
-      if (viewModel) selectedPaths.push(viewModel.path)
-    }
+    // The command re-resolves these at apply time, so overlapping or stale
+    // requests can never delete the wrong nodes.
+    const selectedPaths = this.treeFacade.getSelectedPaths()
     if (selectedPaths.length === 0) return
 
     const cmd = new DeleteCommand(this.treeFacade, this.tabEditorFacade, selectedPaths)
@@ -643,13 +639,12 @@ export class CommandManager {
   // sibling of its own parent. Descendants are not marked as cut either — the
   // wrapper's colour is inherited by the child nodes it wraps.
   performCutTree() {
-    this.treeFacade.clearClipboardPaths()
-    this.treeFacade.clipboardMode = "cut"
+    this.treeFacade.setClipboard(this.treeFacade.getSelectedPaths(), "cut")
+  }
 
-    for (const idx of this.treeFacade.getSelectedIndices()) {
-      this.treeFacade.getTreeWrapperByIndex(idx).classList.add(DOM.CLASS_CUT)
-      this.treeFacade.addClipboardPaths(this.treeFacade.getTreeViewModelByIndex(idx).path)
-    }
+  /** Esc drops a pending cut, the way it does in every file manager. */
+  performClearTreeClipboard() {
+    this.treeFacade.clearClipboard()
   }
 
   async performCopyEditor() {
@@ -662,12 +657,7 @@ export class CommandManager {
 
   /** Roots only, for the same reason as {@link performCutTree}. */
   performCopyTree() {
-    this.treeFacade.clearClipboardPaths()
-    this.treeFacade.clipboardMode = "copy"
-
-    for (const idx of this.treeFacade.getSelectedIndices()) {
-      this.treeFacade.addClipboardPaths(this.treeFacade.getTreeViewModelByIndex(idx).path)
-    }
+    this.treeFacade.setClipboard(this.treeFacade.getSelectedPaths(), "copy")
   }
 
   performPasteEditor() {
@@ -702,7 +692,7 @@ export class CommandManager {
   }
 
   async performPasteTreeWithShortcut() {
-    await this._enqueuePasteTree(this.treeFacade.lastSelectedIndex)
+    await this._enqueuePasteTree(this.treeFacade.focusedIndex)
   }
 
   async performPasteTreeWithDrag() {

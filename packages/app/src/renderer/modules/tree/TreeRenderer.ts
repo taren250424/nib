@@ -7,14 +7,19 @@ import closedFolderSvg from "../../assets/icons/closed_folder.svg?raw"
 import openedFolderSvg from "../../assets/icons/opened_folder.svg?raw"
 import { DI, DOM } from "@renderer/constants"
 import type { TreeElements } from "./TreeElements"
+import { TreeStore } from "./TreeStore"
 
 @injectable()
 export class TreeRenderer {
   private _ghost: HTMLElement | null = null
 
   private _pathToTreeWrapper: Map<string, HTMLElement> = new Map()
+  private _rootPath: string | null = null
 
-  constructor(@inject(DI.TreeElements) readonly elements: TreeElements) {}
+  constructor(
+    @inject(DI.TreeElements) readonly elements: TreeElements,
+    @inject(DI.TreeStore) private readonly store: TreeStore
+  ) {}
 
   //
 
@@ -40,10 +45,14 @@ export class TreeRenderer {
     node.dataset[DOM.DATASET_ATTR_TREE_PATH] = viewModel.path
     node.title = viewModel.path
     node.tabIndex = -1
+    node.setAttribute("role", "treeitem")
+    node.setAttribute("aria-level", String(viewModel.indent))
+    if (viewModel.directory) node.setAttribute("aria-expanded", String(viewModel.expanded))
 
     const children = document.createElement("div")
     children.classList.add(DOM.CLASS_TREE_NODE_CHILDREN)
     children.classList.toggle(DOM.CLASS_EXPANDED, viewModel.expanded)
+    children.setAttribute("role", "group")
 
     const wrapper = document.createElement("div")
     wrapper.classList.add(DOM.CLASS_TREE_NODE_WRAPPER)
@@ -54,8 +63,49 @@ export class TreeRenderer {
     wrapper.appendChild(children)
 
     this._pathToTreeWrapper.set(viewModel.path, wrapper)
+    // Paint from the store rather than leaving it to whoever asked for the
+    // render: a node built without this is a node whose selected/focused/cut
+    // marks vanish the moment anything re-renders it.
+    this.syncNodeState(viewModel.path)
 
     return wrapper
+  }
+
+  /**
+   * Brings one node's selected/focused/cut marks back in line with the store.
+   *
+   * Every path that produces those marks ends here, so the highlighted node and
+   * the node a command will act on are the same node by construction.
+   */
+  syncNodeState(path: string) {
+    const wrapper = this._pathToTreeWrapper.get(path)
+    if (!wrapper) return
+
+    // The root has no row of its own — its wrapper is the scroll container
+    // holding every other node, so querying it for a tree node would find the
+    // first child instead. Its focus shows on the container.
+    if (path === this._rootPath) {
+      this.elements.treeNodeContainer.classList.toggle(DOM.CLASS_FOCUSED, this.store.isFocused(path))
+      return
+    }
+
+    // Cut marks the wrapper, not the row: the greying is meant to carry to the
+    // children being moved along with it.
+    wrapper.classList.toggle(DOM.CLASS_CUT, this.store.isCut(path))
+
+    const node = wrapper.querySelector(DOM.SELECTOR_TREE_NODE) as HTMLElement | null
+    if (!node) return
+
+    const selected = this.store.isSelected(path)
+    node.classList.toggle(DOM.CLASS_SELECTED, selected)
+    node.classList.toggle(DOM.CLASS_FOCUSED, this.store.isFocused(path))
+    node.setAttribute("aria-selected", String(selected))
+  }
+
+  /** Reflects an expand/collapse the tree performed on an existing node. */
+  syncNodeExpanded(path: string, expanded: boolean) {
+    const node = this._pathToTreeWrapper.get(path)?.querySelector(DOM.SELECTOR_TREE_NODE) as HTMLElement | null
+    node?.setAttribute("aria-expanded", String(expanded))
   }
 
   private _renderElement(container: HTMLElement, viewModel: TreeViewModel) {
@@ -87,8 +137,15 @@ export class TreeRenderer {
       // container = this.elements.treeNodeContainer
       container = this.elements.simpleBar.getContentElement() as HTMLElement
 
+      // Every wrapper below is about to be discarded. Clearing here rather than
+      // asking callers to remember means a full render cannot leave the map
+      // pointing at elements that are no longer in the document.
+      this._pathToTreeWrapper.clear()
+      this._rootPath = viewModel.path
+
       this._pathToTreeWrapper.set(viewModel.path, container)
       container.dataset[DOM.DATASET_ATTR_TREE_PATH] = viewModel.path
+      container.setAttribute("role", "tree")
     }
 
     while (container.firstChild) {
@@ -158,10 +215,6 @@ export class TreeRenderer {
   }
 
   //
-
-  clearPathToTreeWrapper() {
-    this._pathToTreeWrapper.clear()
-  }
 
   getTreeNodeByPath(path: string) {
     const wrapper = this._pathToTreeWrapper.get(path)!

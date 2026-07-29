@@ -37,6 +37,9 @@ function inTask(...tasks: Task[]) {
 /** Editing the document needs both the focus and a document to edit. */
 const inEditor = (context: CommandContext) => context.focusedTask === "editor" && context.hasActiveEditor
 
+/** Most tree commands act on the selection, so an empty one disables them. */
+const inTreeSelection = (context: CommandContext) => context.focusedTask === "tree" && context.treeHasSelection
+
 /**
  * Every command, paired with the context it applies in.
  *
@@ -92,13 +95,15 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "tab.closeToRight": { when: inTask("tab"), run: () => commandManager.performCloseTabsToRight() },
     "tab.closeAll": { when: inTask("tab"), run: () => commandManager.performCloseAllTabs() },
 
-    // Tree items
+    // Tree items. Create is the one that works with nothing selected — it falls
+    // back to the root directory; the rest need a node to act on, which is what
+    // greys them out in the context menu.
     "tree.create": { when: inTask("tree"), run: (directory: boolean) => commandManager.performCreate(directory) },
-    "tree.rename": { when: inTask("tree"), run: () => commandManager.performRename() },
-    "tree.delete": { when: inTask("tree"), run: () => commandManager.performDelete() },
+    "tree.rename": { when: inTreeSelection, run: () => commandManager.performRename() },
+    "tree.delete": { when: inTreeSelection, run: () => commandManager.performDelete() },
     "tree.open": {
-      when: inTask("tree"),
-      run: () => commandManager.performOpenFileOrDirectoryByLastSelectedIndex(),
+      when: inTreeSelection,
+      run: () => commandManager.performOpenFocusedTreeNode(),
     },
     "tree.expandDirectory": {
       run: (node: HTMLElement) => commandManager.performOpenDirectoryByTreeNode(node),
@@ -114,8 +119,14 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
 
     // Tree clipboard. Paste splits by where the target comes from: the
     // right-clicked node, the selection, or the node a drag was dropped on.
-    "tree.cut": { when: inTask("tree"), run: () => commandManager.performCutTree() },
-    "tree.copy": { when: inTask("tree"), run: () => commandManager.performCopyTree() },
+    "tree.cut": { when: inTreeSelection, run: () => commandManager.performCutTree() },
+    "tree.copy": { when: inTreeSelection, run: () => commandManager.performCopyTree() },
+    // Esc completes the cut lifecycle: without a way to call one off, the
+    // sources kept their greyed-out styling until something else replaced them.
+    "tree.clearClipboard": {
+      when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
+      run: () => commandManager.performClearTreeClipboard(),
+    },
     // Paste needs something on the clipboard, not merely a selection — cutting
     // and then clicking elsewhere still leaves something to paste.
     "tree.pasteFromContextMenu": {

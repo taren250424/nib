@@ -9,7 +9,7 @@ import { TreeStore } from "./TreeStore"
 import { TreeDragManager } from "./TreeDragManager"
 import { CLASS_SELECTED } from "@renderer/constants/dom"
 import { ContextKeyService } from "@renderer/core"
-import { adjustMenuPosition, assert } from "@renderer/utils"
+import { adjustMenuPosition } from "@renderer/utils"
 
 @injectable()
 export class TreeFacade {
@@ -18,7 +18,20 @@ export class TreeFacade {
     @inject(DI.TreeRenderer) public readonly renderer: TreeRenderer,
     @inject(DI.TreeDragManager) public readonly drag: TreeDragManager,
     @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService
-  ) {}
+  ) {
+    // Whether this selection is the one being acted on is the same question the
+    // commands answer with focusedTask, so the dimming reads it from there
+    // rather than from :focus-within — the two disagree while the context menu
+    // holds focus, and the selection is still the menu's target then.
+    this.contextKeyService.onDidChange((changed) => {
+      if (changed.has("focusedTask")) this._syncActiveClass()
+    })
+  }
+
+  private _syncActiveClass() {
+    const active = this.contextKeyService.get("focusedTask") === "tree"
+    this.renderer.elements.treeNodeContainer.classList.toggle(DOM.CLASS_TREE_ACTIVE, active)
+  }
 
   // store
 
@@ -64,10 +77,27 @@ export class TreeFacade {
 
   insertChildNodes(node: TreeViewModel) {
     this.store.insertChildNodes(node)
+    this.renderer.syncNodeExpanded(node.path, true)
   }
 
   removeChildNodes(node: TreeViewModel) {
-    this.store.removeChildNodes(node)
+    // Collapsing hides rows that may be selected. Leaving them selected would
+    // point the next delete or cut at nodes the user can no longer see, so the
+    // selection retreats to the directory that swallowed them.
+    const removedPaths = this.store.removeChildNodes(node)
+    let focusSwallowed = false
+
+    for (const path of removedPaths) {
+      if (this.store.isFocused(path)) focusSwallowed = true
+      this.store.deselectPath(path)
+      this.renderer.syncNodeState(path)
+    }
+
+    if (focusSwallowed) this.store.focusedPath = node.path
+
+    this.renderer.syncNodeState(node.path)
+    this.renderer.syncNodeExpanded(node.path, false)
+    this._publishSelectionContext()
   }
 
   //
@@ -110,113 +140,196 @@ export class TreeFacade {
 
   //
 
-  get lastSelectedIndex() {
-    return this.store.lastSelectedIndex
+  // selection
+  //
+  // Everything that changes what is selected or focused goes through
+  // _applySelection. The store, the DOM classes and the context keys move
+  // together there, so what is highlighted, what a command will act on and which
+  // menu items are enabled cannot drift apart — which is exactly how a
+  // right-click once deleted a directory the user had stopped looking at.
+
+  /** Replaces the selection. Focus and the Shift anchor land on `focusIndex`. */
+  setSelection(indices: readonly number[], focusIndex?: number) {
+    const paths = this._toPaths(indices)
+    const focusPath = focusIndex === undefined ? (paths[paths.length - 1] ?? null) : this._pathAt(focusIndex)
+
+    this._applySelection(paths, focusPath, focusPath)
   }
 
-  set lastSelectedIndex(index: number) {
-    // -1 is the explicit "no selection" sentinel. Any other index must be live:
-    // commands and watcher sync are serialized, so a dead index here is an
-    // internal bug — surface it in dev, tolerate it in production.
-    const viewModel = this.store.flattenTree[index]
-    assert(index === -1 || viewModel, `lastSelectedIndex: dead index ${index}`)
-    if (viewModel) {
-      const wrapper = this.getTreeWrapperByPath(viewModel.path)
-      const treeNode = wrapper?.querySelector(DOM.SELECTOR_TREE_NODE) as HTMLElement | null
-      treeNode?.focus()
+  clearSelection() {
+    this._applySelection([], null, null)
+  }
+
+  /** Ctrl-click: flips one node, leaving the rest of the selection alone. */
+  toggleSelection(index: number) {
+    const path = this._pathAt(index)
+    if (path === null) return
+
+    const paths = this.store.getSelectedPaths()
+    const next = this.store.isSelected(path) ? paths.filter((p) => p !== path) : [...paths, path]
+
+    this._applySelection(next, path, path)
+  }
+
+  /**
+   * Shift-click and Shift+Arrow: the run from the anchor to `index`.
+   *
+   * The anchor stays where the last plain click put it. Moving it with each
+   * extension is what made a repeated Shift+Down grow a selection it should have
+   * been shrinking.
+   */
+  extendSelectionTo(index: number) {
+    const path = this._pathAt(index)
+    if (path === null) return
+
+    const anchorPath = this.store.anchorPath
+    const anchorIndex = anchorPath !== null ? this.store.getFlattenIndexByPath(anchorPath) : undefined
+
+    // No anchor yet (nothing selected, or the anchor was collapsed away) — this
+    // node becomes one, and the range is just itself.
+    if (anchorIndex === undefined) {
+      this._applySelection([path], path, path)
+      return
     }
-    this.store.lastSelectedIndex = viewModel ? index : -1
+
+    // Index 0 is the root, which has no row and cannot be part of a range.
+    const start = Math.max(1, Math.min(anchorIndex, index))
+    const end = Math.max(anchorIndex, index)
+
+    const paths: string[] = []
+    for (let i = start; i <= end; i++) {
+      const rowPath = this._pathAt(i)
+      if (rowPath !== null) paths.push(rowPath)
+    }
+
+    this._applySelection(paths, path, anchorPath)
   }
 
-  removeLastSelectedIndex() {
-    this.store.lastSelectedIndex = -1
+  /**
+   * Moves the current item and gives it real DOM focus, which is what scrolls it
+   * into view. Kept apart from the selection setters: assigning the current item
+   * used to focus an element as a side effect, and callers that only wanted the
+   * bookkeeping had to reach past the facade into the store to avoid it.
+   */
+  focusIndex(index: number) {
+    const path = this._pathAt(index)
+    if (path === null) return
+
+    if (!this.store.isFocused(path)) {
+      this._applySelection(this.store.getSelectedPaths(), path, path)
+    }
+
+    // The root's wrapper is the container of every other node, so asking it for
+    // a tree node would hand back the first child. It has no row to focus.
+    if (index === 0) return
+
+    const treeNode = this.getTreeWrapperByPath(path)?.querySelector(DOM.SELECTOR_TREE_NODE) as HTMLElement | null
+    treeNode?.focus()
   }
 
-  setLastSelectedIndexByPath(path: string) {
-    const idx = this.store.getFlattenIndexByPath(path)
-    this.lastSelectedIndex = idx !== undefined ? idx : -1
-  }
-
-  //
-
-  get contextTreeIndex() {
-    return this.store.contextTreeIndex
-  }
-
-  set contextTreeIndex(index: number) {
-    this.store.contextTreeIndex = index
-  }
-
-  removeContextTreeIndex() {
-    this.store.removeContextTreeIndex()
-  }
-
-  setContextTreeIndexByPath(path: string) {
-    this.store.contextTreeIndex = this.store.getFlattenIndexByPath(path)!
-  }
-
-  //
-
-  get selectedDragIndex() {
-    return this.store.selectedDragIndex
-  }
-
-  set selectedDragIndex(index: number) {
-    this.store.selectedDragIndex = index
-  }
-
-  setSelectedDragIndexByPath(path: string) {
-    this.store.selectedDragIndex = this.store.getFlattenIndexByPath(path)!
-  }
-
-  //
-
-  addSelectedIndices(index: number) {
-    this.store.addSelectedIndices(index)
+  /** The current item: the target of rename, create, paste and arrow movement. */
+  get focusedIndex(): number {
+    const path = this.store.focusedPath
+    if (path === null) return -1
+    return this.store.getFlattenIndexByPath(path) ?? -1
   }
 
   getSelectedIndices(): number[] {
-    return this.store.getSelectedIndices()
+    const indices: number[] = []
+    for (const path of this.store.getSelectedPaths()) {
+      const index = this.store.getFlattenIndexByPath(path)
+      if (index !== undefined) indices.push(index)
+    }
+    return indices.sort((a, b) => a - b)
   }
 
-  clearSelectedIndices() {
-    this.store.clearSelectedIndices()
+  getSelectedPaths(): string[] {
+    return this.store.getSelectedPaths()
+  }
+
+  private _applySelection(paths: readonly string[], focusPath: string | null, anchorPath: string | null) {
+    // Repaint the union of before and after: a node that just left the selection
+    // needs its class removed as much as a new one needs it added.
+    const touched = new Set<string>([...this.store.getSelectedPaths(), ...paths])
+    if (this.store.focusedPath !== null) touched.add(this.store.focusedPath)
+    if (focusPath !== null) touched.add(focusPath)
+
+    this.store.setSelectedPaths(paths)
+    this.store.focusedPath = focusPath
+    this.store.anchorPath = anchorPath
+
+    for (const path of touched) this.renderer.syncNodeState(path)
+
+    this._publishSelectionContext()
+  }
+
+  private _publishSelectionContext() {
+    const focusedPath = this.store.focusedPath
+    const focused = focusedPath !== null ? this.store.getTreeViewModelByPath(focusedPath) : undefined
+
+    this.contextKeyService.update({
+      treeHasSelection: this.store.getSelectedPaths().length > 0,
+      // The current item is what the single-target commands act on, so it is
+      // also what "is the selection a directory" has to mean for them.
+      treeSelectionIsDirectory: focused?.directory ?? false,
+    })
+  }
+
+  private _pathAt(index: number): string | null {
+    return this.store.flattenTree[index]?.path ?? null
+  }
+
+  private _toPaths(indices: readonly number[]): string[] {
+    const paths: string[] = []
+    for (const index of indices) {
+      const path = this._pathAt(index)
+      if (path !== null) paths.push(path)
+    }
+    return paths
   }
 
   //
 
+  get contextTreeIndex(): number {
+    const path = this.store.contextPath
+    if (path === null) return -1
+    return this.store.getFlattenIndexByPath(path) ?? -1
+  }
+
+  get selectedDragIndex(): number {
+    const path = this.store.dragTargetPath
+    if (path === null) return -1
+    return this.store.getFlattenIndexByPath(path) ?? -1
+  }
+
+  setSelectedDragIndexByPath(path: string) {
+    this.store.dragTargetPath = path
+  }
+
+  // clipboard
+
   get clipboardMode() {
     return this.store.clipboardMode
-  }
-
-  set clipboardMode(mode: ClipboardMode) {
-    this.store.clipboardMode = mode
-  }
-
-  addClipboardPaths(path: string) {
-    this.store.addClipboardPaths(path)
-    this._publishClipboardContext()
   }
 
   getClipboardPaths(): string[] {
     return this.store.getClipboardPaths()
   }
 
-  clearClipboardPaths() {
-    const paths = this.store.getClipboardPaths()
-    for (const path of paths) {
-      const wrapper = this.getTreeWrapperByPath(path)
-      wrapper?.classList.remove(DOM.CLASS_CUT)
-    }
+  /** Replaces the clipboard. Only a cut greys its sources out; a copy leaves them. */
+  setClipboard(paths: readonly string[], mode: ClipboardMode) {
+    const touched = new Set<string>([...this.store.getClipboardPaths(), ...paths])
 
-    this.store.clearClipboardPaths()
+    this.store.setClipboardPaths(paths)
+    this.store.clipboardMode = mode
+
+    for (const path of touched) this.renderer.syncNodeState(path)
     this._publishClipboardContext()
   }
 
   /** Drops the clipboard entirely: pending paths, their cut styling, and the mode. */
   clearClipboard() {
-    this.clearClipboardPaths()
-    this.store.clipboardMode = "none"
+    this.setClipboard([], "none")
   }
 
   // Both mutators funnel through here, so whether there is anything to paste is
@@ -249,12 +362,13 @@ export class TreeFacade {
 
   //
 
-  clearPathToTreeWrapper() {
-    this.renderer.clearPathToTreeWrapper()
-  }
-
   getTreeNodeByPath(path: string) {
     return this.renderer.getTreeNodeByPath(path)
+  }
+
+  /** Repaints one node after something outside the selection touched its row. */
+  refreshNodeState(path: string) {
+    this.renderer.syncNodeState(path)
   }
 
   getTreeWrapperByPath(path: string) {
@@ -426,15 +540,12 @@ export class TreeFacade {
     //
     // Right-clicking inside an existing multi-selection keeps it, so the menu can
     // still act on all of it.
-    if (index !== undefined && !this.getSelectedIndices().includes(index)) {
-      this.clearTreeSelected()
-      treeNode.classList.add(DOM.CLASS_SELECTED)
-      this.addSelectedIndices(index)
-      this.setLastSelectedIndexByPath(path)
-    }
+    if (index === undefined) return
 
-    treeNode.classList.add(DOM.CLASS_FOCUSED)
-    this.setContextTreeIndexByPath(path)
+    if (this.store.isSelected(path)) this.focusIndex(index)
+    else this.setSelection([index], index)
+
+    this.store.contextPath = path
 
     const { treeContextMenu, treeContextPaste } = this.renderer.elements
 
@@ -449,44 +560,18 @@ export class TreeFacade {
   }
 
   handleHideContextmenu() {
-    // Not conditional on the context index: deleting the node it pointed at
+    // Not conditional on the context path: deleting the node it pointed at
     // clears it, and gating the hide on it left the menu on screen afterwards.
     // Whether the menu is showing is the menu's own state.
-    this.contextTreeIndex = -1
+    this.store.contextPath = null
     this.renderer.elements.treeContextMenu.classList.remove(CLASS_SELECTED)
-  }
-
-  blur(index: number) {
-    if (index === -1) return
-
-    if (index === 0) {
-      this.renderer.elements.treeNodeContainer.classList.remove(DOM.CLASS_FOCUSED)
-    } else {
-      const node = this.getTreeNodeByIndex(index)
-      node.classList.remove(DOM.CLASS_FOCUSED)
-    }
-  }
-
-  clearTreeSelected() {
-    const selectedIndices = this.getSelectedIndices()
-    // Clear state first so a dead index can't survive in the set. Serialized
-    // mutations mean dead indices here are internal bugs — assert in dev,
-    // tolerate in production.
-    this.clearSelectedIndices()
-    for (const i of selectedIndices) {
-      const viewModel = this.store.flattenTree[i]
-      assert(viewModel, `clearTreeSelected: dead index ${i}`)
-      if (!viewModel) continue
-      const wrapper = this.getTreeWrapperByPath(viewModel.path)
-      const node = wrapper?.querySelector(DOM.SELECTOR_TREE_NODE)
-      node?.classList.remove(DOM.CLASS_SELECTED)
-    }
   }
 
   //
 
   async applyRename(preBase: string, newBase: string) {
     const start = this.getFlattenIndexByPath(preBase)!
+    const renamedPaths: string[] = []
 
     for (let i = start; i < this.flattenTree.length; i++) {
       const vm = this.getTreeViewModelByIndex(i)
@@ -511,42 +596,21 @@ export class TreeFacade {
         this.setTreeWrapperByPath(newPath, wrapper)
         node.dataset[DOM.DATASET_ATTR_TREE_PATH] = newPath
         node.title = newPath
+
+        // Selection and clipboard are keyed by path, and this is the one
+        // operation that moves a path out from under them.
+        this.store.renamePath(oldPath, newPath)
+        renamedPaths.push(newPath)
       } else {
         break
       }
     }
-  }
 
-  // Snapshot selection state as paths so it can be re-resolved after the
-  // flattenTree indices shift. Selection correction lives here (inside apply*),
-  // never in callers.
-  private _captureSelectionPaths() {
-    const selected: string[] = []
-    for (const i of this.getSelectedIndices()) {
-      const viewModel = this.store.flattenTree[i]
-      if (viewModel) selected.push(viewModel.path)
-    }
+    // The rename replaced the row's contents, so its marks are repainted from
+    // the state they were just carried over to.
+    for (const path of renamedPaths) this.renderer.syncNodeState(path)
 
-    return {
-      selected,
-      last: this.store.flattenTree[this.store.lastSelectedIndex]?.path ?? null,
-      context: this.store.flattenTree[this.store.contextTreeIndex]?.path ?? null,
-    }
-  }
-
-  private _restoreSelectionPaths(snapshot: { selected: string[]; last: string | null; context: string | null }) {
-    this.clearSelectedIndices()
-    for (const path of snapshot.selected) {
-      const idx = this.getFlattenIndexByPath(path)
-      if (idx !== undefined) this.addSelectedIndices(idx)
-    }
-
-    // Assign via store to avoid the facade setter's focus side effect.
-    const lastIdx = snapshot.last !== null ? this.getFlattenIndexByPath(snapshot.last) : undefined
-    this.store.lastSelectedIndex = lastIdx !== undefined ? lastIdx : -1
-
-    const contextIdx = snapshot.context !== null ? this.getFlattenIndexByPath(snapshot.context) : undefined
-    this.store.contextTreeIndex = contextIdx !== undefined ? contextIdx : -1
+    this._publishSelectionContext()
   }
 
   applyDelete(indices: number[]) {
@@ -555,8 +619,6 @@ export class TreeFacade {
 
     indices.sort((a, b) => b - a)
     const minIndex = indices[indices.length - 1]
-
-    const selectionSnapshot = this._captureSelectionPaths()
 
     for (const index of indices) {
       const target = this.store.flattenTree[index]
@@ -594,13 +656,19 @@ export class TreeFacade {
         wrapper?.remove()
 
         this.deleteTreeWrapperByPath(path)
+        // The node is gone for good, so the clipboard drops it too — otherwise
+        // deleted paths pile up there and a later paste asks for files that no
+        // longer exist.
+        this.store.forgetPath(path)
       }
 
       this.spliceFlattenTree(index, toDelete.length)
     }
 
     this.updatePathToFlattenTreeIndex(minIndex)
-    this._restoreSelectionPaths(selectionSnapshot)
+
+    this._publishSelectionContext()
+    this._publishClipboardContext()
   }
 
   applyCreate(parentPath: string, createdPath: string, isDirectory: boolean) {
@@ -626,7 +694,6 @@ export class TreeFacade {
       directory: isDirectory,
       expanded: false,
       children: isDirectory ? [] : null,
-      selected: false,
     }
 
     // Insert into parent.children at sorted position
@@ -649,10 +716,9 @@ export class TreeFacade {
         flatInsertIdx = prevSiblingFlatIdx + prevSubtreeSize
       }
 
-      // Insert into flattenTree (selection indices at/after the insert point shift by one)
-      const selectionSnapshot = this._captureSelectionPaths()
+      // Rows below shift down by one. Nothing to correct: the selection names
+      // paths, so it follows the nodes rather than the positions they were at.
       this.store.insertIntoFlattenTree(flatInsertIdx, [newNode])
-      this._restoreSelectionPaths(selectionSnapshot)
     }
 
     // The DOM node goes in either way. Expanding only renders into an empty

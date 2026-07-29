@@ -37,6 +37,7 @@ export type CommandId =
   //
   | "tree.cut"
   | "tree.copy"
+  | "tree.clearClipboard"
   | "tree.pasteFromContextMenu"
   | "tree.pasteFromShortcut"
   | "tree.pasteFromDrag"

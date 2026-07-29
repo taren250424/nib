@@ -61,6 +61,10 @@ describe("createCommandDescriptors", () => {
       ["find.submit", "find-replace"],
     ]
 
+    // The tree commands here also want something selected; the zone alone is
+    // what this case is about, so give them both and vary only the zone.
+    context.set("treeHasSelection", true)
+
     for (const [id, task] of expectations) {
       const when = byId.get(id)?.when
       expect(when, `${id} should be scoped to a zone`).toBeDefined()
@@ -71,6 +75,30 @@ describe("createCommandDescriptors", () => {
       context.set("focusedTask", "none")
       expect(when!(context.snapshot()), `${id} should not apply outside ${task}`).toBe(false)
     }
+  })
+
+  // The bug this pins: delete and cut act on the selection, so offering them
+  // with nothing selected offers to act on nothing.
+  it("needs a selection for the tree commands that act on one", () => {
+    const { byId } = descriptorsById()
+    const context = new ContextKeyService()
+    context.set("focusedTask", "tree")
+
+    for (const id of ["tree.delete", "tree.cut", "tree.copy", "tree.rename", "tree.open"]) {
+      const when = byId.get(id)!.when!
+      expect(when(context.snapshot()), `${id} should not apply with an empty selection`).toBe(false)
+    }
+
+    context.set("treeHasSelection", true)
+    for (const id of ["tree.delete", "tree.cut", "tree.copy", "tree.rename", "tree.open"]) {
+      const when = byId.get(id)!.when!
+      expect(when(context.snapshot()), `${id} should apply with a selection`).toBe(true)
+    }
+
+    // Create is the exception: it falls back to the root directory.
+    expect(byId.get("tree.create")!.when!(new ContextKeyService().snapshot())).toBe(false)
+    context.set("treeHasSelection", false)
+    expect(byId.get("tree.create")!.when!(context.snapshot())).toBe(true)
   })
 
   // Replace leaves focus in the find widget, and undo there belongs to the
@@ -189,7 +217,7 @@ describe("command descriptors under a registry", () => {
     const registry = new CommandRegistry(context)
     registry.registerAll(createCommandDescriptors(deps))
 
-    context.set("focusedTask", "editor")
+    context.update({ focusedTask: "editor", treeHasSelection: true })
     await registry.execute("tree.delete")
     expect(calls).toEqual([])
 
@@ -204,7 +232,7 @@ describe("command descriptors under a registry", () => {
     const registry = new CommandRegistry(context)
     registry.registerAll(createCommandDescriptors(deps))
 
-    context.set("focusedTask", "tree")
+    context.update({ focusedTask: "tree", treeHasSelection: true })
     expect(registry.isEnabled("tree.rename")).toBe(true)
     expect(registry.isEnabled("editor.copy")).toBe(false)
     expect(calls).toEqual([])

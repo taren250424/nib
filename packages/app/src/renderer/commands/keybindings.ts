@@ -63,7 +63,11 @@ export const KEYBINDINGS: readonly Keybinding[] = [
   { key: "Ctrl+F", command: "find.toggle", args: [false] },
   { key: "Ctrl+H", command: "find.toggle", args: [true] },
   { key: "Ctrl+Alt+ENTER", command: "find.replaceAll" },
+  // Esc closes the find box if it is open, and otherwise calls off a pending
+  // tree cut. Neither applies with both closed and empty, so the key falls
+  // through to the editor.
   { key: "ESC", command: "find.close" },
+  { key: "ESC", command: "tree.clearClipboard" },
   { key: "ENTER", command: "find.submit" },
   { key: "ENTER", command: "tree.open" },
   { key: "Shift+ENTER", command: "find.submitBackward" },
