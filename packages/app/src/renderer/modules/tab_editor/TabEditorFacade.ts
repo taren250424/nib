@@ -778,7 +778,12 @@ export class TabEditorFacade {
 
 	//
 
-	findNextMatch(direction: "up" | "down" = this.findDirection) {
+	/**
+	 * "advance" steps to the next match from the caret and is what the arrows and
+	 * Enter do; "refine" re-runs a query that is still being typed from the search
+	 * anchor, so editing it does not walk through the document.
+	 */
+	findNextMatch(direction: "up" | "down" = this.findDirection, mode: "advance" | "refine" = "advance") {
 		const tabEditorView = this.getActiveTabEditorView()
 		// Binary tabs have no editor to search in; a missing view means no tab is open.
 		if (!tabEditorView || tabEditorView.isBinary) {
@@ -794,7 +799,10 @@ export class TabEditorFacade {
 			return
 		}
 
-		const targetIndex = tabEditorView.searchNextMatch(searchText, direction, this.searchOptions)
+		const targetIndex =
+			mode === "refine"
+				? tabEditorView.searchFromAnchor(searchText, this.searchOptions)
+				: tabEditorView.searchNextMatch(searchText, direction, this.searchOptions)
 		const matchesCount = tabEditorView.searchState?.matches.length || 0
 
 		if (targetIndex !== -1 && matchesCount > 0) {

@@ -67,6 +67,11 @@ export class TabEditorView {
 	private _searchState: SearchState | null = null
 	private _searchHighlightKey = new PluginKey<DecorationSet>("searchHighlight")
 
+	// Where an incremental search measures "next match" from. Kept separate from the
+	// caret because focusing a match moves the caret onto it, and searching forward
+	// from there would walk one occurrence further on every keystroke in the query.
+	private _searchAnchor: number | null = null
+
 	constructor(
 		tabBox: HTMLElement,
 		tabSpan: HTMLElement,
@@ -325,6 +330,12 @@ export class TabEditorView {
 		this._searchState = state
 	}
 
+	/** Pins the incremental search to the caret, e.g. when the find widget opens. */
+	captureSearchAnchor() {
+		const view = this._editor!.ctx.get(editorViewCtx)
+		this._searchAnchor = view.state.selection.from
+	}
+
 	searchNextMatch(query: string, direction: "up" | "down", options: SearchOptions): number {
 		const matches = this.findAllMatches(query, options)
 		if (!matches.length) {
@@ -350,6 +361,40 @@ export class TabEditorView {
 			}
 			if (targetIndex === -1) targetIndex = matches.length - 1
 		}
+
+		// Deliberate navigation takes the anchor with it, so refining the query
+		// afterwards continues from where the user actually is.
+		this._searchAnchor = matches[targetIndex].from
+
+		this.updateSearchState({
+			query,
+			matches,
+			currentIndex: targetIndex,
+			doc: state.doc,
+		})
+
+		this.focusCurrentMatch()
+		return targetIndex
+	}
+
+	/**
+	 * Search for a query that is still being edited: the first match at or after the
+	 * anchor, which keeps the selection on one occurrence while the query grows and
+	 * returns to it when characters are deleted again.
+	 */
+	searchFromAnchor(query: string, options: SearchOptions): number {
+		const matches = this.findAllMatches(query, options)
+		if (!matches.length) {
+			this.clearSearch()
+			return -1
+		}
+
+		const view = this._editor!.ctx.get(editorViewCtx)
+		const state = view.state
+		const anchor = this._searchAnchor ?? state.selection.from
+
+		let targetIndex = matches.findIndex((match) => match.from >= anchor)
+		if (targetIndex === -1) targetIndex = 0
 
 		this.updateSearchState({
 			query,

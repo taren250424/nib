@@ -720,7 +720,10 @@ export class CommandManager {
 		if (showReplace) this.tabEditorFacade.replaceInput.select()
 		else this.tabEditorFacade.findInput.select()
 
-		this.performFind(this.tabEditorFacade.findDirection)
+		// Anchor the session where the caret is, so typing the query searches
+		// outwards from the reading position rather than from the last match.
+		activeView.captureSearchAnchor()
+		this._refreshFind()
 	}
 
 	performSearchQueryChanged(query: string) {
@@ -730,7 +733,12 @@ export class CommandManager {
 		// closed (e.g. Esc committing an IME composition); searching then
 		// would repaint highlights that close just cleared.
 		if (!this.tabEditorFacade.findReplaceOpen) return
-		this.performFind(this.tabEditorFacade.findDirection)
+		this._refreshFind()
+	}
+
+	/** Re-runs a query that is still being edited, without stepping to the next match. */
+	private _refreshFind() {
+		this.tabEditorFacade.findNextMatch(this.tabEditorFacade.findDirection, "refine")
 	}
 
 	performReplaceQueryChanged(query: string) {
@@ -750,7 +758,7 @@ export class CommandManager {
 
 		// Match lists computed with the previous options are meaningless now.
 		this.tabEditorFacade.clearAllSearches()
-		this.performFind(this.tabEditorFacade.findDirection)
+		this._refreshFind()
 	}
 
 	performFind(direction: "up" | "down") {
