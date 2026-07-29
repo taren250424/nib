@@ -12,6 +12,15 @@ export type ContextMenuBinding<E> = {
    */
   commands: readonly CommandId[]
   args?: readonly unknown[]
+
+  /**
+   * Where the shortcut label comes from, when it is not one of `commands`.
+   *
+   * A right-clicked target is its own channel and so its own id, which leaves
+   * these rows naming commands no key is bound to — while a key does reach the
+   * same action through the sibling id. That sibling is what this names.
+   */
+  keyFrom?: CommandId
 }
 
 /**
@@ -30,13 +39,13 @@ export type ContextMenuBinding<E> = {
 export const TREE_CONTEXT_MENU_BINDINGS: readonly ContextMenuBinding<TreeElements>[] = [
   { element: "treeContextCut", commands: ["tree.cut"] },
   { element: "treeContextCopy", commands: ["tree.copy"] },
-  { element: "treeContextPaste", commands: ["tree.pasteFromContextMenu"] },
+  { element: "treeContextPaste", commands: ["tree.pasteFromContextMenu"], keyFrom: "tree.pasteFromShortcut" },
   { element: "treeContextRename", commands: ["tree.rename"] },
   { element: "treeContextDelete", commands: ["tree.delete"] },
 ]
 
 export const TAB_CONTEXT_MENU_BINDINGS: readonly ContextMenuBinding<TabEditorElements>[] = [
-  { element: "tabContextClose", commands: ["tab.closeFromContextMenu"] },
+  { element: "tabContextClose", commands: ["tab.closeFromContextMenu"], keyFrom: "tab.closeActive" },
   { element: "tabContextCloseOthers", commands: ["tab.closeOthers"] },
   { element: "tabContextCloseRight", commands: ["tab.closeToRight"] },
   { element: "tabContextCloseAll", commands: ["tab.closeAll"] },

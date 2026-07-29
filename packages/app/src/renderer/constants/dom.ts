@@ -17,6 +17,9 @@ export const SELECTOR_TAB_CONTEXT_MENU = `#${ID_TAB_CONTEXT_MENU}`
 export const ID_TREE_CONTEXT_MENU = "tree-context-menu"
 export const SELECTOR_TREE_CONTEXT_MENU = `#${ID_TREE_CONTEXT_MENU}`
 
+export const CLASS_SHORTCUT = "shortcut"
+export const SELECTOR_SHORTCUT = `.${CLASS_SHORTCUT}`
+
 export const CLASS_MENU_ITEM = "menu-item"
 export const SELECTOR_MENU_ITEM = `.${CLASS_MENU_ITEM}`
 

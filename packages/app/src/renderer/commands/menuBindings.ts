@@ -11,6 +11,19 @@ export type MenuBinding = {
    */
   commands: readonly CommandId[]
   args?: readonly unknown[]
+
+  /**
+   * Where the shortcut label comes from, when it is not one of `commands`.
+   *
+   * Splitting an action's invocation channels into separate ids leaves the
+   * menu's id without a keybinding of its own, even though a key does reach the
+   * same action through its sibling. Naming that sibling is the part a lookup
+   * cannot work out.
+   */
+  keyFrom?: CommandId
+
+  /** A key the app does not own, so no binding can describe it. */
+  keyLabel?: string
 }
 
 /**
@@ -29,7 +42,8 @@ export const MENU_BINDINGS: readonly MenuBinding[] = [
   { element: "saveAs", commands: ["file.saveAs"] },
   { element: "saveAll", commands: ["file.saveAll"] },
   { element: "settings", commands: ["settings.open"] },
-  { element: "exit", commands: ["app.exit"] },
+  // The window manager closes the window; nothing here handles Alt+F4.
+  { element: "exit", commands: ["app.exit"], keyLabel: "Alt+F4" },
 
   // Edit
   { element: "undo", commands: ["tree.undo", "editor.undo"] },

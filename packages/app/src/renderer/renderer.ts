@@ -30,6 +30,7 @@ import {
   handleGlobalInput,
   handleMenuItems,
   handleCommandMenus,
+  handleShortcutLabels,
   handleInfo,
   handleLoad,
   handleSettings,
@@ -84,6 +85,7 @@ window.addEventListener("DOMContentLoaded", () => {
   handleGlobalInput(emitter, focusManager, keybindingService)
   handleMenuItems(emitter, menuElements)
   handleCommandMenus(commandRegistry, contextKeyService, menuElements)
+  handleShortcutLabels(menuElements, treeFacade.renderer.elements, tabEditorFacade.renderer.elements)
 
   handleTabEditor(run, emitter, commandRegistry, focusManager, tabEditorFacade)
   handleInfo(infoFacade)
