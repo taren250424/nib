@@ -613,6 +613,12 @@ export class TreeFacade {
 		// Already present (e.g. watcher echo of our own create) — skip duplicates.
 		if (parent.children?.some((child) => child.path === createdPath)) return
 
+		// Collapsed and never read: leave the model alone. Expanding reads the
+		// directory from disk and that read already contains the new node. Recording
+		// a lone child here would make the directory look loaded, so expanding would
+		// render only this node and hide everything actually inside it.
+		if (!parent.expanded && !parent.children?.length) return
+
 		const name = window.utils.getBaseName(createdPath)
 
 		const newNode: TreeViewModel = {
@@ -630,27 +636,31 @@ export class TreeFacade {
 		const childInsertIdx = this.store.findSortedChildInsertIndex(parent, name, isDirectory)
 		parent.children.splice(childInsertIdx, 0, newNode)
 
-		// If parent is not expanded, only update the model (DOM stays collapsed)
-		if (!parent.expanded) return
+		// flattenTree holds the visible rows, so a collapsed parent contributes none;
+		// its children join it when it expands.
+		if (parent.expanded) {
+			// Calculate flattenTree insert position
+			const parentFlatIdx = this.getFlattenIndexByPath(parentPath)!
+			let flatInsertIdx: number
+			if (childInsertIdx === 0) {
+				flatInsertIdx = parentFlatIdx + 1
+			} else {
+				const prevSibling = parent.children[childInsertIdx - 1]
+				const prevSiblingFlatIdx = this.getFlattenIndexByPath(prevSibling.path)!
+				const prevSubtreeSize = this.store.getSubtreeSize(prevSiblingFlatIdx)
+				flatInsertIdx = prevSiblingFlatIdx + prevSubtreeSize
+			}
 
-		// Calculate flattenTree insert position
-		const parentFlatIdx = this.getFlattenIndexByPath(parentPath)!
-		let flatInsertIdx: number
-		if (childInsertIdx === 0) {
-			flatInsertIdx = parentFlatIdx + 1
-		} else {
-			const prevSibling = parent.children[childInsertIdx - 1]
-			const prevSiblingFlatIdx = this.getFlattenIndexByPath(prevSibling.path)!
-			const prevSubtreeSize = this.store.getSubtreeSize(prevSiblingFlatIdx)
-			flatInsertIdx = prevSiblingFlatIdx + prevSubtreeSize
+			// Insert into flattenTree (selection indices at/after the insert point shift by one)
+			const selectionSnapshot = this._captureSelectionPaths()
+			this.store.insertIntoFlattenTree(flatInsertIdx, [newNode])
+			this._restoreSelectionPaths(selectionSnapshot)
 		}
 
-		// Insert into flattenTree (selection indices at/after the insert point shift by one)
-		const selectionSnapshot = this._captureSelectionPaths()
-		this.store.insertIntoFlattenTree(flatInsertIdx, [newNode])
-		this._restoreSelectionPaths(selectionSnapshot)
-
-		// Insert into DOM
+		// The DOM node goes in either way. Expanding only renders into an empty
+		// container, so a node skipped here while collapsed would stay invisible
+		// until a full rebuild — which is what hid files pasted into a closed
+		// directory that had been opened at some point earlier.
 		const container = this.getChildrenContainer(parentPath)
 		const nextSibling = childInsertIdx < parent.children.length - 1
 			? parent.children[childInsertIdx + 1]
