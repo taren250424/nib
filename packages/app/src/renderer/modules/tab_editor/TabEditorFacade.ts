@@ -9,6 +9,7 @@ import { DATASET_ATTR_TAB_ID, EXIT_TEXT } from "../../constants/dom"
 import { TabEditorRenderer } from "./TabEditorRenderer"
 import { TabEditorStore } from "./TabEditorStore"
 import { TabEditorView } from "./TabEditorView"
+import { compileSearchRegex } from "./search"
 import type { SearchOptions } from "./search"
 import { TabDragManager } from "./TabDragManager"
 import { ContextKeyService } from "@renderer/core"
@@ -811,9 +812,20 @@ export class TabEditorFacade {
 
     if (!searchText) {
       tabEditorView.clearSearch()
+      this.markSearchInvalid(null)
       this.findInfo.textContent = `No results`
       return
     }
+
+    // A malformed regex used to read as "No results", which says the document
+    // has none of what you asked for rather than that it was never asked.
+    const { error } = compileSearchRegex(searchText, this.searchOptions)
+    if (error) {
+      tabEditorView.clearSearch()
+      this.markSearchInvalid(error)
+      return
+    }
+    this.markSearchInvalid(null)
 
     const targetIndex =
       mode === "refine"
@@ -839,6 +851,18 @@ export class TabEditorFacade {
     } else {
       this.findInfo.textContent = `No results`
     }
+  }
+
+  /**
+   * Marks the query as unusable, or clears the mark with null.
+   *
+   * The message goes on the input's tooltip rather than into the counter, which
+   * has room for "1 of 12" and not for "Unterminated group".
+   */
+  markSearchInvalid(error: string | null) {
+    this.findInput.classList.toggle(DOM.CLASS_INVALID, error !== null)
+    this.findInput.title = error ?? ""
+    if (error !== null) this.findInfo.textContent = `Invalid regex`
   }
 
   clearAllSearches() {

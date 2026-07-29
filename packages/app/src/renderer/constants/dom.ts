@@ -10,6 +10,8 @@ export const CLASS_TREE_ACTIVE = "tree-active"
 export const CLASS_BINARY = "binary"
 export const CLASS_DEACTIVE = "deactive"
 export const CLASS_CUT = "cut"
+/** On an input whose contents cannot be used — currently a malformed regex. */
+export const CLASS_INVALID = "invalid"
 
 export const ID_TAB_CONTEXT_MENU = "tab-context-menu"
 export const SELECTOR_TAB_CONTEXT_MENU = `#${ID_TAB_CONTEXT_MENU}`

@@ -902,6 +902,7 @@ export class CommandManager {
     this.tabEditorFacade.findAndReplaceContainer.style.display = "none"
 
     this.tabEditorFacade.clearAllSearches()
+    this.tabEditorFacade.markSearchInvalid(null)
     this.tabEditorFacade.replaceInfo.textContent = ""
 
     this.tabEditorFacade.findReplaceOpen = false

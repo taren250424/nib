@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { buildSearchRegex, expandReplacement } from "@renderer/modules/tab_editor/search"
+import { buildSearchRegex, compileSearchRegex, expandReplacement } from "@renderer/modules/tab_editor/search"
 import type { SearchOptions } from "@renderer/modules/tab_editor/search"
 
 const DEFAULT_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, useRegex: false }
@@ -91,5 +91,25 @@ describe("expandReplacement", () => {
   // inserted exactly as typed.
   it("leaves everything alone when there are no groups", () => {
     expect(expandReplacement("$1 costs $5", "anything", [])).toBe("$1 costs $5")
+  })
+})
+
+describe("compileSearchRegex", () => {
+  // Both used to be reported as "No results", which says the document has none
+  // of what you asked for rather than that it was never asked.
+  it("tells a malformed regex apart from one that finds nothing", () => {
+    const bad = compileSearchRegex("(unclosed", options({ useRegex: true }))
+    expect(bad.regex).toBeNull()
+    expect(bad.error).toMatch(/./)
+
+    const good = compileSearchRegex("nothing-here", options({ useRegex: true }))
+    expect(good.regex).not.toBeNull()
+    expect(good.error).toBeNull()
+  })
+
+  // Outside regex mode the query is escaped, so nothing the user types can fail.
+  it("cannot fail for a plain-text search", () => {
+    expect(compileSearchRegex("(unclosed", options()).error).toBeNull()
+    expect(compileSearchRegex("a{2,1}", options()).error).toBeNull()
   })
 })

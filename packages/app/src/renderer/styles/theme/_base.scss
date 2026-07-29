@@ -1,4 +1,7 @@
 @use "sass:map";
+// Not from the palette: every theme here is a light one, and an error is the
+// one thing that should look the same in all of them.
+@use "../colors.scss" as colors;
 
 @mixin define-theme-from-palette($p) {
   // Base Colors
@@ -43,6 +46,7 @@
 
   --find-replace-container-bg: #{$bg-frame};
   --find-replace-input: #{$bg-highlight};
+  --find-replace-invalid: #{colors.$red-5};
   --find-replace-button-hover: #{$bg-subtle};
 
   --tooltip-bg: #{$tooltip-bg};

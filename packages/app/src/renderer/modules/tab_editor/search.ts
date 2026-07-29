@@ -39,15 +39,27 @@ export function expandReplacement(
   })
 }
 
-export function buildSearchRegex(searchText: string, options: SearchOptions): RegExp | null {
+export type SearchCompileResult = { regex: RegExp; error: null } | { regex: null; error: string }
+
+/**
+ * Compiles the query, keeping the reason it failed.
+ *
+ * Only a regex search can fail, and a half-typed one usually is failing — which
+ * is why the failure has to be tellable apart from a search that simply found
+ * nothing, instead of both reading "No results".
+ */
+export function compileSearchRegex(searchText: string, options: SearchOptions): SearchCompileResult {
   let source = options.useRegex ? searchText : searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 
   if (options.wholeWord) source = `\\b(?:${source})\\b`
 
   try {
-    return new RegExp(source, options.matchCase ? "g" : "gi")
-  } catch {
-    // A user-typed regex is transiently invalid while being edited.
-    return null
+    return { regex: new RegExp(source, options.matchCase ? "g" : "gi"), error: null }
+  } catch (err) {
+    return { regex: null, error: err instanceof Error ? err.message : String(err) }
   }
+}
+
+export function buildSearchRegex(searchText: string, options: SearchOptions): RegExp | null {
+  return compileSearchRegex(searchText, options).regex
 }
