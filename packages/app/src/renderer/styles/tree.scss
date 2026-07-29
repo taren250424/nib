@@ -115,6 +115,21 @@ $tree-top-min-height: 25px;
 	background-color: var(--tree-node-selected);
 }
 
+.tree-node.selected:hover {
+	background-color: var(--tree-node-selected-hover);
+}
+
+// Only the tree nodes are focusable, so :focus-within tells us whether this
+// selection is the one being acted on or one left behind when focus moved to
+// the editor. Dim the latter.
+#tree-node-container:not(:focus-within) .tree-node.selected {
+	background-color: var(--tree-node-selected-inactive);
+}
+
+#tree-node-container:not(:focus-within) .tree-node.selected:hover {
+	background-color: var(--tree-node-selected);
+}
+
 .tree-node > span {
 	margin-left: 1px;
 }
@@ -155,7 +170,7 @@ $tree-top-min-height: 25px;
 	position: fixed;
 	pointer-events: none;
 	background-color: var(--tree-ghost-bg);
-	color: white;
+	color: var(--tree-ghost-font);
 	font-size: 0.7rem;
 	padding: $ghost-padding;
 	z-index: 90;

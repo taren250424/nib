@@ -72,11 +72,18 @@
 
 	--tree-node-cut: #{$ref};
 	--tree-node-focused: #{$accent};
-	--tree-node-selected: #{$bg-subtle};
+	// Selection is accent-tinted so it reads as a state rather than as hover, and
+	// dims once the tree stops holding focus, the way list widgets normally do.
+	// These five used to be one and the same colour, which left the selection,
+	// the hover and the drop target indistinguishable.
+	--tree-node-selected: #{$accent}66;
+	--tree-node-selected-inactive: #{$accent}26;
+	--tree-node-selected-hover: #{$accent}80;
 	--tree-node-hover: #{$bg-subtle};
-	--tree-ghost-bg: #{$bg-subtle};
+	--tree-ghost-bg: #{$tooltip-bg};
+	--tree-ghost-font: #{$tooltip-font};
 	--tree-top-icon-hover: #{$bg-subtle};
-	--tree-wrapper-drag-overlay: #{$bg-subtle};
+	--tree-wrapper-drag-overlay: #{$bg-highlight};
 
 	--settings-menu-container: #{$bg-surface};
 	--settings-menu-button-bg: #{$bg-subtle};
