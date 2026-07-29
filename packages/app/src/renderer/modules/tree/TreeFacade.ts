@@ -434,10 +434,11 @@ export class TreeFacade {
 	}
 
 	handleHideContextmenu() {
-		if (this.contextTreeIndex !== -1) {
-			this.contextTreeIndex = -1
-			this.renderer.elements.treeContextMenu.classList.remove(CLASS_SELECTED)
-		}
+		// Not conditional on the context index: deleting the node it pointed at
+		// clears it, and gating the hide on it left the menu on screen afterwards.
+		// Whether the menu is showing is the menu's own state.
+		this.contextTreeIndex = -1
+		this.renderer.elements.treeContextMenu.classList.remove(CLASS_SELECTED)
 	}
 
 	blur(index: number) {

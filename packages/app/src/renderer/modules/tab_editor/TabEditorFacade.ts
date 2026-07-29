@@ -447,10 +447,10 @@ export class TabEditorFacade {
 	}
 
 	handleHideContextmenu() {
-		if (this.contextTabId !== -1) {
-			this.contextTabId = -1
-			this.renderer.elements.tabContextMenu.classList.remove(DOM.CLASS_SELECTED)
-		}
+		// Same reason as the tree's: whether the menu is showing is the menu's own
+		// state, so hiding it must not depend on the right-clicked id still resolving.
+		this.contextTabId = -1
+		this.renderer.elements.tabContextMenu.classList.remove(DOM.CLASS_SELECTED)
 	}
 
 	//

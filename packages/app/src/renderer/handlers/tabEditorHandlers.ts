@@ -3,6 +3,7 @@ import "@milkdown/theme-nord/style.css"
 import { CUSTOM_EVENTS, DOM } from "../constants"
 import { TabEditorFacade } from "../modules"
 import { Dispatcher } from "@renderer/dispatch"
+import type { AppEvents } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 import { debounce } from "@renderer/utils"
 
@@ -60,25 +61,24 @@ function bindContextmenuClickEvents(dispatcher: Dispatcher, tabEditorFacade: Tab
 	const { tabContextClose, tabContextCloseOthers, tabContextCloseRight, tabContextCloseAll } =
 		tabEditorFacade.renderer.elements
 
-	tabContextClose.addEventListener("click", async () => {
-		await dispatcher.dispatch("closeTab", "context-menu", tabEditorFacade.contextTabId)
-		tabEditorFacade.handleHideContextmenu()
-	})
+	// Closing happens after the command, since close-one reads the right-clicked
+	// id. A failed command still closes the menu.
+	const bindItem = (element: HTMLElement, event: AppEvents, arg?: () => unknown) => {
+		element.addEventListener("click", async () => {
+			try {
+				await dispatcher.dispatch(event, "context-menu", ...(arg ? [arg()] : []))
+			} catch (err) {
+				console.error(`[tabEditorHandlers] ${event} from the context menu failed:`, err)
+			} finally {
+				tabEditorFacade.handleHideContextmenu()
+			}
+		})
+	}
 
-	tabContextCloseOthers.addEventListener("click", async () => {
-		await dispatcher.dispatch("closeOtherTabs", "context-menu")
-		tabEditorFacade.handleHideContextmenu()
-	})
-
-	tabContextCloseRight.addEventListener("click", async () => {
-		await dispatcher.dispatch("closeTabsToRight", "context-menu")
-		tabEditorFacade.handleHideContextmenu()
-	})
-
-	tabContextCloseAll.addEventListener("click", async () => {
-		await dispatcher.dispatch("closeAllTabs", "context-menu")
-		tabEditorFacade.handleHideContextmenu()
-	})
+	bindItem(tabContextClose, "closeTab", () => tabEditorFacade.contextTabId)
+	bindItem(tabContextCloseOthers, "closeOtherTabs")
+	bindItem(tabContextCloseRight, "closeTabsToRight")
+	bindItem(tabContextCloseAll, "closeAllTabs")
 }
 
 //

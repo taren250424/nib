@@ -2,6 +2,7 @@ import "@milkdown/theme-nord/style.css"
 import { TreeFacade } from "../modules"
 import { DOM, CUSTOM_EVENTS } from "../constants"
 import { Dispatcher } from "@renderer/dispatch"
+import type { AppEvents } from "@renderer/dispatch"
 import { EventEmitter } from "events"
 
 export function handleTree(dispatcher: Dispatcher, emitter: EventEmitter, treeFacade: TreeFacade) {
@@ -140,30 +141,25 @@ function bindContextmenuClickEvents(dispatcher: Dispatcher, treeFacade: TreeFaca
 	const { treeContextCut, treeContextCopy, treeContextPaste, treeContextRename, treeContextDelete } =
 		treeFacade.renderer.elements
 
-	treeContextCut.addEventListener("click", async () => {
-		await dispatcher.dispatch("cut", "context-menu")
-		treeFacade.handleHideContextmenu()
-	})
+	// Closing happens after the command, not before, because paste reads the
+	// right-clicked index and closing clears it. A failed command still closes.
+	const bindItem = (element: HTMLElement, event: AppEvents) => {
+		element.addEventListener("click", async () => {
+			try {
+				await dispatcher.dispatch(event, "context-menu")
+			} catch (err) {
+				console.error(`[treeHandlers] ${event} from the context menu failed:`, err)
+			} finally {
+				treeFacade.handleHideContextmenu()
+			}
+		})
+	}
 
-	treeContextCopy.addEventListener("click", async () => {
-		await dispatcher.dispatch("copy", "context-menu")
-		treeFacade.handleHideContextmenu()
-	})
-
-	treeContextPaste.addEventListener("click", async () => {
-		await dispatcher.dispatch("paste", "context-menu")
-		treeFacade.handleHideContextmenu()
-	})
-
-	treeContextRename.addEventListener("click", async () => {
-		await dispatcher.dispatch("rename", "context-menu")
-		treeFacade.handleHideContextmenu()
-	})
-
-	treeContextDelete.addEventListener("click", async () => {
-		await dispatcher.dispatch("delete", "context-menu")
-		treeFacade.handleHideContextmenu()
-	})
+	bindItem(treeContextCut, "cut")
+	bindItem(treeContextCopy, "copy")
+	bindItem(treeContextPaste, "paste")
+	bindItem(treeContextRename, "rename")
+	bindItem(treeContextDelete, "delete")
 }
 
 //
