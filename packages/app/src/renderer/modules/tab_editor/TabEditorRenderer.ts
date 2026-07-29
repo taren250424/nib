@@ -22,6 +22,9 @@ export class TabEditorRenderer {
   private _autoSaveNotifier: (kind: "input" | "blur") => void = () => {
     /* no-op until the facade registers its notifier */
   }
+  private _editNotifier: (view: TabEditorView) => void = () => {
+    /* no-op until the facade registers its notifier */
+  }
   private _throttledTempSave = throttle(async (view: TabEditorView, vm: TabEditorViewModel) => {
     await window.rendererToMain.tempSave({
       id: vm.id,
@@ -37,6 +40,11 @@ export class TabEditorRenderer {
 
   setAutoSaveNotifier(notifier: (kind: "input" | "blur") => void) {
     this._autoSaveNotifier = notifier
+  }
+
+  /** Told which view changed, so anything describing the document can catch up. */
+  setEditNotifier(notifier: (view: TabEditorView) => void) {
+    this._editNotifier = notifier
   }
 
   private _createTabEl(id: string, filePath: string, fileName: string) {
@@ -121,6 +129,7 @@ export class TabEditorRenderer {
       this._throttledTempSave(view, vm)
     }
 
+    this._editNotifier(view)
     this._autoSaveNotifier("input")
   }
 

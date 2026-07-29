@@ -32,6 +32,7 @@ export class TabEditorFacade {
     @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService
   ) {
     this.renderer.setAutoSaveNotifier((kind) => this._handleAutoSaveEvent(kind))
+    this.renderer.setEditNotifier((view) => this._refreshSearchAfterEdit(view))
   }
 
   //
@@ -752,6 +753,11 @@ export class TabEditorFacade {
     activatedTab.setDeactive()
     targetTab.setActive()
 
+    // The highlights belong to the search being shown, not to whichever tab the
+    // query last ran in. Leaving them behind meant coming back to a tab still
+    // marked up for a query that had since changed or been cleared.
+    if (!activatedTab.isBinary && activatedTab !== targetTab) activatedTab.clearSearch()
+
     this.activeTabId = id
     this.activeTabIndex = targetIndex
 
@@ -851,6 +857,24 @@ export class TabEditorFacade {
     } else {
       this.findInfo.textContent = `No results`
     }
+  }
+
+  /**
+   * Keeps the match list and the counter describing the document as it is being
+   * typed in, rather than the one the last search ran against.
+   *
+   * Deliberately not a re-search: stepping to a match would drag the caret away
+   * from what is being written. Only the highlights and the count move.
+   */
+  private _refreshSearchAfterEdit(view: TabEditorView) {
+    if (!this.findReplaceOpen || !this.searchQuery) return
+    if (view.isBinary || view !== this.getActiveTabEditorView()) return
+    if (compileSearchRegex(this.searchQuery, this.searchOptions).error) return
+
+    const count = view.refreshMatches(this.searchQuery, this.searchOptions)
+    const state = view.searchState
+
+    this.findInfo.textContent = count > 0 && state ? `${state.currentIndex + 1} of ${count}` : `No results`
   }
 
   /**

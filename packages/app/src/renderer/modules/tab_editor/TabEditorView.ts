@@ -397,6 +397,42 @@ export class TabEditorView {
     return targetIndex
   }
 
+  /**
+   * Re-finds matches after the document changed, leaving the caret where the
+   * user is typing.
+   *
+   * Editing with the widget open used to leave the counter describing a
+   * document that no longer exists, and Replace stepping to the next match
+   * instead of replacing, because the positions it held had gone stale.
+   *
+   * The current match becomes the first one the caret has not passed, so Enter
+   * carries on from where the typing stopped.
+   */
+  refreshMatches(query: string, options: SearchOptions): number {
+    const view = this._editor!.ctx.get(editorViewCtx)
+    const matches = this.findAllMatches(query, options)
+
+    if (!matches.length) {
+      this.clearSearch()
+      return 0
+    }
+
+    const caret = view.state.selection.from
+    let currentIndex = matches.findIndex((match) => match.to >= caret)
+    if (currentIndex === -1) currentIndex = matches.length - 1
+
+    this.updateSearchState({ query, matches, currentIndex, doc: view.state.doc, options })
+
+    this._ensureSearchHighlightPlugin(view)
+    // Meta only: no selection, no scroll. Repainting the highlights must not
+    // pull the view away from what is being typed.
+    view.dispatch(
+      view.state.tr.setMeta(this._searchHighlightKey, { matches, currentIndex } satisfies SearchHighlightMeta)
+    )
+
+    return matches.length
+  }
+
   isSearchStateStale(): boolean {
     if (!this._searchState) return true
     const view = this._editor!.ctx.get(editorViewCtx)
