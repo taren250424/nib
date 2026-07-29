@@ -39,7 +39,7 @@ export function handleSync(commandQueue: CommandQueue, tabEditorFacade: TabEdito
 
 					treeFacade.removeLastSelectedIndex()
 					treeFacade.clearSelectedIndices()
-					treeFacade.clearClipboardPaths()
+					treeFacade.clearClipboard()
 					treeFacade.setRootTreeViewModel(viewModel)
 				}
 			}).catch((err) => {

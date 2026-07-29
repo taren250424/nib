@@ -693,18 +693,25 @@ export class CommandManager {
 		}
 		if (selectedViewModels.length === 0) return
 
+		const clipboardMode = this.treeFacade.clipboardMode
 		const cmd = new PasteCommand(
 			this.treeFacade,
 			this.tabEditorFacade,
 			targetViewModel,
 			selectedViewModels,
-			this.treeFacade.clipboardMode
+			clipboardMode
 		)
 
 		try {
 			await this._withWatchSkip(() => cmd.execute())
 			this.undoStack.push(cmd)
 			this.redoStack.length = 0
+
+			// A cut is consumed by its paste. Without this the sources keep their
+			// greyed-out cut styling forever and the mode never leaves "cut", so
+			// Paste stays enabled pointing at nodes that have already moved.
+			// Copy keeps its clipboard so it can be pasted repeatedly.
+			if (clipboardMode === "cut") this.treeFacade.clearClipboard()
 		} catch (error) {
 			console.error("[CommandManager] paste failed:", error)
 		}

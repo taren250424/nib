@@ -209,6 +209,12 @@ export class TreeFacade {
 		this.store.clearClipboardPaths()
 	}
 
+	/** Drops the clipboard entirely: pending paths, their cut styling, and the mode. */
+	clearClipboard() {
+		this.clearClipboardPaths()
+		this.store.clipboardMode = "none"
+	}
+
 	// renderer
 
 	// NOTE: Full rebuild — only use for initial load or directory switch.
