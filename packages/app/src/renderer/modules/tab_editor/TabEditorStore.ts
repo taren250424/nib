@@ -1,6 +1,6 @@
 import type { TabEditorViewModel } from "../../viewmodels/TabEditorViewModel"
 import type { TabEditorDto } from "@shared/dto/TabEditorDto"
-import type { SearchOptions } from "./TabEditorView"
+import type { SearchOptions } from "./search"
 import { injectable } from "inversify"
 
 @injectable()

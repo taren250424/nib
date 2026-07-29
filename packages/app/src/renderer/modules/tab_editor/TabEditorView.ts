@@ -9,33 +9,12 @@ import { redo, undo } from "prosemirror-history"
 import type { Node } from "prosemirror-model"
 
 import { CLASS_SELECTED, DATASET_ATTR_TAB_ID } from "../../constants/dom"
+import { buildSearchRegex, INLINE_NODE_PLACEHOLDER } from "./search"
+import type { SearchOptions } from "./search"
 
 type SearchMatch = {
 	from: number
 	to: number
-}
-
-export type SearchOptions = {
-	matchCase: boolean
-	wholeWord: boolean
-	useRegex: boolean
-}
-
-// Stands in for non-text inline nodes (images, hard breaks) so string
-// offsets stay aligned with document positions; never matches user input.
-const INLINE_NODE_PLACEHOLDER = "￼"
-
-function buildSearchRegex(searchText: string, options: SearchOptions): RegExp | null {
-	let source = options.useRegex ? searchText : searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-
-	if (options.wholeWord) source = `\\b(?:${source})\\b`
-
-	try {
-		return new RegExp(source, options.matchCase ? "g" : "gi")
-	} catch {
-		// A user-typed regex is transiently invalid while being edited.
-		return null
-	}
 }
 
 type SearchState = {
