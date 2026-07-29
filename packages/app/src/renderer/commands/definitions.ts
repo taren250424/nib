@@ -24,6 +24,9 @@ function inTask(...tasks: Task[]) {
 	return (context: CommandContext) => tasks.includes(context.focusedTask)
 }
 
+/** Editing the document needs both the focus and a document to edit. */
+const inEditor = (context: CommandContext) => context.focusedTask === "editor" && context.hasActiveEditor
+
 /**
  * Every command, paired with the context it applies in.
  *
@@ -74,7 +77,7 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
 
 		// Tabs
 		"tab.close": { run: (id: number) => commandManager.performCloseTab(id) },
-		"tab.closeActive": { run: () => commandManager.performCloseActiveTab() },
+		"tab.closeActive": { when: (ctx) => ctx.hasActiveEditor, run: () => commandManager.performCloseActiveTab() },
 		"tab.closeOthers": { when: inTask("tab"), run: () => commandManager.performCloseOtherTabs() },
 		"tab.closeToRight": { when: inTask("tab"), run: () => commandManager.performCloseTabsToRight() },
 		"tab.closeAll": { when: inTask("tab"), run: () => commandManager.performCloseAllTabs() },
@@ -121,14 +124,22 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
 		// Editor clipboard. The native variants let the browser move the text and
 		// only mark the tab dirty; the others do the clipboard work by hand,
 		// because a menu click carries no clipboard permission of its own.
-		"editor.cut": { when: inTask("editor"), run: () => commandManager.performCutEditorManual() },
-		"editor.cut.native": { when: inTask("editor"), run: () => commandManager.performCutEditor() },
-		"editor.copy": { when: inTask("editor"), run: () => commandManager.performCopyEditor() },
-		"editor.paste": { when: inTask("editor"), run: () => commandManager.performPasteEditorManual() },
-		"editor.paste.native": { when: inTask("editor"), run: () => commandManager.performPasteEditor() },
+		//
+		// The native pair reach for the active view without checking it exists, so
+		// requiring one here is what keeps that from throwing rather than a guard
+		// repeated in each of them.
+		"editor.cut": { when: inEditor, run: () => commandManager.performCutEditorManual() },
+		"editor.cut.native": { when: inEditor, run: () => commandManager.performCutEditor() },
+		"editor.copy": { when: inEditor, run: () => commandManager.performCopyEditor() },
+		"editor.paste": { when: inEditor, run: () => commandManager.performPasteEditorManual() },
+		"editor.paste.native": { when: inEditor, run: () => commandManager.performPasteEditor() },
 
-		// Find and replace
-		"find.toggle": { run: (replace: boolean) => commandManager.toggleFindReplaceBox(replace) },
+		// Find and replace. With no tab open there is nothing to search, and the key
+		// should reach whatever else wants it rather than being swallowed.
+		"find.toggle": {
+			when: (ctx) => ctx.hasActiveEditor,
+			run: (replace: boolean) => commandManager.toggleFindReplaceBox(replace),
+		},
 		"find.queryChanged": { run: (query: string) => commandManager.performSearchQueryChanged(query) },
 		"find.replaceQueryChanged": { run: (query: string) => commandManager.performReplaceQueryChanged(query) },
 		"find.toggleOption": {

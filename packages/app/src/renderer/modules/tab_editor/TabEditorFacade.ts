@@ -11,6 +11,7 @@ import { TabEditorStore } from "./TabEditorStore"
 import { TabEditorView } from "./TabEditorView"
 import type { SearchOptions } from "./search"
 import { TabDragManager } from "./TabDragManager"
+import { ContextKeyService } from "@renderer/core"
 import { adjustMenuPosition, assert } from "@renderer/utils"
 import { DI, DOM } from "@renderer/constants"
 
@@ -26,7 +27,8 @@ export class TabEditorFacade {
 	constructor(
 		@inject(DI.TabEditorStore) public readonly store: TabEditorStore,
 		@inject(DI.TabEditorRenderer) public readonly renderer: TabEditorRenderer,
-		@inject(DI.TabDragManager) public readonly drag: TabDragManager
+		@inject(DI.TabDragManager) public readonly drag: TabDragManager,
+		@inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService
 	) {
 		this.renderer.setAutoSaveNotifier((kind) => this._handleAutoSaveEvent(kind))
 	}
@@ -45,8 +47,12 @@ export class TabEditorFacade {
 		return this.store.activeTabId
 	}
 
+	// Every path that changes which tab is active goes through here, so this is
+	// where "is there an editor at all" is announced. -1 is the explicit sentinel
+	// for none, set when the last tab closes.
 	set activeTabId(id: number) {
 		this.store.activeTabId = id
+		this.contextKeyService.set("hasActiveEditor", id !== -1)
 	}
 
 	get activeTabIndex() {
@@ -460,7 +466,9 @@ export class TabEditorFacade {
 		const activatedId = dto.activatedId
 		const tabs = dto.data
 
-		this.store.activeTabId = activatedId
+		// Set before the tabs exist, because addTab reads it to decide which one to
+		// activate; the activation itself assigns it again.
+		this.activeTabId = activatedId
 
 		for (let i = 0; i < tabs.length; i++) {
 			await this.addTab(
@@ -479,7 +487,7 @@ export class TabEditorFacade {
 		const activatedId = dto.activatedId
 		const tabs = dto.data
 
-		this.store.activeTabId = activatedId
+		this.activeTabId = activatedId
 
 		const map: Map<number, TabEditorDto> = new Map()
 		for (const tab of tabs) {

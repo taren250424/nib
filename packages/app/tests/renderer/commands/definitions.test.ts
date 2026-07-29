@@ -58,7 +58,6 @@ describe("createCommandDescriptors", () => {
 			["tree.delete", "tree"],
 			["tree.cut", "tree"],
 			["tab.closeOthers", "tab"],
-			["editor.copy", "editor"],
 			["find.submit", "find-replace"],
 		]
 
@@ -95,6 +94,31 @@ describe("createCommandDescriptors", () => {
 		for (const id of ["file.newTab", "file.save", "view.zoomIn", "settings.apply"]) {
 			expect(byId.get(id)?.when, `${id} should not be scoped`).toBeUndefined()
 		}
+	})
+
+	// The editor clipboard commands reach for the active view without checking it
+	// exists, so the condition has to carry that rather than the focus alone.
+	it("requires an open document for the editor commands, not just editor focus", () => {
+		const { byId } = descriptorsById()
+		const context = new ContextKeyService()
+		context.set("focusedTask", "editor")
+
+		const editing = ["editor.cut", "editor.cut.native", "editor.copy", "editor.paste", "editor.paste.native"]
+
+		for (const id of editing) {
+			const when = byId.get(id)!.when!
+			expect(when(context.snapshot()), `${id} should not apply with no tab open`).toBe(false)
+		}
+
+		context.set("hasActiveEditor", true)
+		for (const id of editing) {
+			const when = byId.get(id)!.when!
+			expect(when(context.snapshot()), `${id} should apply with a tab open`).toBe(true)
+		}
+
+		// And still not from another zone, even with a document open.
+		context.set("focusedTask", "tree")
+		expect(byId.get("editor.copy")!.when!(context.snapshot())).toBe(false)
 	})
 
 	// Cutting and then clicking elsewhere still leaves something to paste, so the
