@@ -413,10 +413,10 @@ export class TreeFacade {
 
 		const { treeContextMenu, treeContextPaste } = this.renderer.elements
 
-		const viewModel = this.getTreeViewModelByPath(path)
-
-		const isPasteDisabled =
-			this.clipboardMode === "none" || !viewModel.directory || this.getSelectedIndices().length === 0
+		// What paste consumes is the clipboard, not the current selection: cutting and
+		// then clicking elsewhere used to grey the item out with a full clipboard. The
+		// target need not be a directory either — paste redirects to the parent folder.
+		const isPasteDisabled = this.getClipboardPaths().length === 0
 
 		treeContextPaste.classList.toggle(DOM.CLASS_DEACTIVE, isPasteDisabled)
 		treeContextMenu.classList.add(DOM.CLASS_SELECTED)
