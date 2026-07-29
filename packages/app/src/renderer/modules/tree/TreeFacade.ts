@@ -416,9 +416,24 @@ export class TreeFacade {
 		const treeNode = (e.target as HTMLElement).closest(DOM.SELECTOR_TREE_NODE) as HTMLElement
 		if (!treeNode) return
 
-		treeNode.classList.add(DOM.CLASS_FOCUSED)
-
 		const path = treeNode.dataset[DOM.DATASET_ATTR_TREE_PATH]!
+		const index = this.getFlattenIndexByPath(path)
+
+		// Cut, copy, rename and delete all act on the selection, so opening the menu
+		// somewhere outside it has to bring the selection here first. Without this,
+		// right-clicking a file inside a directory that was left selected — which is
+		// what pasting into it leaves behind — made Delete remove the directory.
+		//
+		// Right-clicking inside an existing multi-selection keeps it, so the menu can
+		// still act on all of it.
+		if (index !== undefined && !this.getSelectedIndices().includes(index)) {
+			this.clearTreeSelected()
+			treeNode.classList.add(DOM.CLASS_SELECTED)
+			this.addSelectedIndices(index)
+			this.setLastSelectedIndexByPath(path)
+		}
+
+		treeNode.classList.add(DOM.CLASS_FOCUSED)
 		this.setContextTreeIndexByPath(path)
 
 		const { treeContextMenu, treeContextPaste } = this.renderer.elements
