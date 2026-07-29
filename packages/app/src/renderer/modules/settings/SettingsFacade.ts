@@ -11,7 +11,7 @@ type Binding<T> = {
 	update: (value: T) => void
 }
 
-injectable()
+@injectable()
 export class SettingsFacade {
 	constructor(
 		@inject(DI.SettingsRenderer) public readonly renderer: SettingsRenderer,
