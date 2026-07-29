@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { buildSearchRegex, compileSearchRegex, expandReplacement } from "@renderer/modules/tab_editor/search"
+import {
+  buildSearchRegex,
+  compileSearchRegex,
+  expandReplacement,
+  wordAt,
+  INLINE_NODE_PLACEHOLDER,
+} from "@renderer/modules/tab_editor/search"
 import type { SearchOptions } from "@renderer/modules/tab_editor/search"
 
 const DEFAULT_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false, useRegex: false }
@@ -111,5 +117,36 @@ describe("compileSearchRegex", () => {
   it("cannot fail for a plain-text search", () => {
     expect(compileSearchRegex("(unclosed", options()).error).toBeNull()
     expect(compileSearchRegex("a{2,1}", options()).error).toBeNull()
+  })
+})
+
+describe("wordAt", () => {
+  it("finds the word the offset is inside", () => {
+    expect(wordAt("the quick brown", 6)).toBe("quick")
+    expect(wordAt("the quick brown", 4)).toBe("quick")
+  })
+
+  // Where the caret sits after typing the thing you then want to search for.
+  it("counts the position just past a word as inside it", () => {
+    expect(wordAt("the quick brown", 9)).toBe("quick")
+  })
+
+  it("returns nothing when the offset is not in a word", () => {
+    expect(wordAt("the  quick", 4)).toBe("")
+    expect(wordAt("", 0)).toBe("")
+  })
+
+  it("takes letters, digits and underscore from any script", () => {
+    expect(wordAt("call snake_case2 now", 8)).toBe("snake_case2")
+    expect(wordAt("파일 트리를 연다", 4)).toBe("트리를")
+  })
+
+  it("stops at the inline-node placeholder", () => {
+    expect(wordAt(`ab${INLINE_NODE_PLACEHOLDER}cd`, 4)).toBe("cd")
+  })
+
+  it("tolerates an offset outside the text", () => {
+    expect(wordAt("word", 99)).toBe("word")
+    expect(wordAt("word", -1)).toBe("word")
   })
 })

@@ -787,11 +787,14 @@ export class CommandManager {
     const activeView = this.tabEditorFacade.getActiveTabEditorView()
     if (!activeView || activeView.isBinary) return
 
-    // Seed the query from the editor selection, like most editors do.
+    // Seed the query from the selection, or from the word the caret is in when
+    // there is none — usually the word just typed, which is what the box was
+    // opened to look for. Neither case disturbs the last query.
     const selectedText = activeView.getSelectedText()
-    if (selectedText && !selectedText.includes("\n")) {
-      this._setSearchQuery(selectedText)
-      this.tabEditorFacade.findInput.value = selectedText
+    const seed = selectedText && !selectedText.includes("\n") ? selectedText : activeView.getWordAtCursor()
+    if (seed) {
+      this._setSearchQuery(seed)
+      this.tabEditorFacade.findInput.value = seed
     }
 
     this.tabEditorFacade.findAndReplaceContainer.style.display = "flex"

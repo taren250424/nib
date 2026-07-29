@@ -9,7 +9,7 @@ import { redo, undo } from "prosemirror-history"
 import type { Node } from "prosemirror-model"
 
 import { CLASS_SELECTED, DATASET_ATTR_TAB_ID } from "../../constants/dom"
-import { buildSearchRegex, expandReplacement, INLINE_NODE_PLACEHOLDER } from "./search"
+import { buildSearchRegex, expandReplacement, wordAt, INLINE_NODE_PLACEHOLDER } from "./search"
 import type { SearchOptions } from "./search"
 
 type SearchMatch = {
@@ -202,6 +202,31 @@ export class TabEditorView {
       const view = ctx.get(editorViewCtx)
       const { from, to } = view.state.selection
       return view.state.doc.textBetween(from, to, "\n")
+    })
+  }
+
+  /**
+   * The word the caret is in, for seeding the query when nothing is selected.
+   *
+   * The block's text is assembled the way a search assembles it, placeholders
+   * and all, so the caret's offset into it means the same thing in both.
+   */
+  getWordAtCursor(): string {
+    return this._editor!.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const selection = view.state.selection
+      if (!selection.empty) return ""
+
+      const parent = selection.$from.parent
+      if (!parent.isTextblock) return ""
+
+      let text = ""
+      parent.forEach((child) => {
+        if (child.isText) text += child.text
+        else text += INLINE_NODE_PLACEHOLDER.repeat(child.nodeSize)
+      })
+
+      return wordAt(text, selection.$from.parentOffset)
     })
   }
 

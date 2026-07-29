@@ -39,6 +39,27 @@ export function expandReplacement(
   })
 }
 
+// Letters, digits and underscore in any script — a markdown editor is not an
+// ASCII-only place, and the placeholder above is deliberately none of these.
+const WORD_CHARACTER = /[\p{L}\p{N}_]/u
+
+/**
+ * The word `offset` sits in or immediately after, or "" if it sits in neither.
+ *
+ * What Ctrl+F seeds the query with when nothing is selected. Sitting just past
+ * the end of a word counts as being in it, which is where the caret usually is
+ * when someone has just finished typing the thing they want to search for.
+ */
+export function wordAt(text: string, offset: number): string {
+  let start = Math.max(0, Math.min(offset, text.length))
+  let end = start
+
+  while (start > 0 && WORD_CHARACTER.test(text[start - 1])) start--
+  while (end < text.length && WORD_CHARACTER.test(text[end])) end++
+
+  return text.slice(start, end)
+}
+
 export type SearchCompileResult = { regex: RegExp; error: null } | { regex: null; error: string }
 
 /**
