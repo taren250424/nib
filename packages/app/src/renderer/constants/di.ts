@@ -2,6 +2,7 @@ export const DI = {
 	MenuElements: Symbol("MenuElements"),
 
 	FocusManager: Symbol("FocusManager"),
+	ContextKeyService: Symbol("ContextKeyService"),
 
 	ZoomManager: Symbol("ZoomManager"),
 

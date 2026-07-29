@@ -1,3 +1,4 @@
+export { handleContextKeys } from "./contextKeyHandlers"
 export { handleGlobalInput } from "./globalHandlers"
 export { handleInfo } from "./infoHandlers"
 export { handleLoad } from "./loadHandlers"

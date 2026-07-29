@@ -8,7 +8,7 @@ import diContainer from "./diContainer"
 // Registers the <velin-select> custom element before any module queries it.
 import "./components/VelinSelect"
 
-import { CommandQueue, FocusManager, ShortcutRegistry } from "./core"
+import { CommandQueue, ContextKeyService, FocusManager, ShortcutRegistry } from "./core"
 import { Dispatcher } from "./dispatch"
 import { EventEmitter } from "events"
 
@@ -24,6 +24,7 @@ import {
 } from "./modules"
 
 import {
+	handleContextKeys,
 	handleGlobalInput,
 	handleMenuItems,
 	handleFileMenu,
@@ -45,6 +46,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 	const commandQueue = diContainer.get<CommandQueue>(DI.CommandQueue)
 	const focusManager = diContainer.get<FocusManager>(DI.FocusManager)
+	const contextKeyService = diContainer.get<ContextKeyService>(DI.ContextKeyService)
 	const zoomManager = diContainer.get<ZoomManager>(DI.ZoomManager)
 	const shortcutRegistry = diContainer.get<ShortcutRegistry>(DI.ShortcutRegistry)
 
@@ -58,6 +60,7 @@ window.addEventListener("DOMContentLoaded", () => {
 	const dispatcher = diContainer.get<Dispatcher>(DI.Dispatcher)
 	const emitter = diContainer.get<EventEmitter>(DI.EventEmitter)
 
+	handleContextKeys(focusManager, contextKeyService)
 	handleGlobalInput(dispatcher, emitter, focusManager, shortcutRegistry)
 	handleMenuItems(emitter, menuElements)
 	handleFileMenu(dispatcher, shortcutRegistry, menuElements, settingsFacade, tabEditorFacade, treeFacade)
