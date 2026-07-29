@@ -36,16 +36,23 @@ export class ShortcutRegistry {
 	}
 
 	getKeyString(e: KeyboardEvent): string {
-		const parts = []
-		if (e.ctrlKey) parts.push("Ctrl")
-		if (e.shiftKey) parts.push("Shift")
-		if (e.altKey) parts.push("Alt")
-
 		let key = e.key
+		let shift = e.shiftKey
 
-		if (key === "=") key = "+"
+		// "+" is typed as Shift+"=" on most layouts, so Ctrl+= and Ctrl+Shift+= have to
+		// collapse onto the same binding. Shift is dropped for this key because it only
+		// produces the character, it does not select a different command.
+		if (key === "=" || key === "+") {
+			key = "+"
+			shift = false
+		}
 		if (key === "Escape") key = "Esc"
 		if (key === " ") key = "Space"
+
+		const parts = []
+		if (e.ctrlKey) parts.push("Ctrl")
+		if (shift) parts.push("Shift")
+		if (e.altKey) parts.push("Alt")
 
 		parts.push(key.toUpperCase())
 		return parts.join("+")
