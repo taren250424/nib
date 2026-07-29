@@ -9,12 +9,16 @@ import { redo, undo } from "prosemirror-history"
 import type { Node } from "prosemirror-model"
 
 import { CLASS_SELECTED, DATASET_ATTR_TAB_ID } from "../../constants/dom"
-import { buildSearchRegex, INLINE_NODE_PLACEHOLDER } from "./search"
+import { buildSearchRegex, expandReplacement, INLINE_NODE_PLACEHOLDER } from "./search"
 import type { SearchOptions } from "./search"
 
 type SearchMatch = {
   from: number
   to: number
+  // What the match consumed and what it captured, kept so a replacement can
+  // refer back to them with $& and $1 without re-running the search.
+  text: string
+  groups: (string | undefined)[]
 }
 
 type SearchState = {
@@ -23,6 +27,9 @@ type SearchState = {
   currentIndex: number
   // Doc the matches were computed against; edits make them stale.
   doc: Node
+  // What produced these matches. Only a regex search captures groups, so this
+  // is also what decides whether a replacement expands $1 or inserts it.
+  options: SearchOptions
 }
 
 type SearchHighlightMeta = {
@@ -295,6 +302,8 @@ export class TabEditorView {
           matches.push({
             from: contentStart + m.index,
             to: contentStart + m.index + m[0].length,
+            text: m[0],
+            groups: m.slice(1),
           })
         }
       }
@@ -350,6 +359,7 @@ export class TabEditorView {
       matches,
       currentIndex: targetIndex,
       doc: state.doc,
+      options,
     })
 
     this.focusCurrentMatch()
@@ -380,6 +390,7 @@ export class TabEditorView {
       matches,
       currentIndex: targetIndex,
       doc: state.doc,
+      options,
     })
 
     this.focusCurrentMatch()
@@ -449,7 +460,7 @@ export class TabEditorView {
     // Matches computed against an older doc must not rewrite arbitrary ranges.
     if (this.isSearchStateStale()) return false
 
-    const { matches, currentIndex } = this._searchState
+    const { matches, currentIndex, options } = this._searchState
     if (currentIndex < 0 || currentIndex >= matches.length) return false
 
     let replaced = false
@@ -457,18 +468,19 @@ export class TabEditorView {
     this._editor!.action((ctx) => {
       const view = ctx.get(editorViewCtx)
       const state = view.state
-      const { from, to } = matches[currentIndex]
+      const match = matches[currentIndex]
+      const { from, to } = match
+
+      const text = options.useRegex ? expandReplacement(replaceText, match.text, match.groups) : replaceText
 
       // Carry the match's own marks over, or replacing a word inside bold,
       // a link or code would silently flatten it to plain text.
       const marks = state.doc.resolve(from).marksAcross(state.doc.resolve(to))
 
       // schema.text("") throws; an empty replacement means deletion.
-      let tr = replaceText
-        ? state.tr.replaceWith(from, to, state.schema.text(replaceText, marks))
-        : state.tr.delete(from, to)
+      let tr = text ? state.tr.replaceWith(from, to, state.schema.text(text, marks)) : state.tr.delete(from, to)
 
-      const cursorPos = tr.mapping.map(from) + replaceText.length
+      const cursorPos = tr.mapping.map(from) + text.length
       tr = tr.setSelection(TextSelection.create(tr.doc, cursorPos))
 
       view.dispatch(tr)
@@ -495,14 +507,17 @@ export class TabEditorView {
 
       // Replace backwards to avoid shifting positional indices for upcoming matches
       for (let i = matches.length - 1; i >= 0; i--) {
-        const { from, to } = matches[i]
+        const match = matches[i]
+        const { from, to } = match
 
         // Marks resolve against the pre-edit doc the matches were found in;
         // going backwards keeps those positions valid.
         const marks = state.doc.resolve(from).marksAcross(state.doc.resolve(to))
 
+        const text = options.useRegex ? expandReplacement(replaceText, match.text, match.groups) : replaceText
+
         // schema.text("") throws; an empty replacement means deletion.
-        tr = replaceText ? tr.replaceWith(from, to, state.schema.text(replaceText, marks)) : tr.delete(from, to)
+        tr = text ? tr.replaceWith(from, to, state.schema.text(text, marks)) : tr.delete(from, to)
         replacedCount++
       }
 
