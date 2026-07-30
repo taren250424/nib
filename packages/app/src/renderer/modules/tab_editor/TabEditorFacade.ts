@@ -130,6 +130,10 @@ export class TabEditorFacade {
     return options[option]
   }
 
+  get searchHistory() {
+    return this.store.searchHistory
+  }
+
   get preserveCase() {
     return this.store.preserveCase
   }

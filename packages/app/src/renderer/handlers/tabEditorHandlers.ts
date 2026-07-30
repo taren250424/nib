@@ -154,6 +154,14 @@ function bindFindReplaceEvents(run: RunCommand, tabEditorFacade: TabEditorFacade
     }, 300)
   )
 
+  // Bound to this input rather than to the zone: the arrows recall past queries
+  // here, and belong to the caret everywhere else in the box.
+  findInput.addEventListener("keydown", async (e) => {
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return
+    e.preventDefault()
+    await run("find.history", e.key === "ArrowUp" ? "older" : "newer")
+  })
+
   replaceInput.addEventListener("input", async (e: Event) => {
     const value = (e.target as HTMLInputElement).value
     await run("find.replaceQueryChanged", value)

@@ -891,6 +891,9 @@ export class CommandManager {
 
   performSearchQueryChanged(query: string) {
     this._setSearchQuery(query)
+    // Typing ends a walk through the history: the next ↑ starts from the newest
+    // entry again, and the draft it would have restored is this text.
+    this.tabEditorFacade.searchHistory.queryChanged(query)
     this.tabEditorFacade.replaceInfo.textContent = ""
     // The input event is debounced, so it can arrive after the box was
     // closed (e.g. Esc committing an IME composition); searching then
@@ -930,7 +933,27 @@ export class CommandManager {
   }
 
   performFind(direction: "up" | "down") {
+    // Asking for a match is the moment a query stops being something half-typed
+    // and becomes one worth offering back. Live search as you type is not.
+    this.tabEditorFacade.searchHistory.record(this.tabEditorFacade.searchQuery)
     this.tabEditorFacade.findNextMatch(direction)
+  }
+
+  /** Walks ↑/↓ through the queries searched for so far. */
+  performSearchHistory(direction: "older" | "newer") {
+    const history = this.tabEditorFacade.searchHistory
+    const input = this.tabEditorFacade.findInput
+
+    const query = direction === "older" ? history.older(input.value) : history.newer()
+    if (query === undefined) return
+
+    input.value = query
+    // The caret goes to the end, as it does in a shell: what someone wants next
+    // is usually to add to the recalled query rather than edit its middle.
+    input.setSelectionRange(query.length, query.length)
+
+    this._setSearchQuery(query)
+    this._refreshFind()
   }
 
   performReplace() {
@@ -980,6 +1003,10 @@ export class CommandManager {
     if (!this.tabEditorFacade.findReplaceOpen) return
 
     this.tabEditorFacade.findAndReplaceContainer.style.display = "none"
+
+    // Whatever the box was closed on is worth remembering too — searching as you
+    // type means a query often finds what it was after without ever being submitted.
+    this.tabEditorFacade.searchHistory.record(this.tabEditorFacade.searchQuery)
 
     this.tabEditorFacade.clearAllSearches()
     this.tabEditorFacade.replaceInfo.textContent = ""

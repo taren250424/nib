@@ -1,6 +1,7 @@
 import type { TabEditorViewModel } from "../../viewmodels/TabEditorViewModel"
 import type { TabEditorDto } from "@shared/dto/TabEditorDto"
 import type { SearchOptions } from "./search"
+import { SearchHistory } from "./SearchHistory"
 import { injectable } from "inversify"
 
 @injectable()
@@ -26,6 +27,8 @@ export class TabEditorStore {
   // only decides how a replacement is spelled. Toggling it leaves the match list
   // untouched, and buildSearchRegex has no business being handed it.
   private _preserveCase = false
+
+  private readonly _searchHistory = new SearchHistory()
 
   private _autoSaveMode = "off"
 
@@ -126,6 +129,10 @@ export class TabEditorStore {
 
   get searchOptions() {
     return this._searchOptions
+  }
+
+  get searchHistory() {
+    return this._searchHistory
   }
 
   get preserveCase() {
