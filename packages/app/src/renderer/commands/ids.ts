@@ -35,13 +35,13 @@ export type CommandId =
   | "tree.expandDirectory"
   | "tree.focusUp"
   | "tree.focusDown"
+  | "tree.move"
   //
   | "tree.cut"
   | "tree.copy"
   | "tree.clearClipboard"
   | "tree.pasteFromContextMenu"
   | "tree.pasteFromShortcut"
-  | "tree.pasteFromDrag"
   //
   | "editor.cut"
   | "editor.cut.native"

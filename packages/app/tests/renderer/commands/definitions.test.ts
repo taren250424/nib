@@ -84,13 +84,13 @@ describe("createCommandDescriptors", () => {
     const context = new ContextKeyService()
     context.set("focusedTask", "tree")
 
-    for (const id of ["tree.delete", "tree.cut", "tree.copy", "tree.rename", "tree.open"]) {
+    for (const id of ["tree.delete", "tree.cut", "tree.copy", "tree.rename", "tree.open", "tree.move"]) {
       const when = byId.get(id)!.when!
       expect(when(context.snapshot()), `${id} should not apply with an empty selection`).toBe(false)
     }
 
     context.set("treeHasSelection", true)
-    for (const id of ["tree.delete", "tree.cut", "tree.copy", "tree.rename", "tree.open"]) {
+    for (const id of ["tree.delete", "tree.cut", "tree.copy", "tree.rename", "tree.open", "tree.move"]) {
       const when = byId.get(id)!.when!
       expect(when(context.snapshot()), `${id} should apply with a selection`).toBe(true)
     }
@@ -173,7 +173,7 @@ describe("createCommandDescriptors", () => {
     const context = new ContextKeyService()
     context.set("focusedTask", "tree")
 
-    const pastes = ["tree.pasteFromContextMenu", "tree.pasteFromShortcut", "tree.pasteFromDrag"]
+    const pastes = ["tree.pasteFromContextMenu", "tree.pasteFromShortcut"]
 
     for (const id of pastes) {
       const when = byId.get(id)!.when!
@@ -185,6 +185,19 @@ describe("createCommandDescriptors", () => {
       const when = byId.get(id)!.when!
       expect(when(context.snapshot()), `${id} should apply with a full clipboard`).toBe(true)
     }
+  })
+
+  // A drop used to be spelled as a cut followed by a paste, which made it wait
+  // on a clipboard it had just overwritten. It moves what was dragged, so a
+  // selection is the whole condition.
+  it("moves a drop on its own, without a clipboard", () => {
+    const { byId } = descriptorsById()
+    const context = new ContextKeyService()
+    context.set("focusedTask", "tree")
+    context.set("treeHasSelection", true)
+
+    expect(byId.get("tree.move")!.when!(context.snapshot())).toBe(true)
+    expect(byId.get("tree.pasteFromDrag")).toBeUndefined()
   })
 
   // Both are on a global key, so neither may act on a box that is not open.
@@ -207,10 +220,11 @@ describe("createCommandDescriptors", () => {
     const { byId, calls } = descriptorsById()
 
     await byId.get("tree.cut")!.run()
+    await byId.get("tree.move")!.run()
     await byId.get("editor.cut")!.run()
     await byId.get("editor.cut.native")!.run()
 
-    expect(calls).toEqual(["performCutTree", "performCutEditorManual", "performCutEditor"])
+    expect(calls).toEqual(["performCutTree", "performMoveTreeFromDrag", "performCutEditorManual", "performCutEditor"])
   })
 
   // Zoom, settings and help used to be wired straight from their handlers,

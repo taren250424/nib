@@ -192,8 +192,7 @@ async function dropDraggedTreeNodes(run: RunCommand, treeFacade: TreeFacade) {
 
   if (canDrop) {
     treeFacade.setSelectedDragIndexByPath(dropPath)
-    await run("tree.cut")
-    await run("tree.pasteFromDrag")
+    await run("tree.move")
   }
 }
 

@@ -1,5 +1,6 @@
 import { inject, injectable } from "inversify"
 
+import type ClipboardMode from "@shared/types/ClipboardMode"
 import type Response from "@shared/types/Response"
 import type { TreeDto } from "@shared/dto/TreeDto"
 import type { TreeViewModel } from "../viewmodels/TreeViewModel"
@@ -699,85 +700,129 @@ export class CommandManager {
     await this._enqueuePasteTree(this.treeFacade.focusedIndex)
   }
 
-  async performPasteTreeWithDrag() {
-    await this._enqueuePasteTree(this.treeFacade.selectedDragIndex)
+  /**
+   * Moves the dragged nodes onto the node the drag was dropped on.
+   *
+   * A drop is a move in its own right, not a cut followed by a paste: routing it
+   * through the clipboard overwrote whatever the user had cut or copied before,
+   * greyed the dragged nodes out mid-drop, and left the two halves able to
+   * disagree about what was being moved.
+   */
+  async performMoveTreeFromDrag() {
+    // What the drag carries is the selection it started from — read here rather
+    // than inside the queue, since that is what the user picked up.
+    const sourcePaths = this.treeFacade.getSelectedPaths()
+    if (sourcePaths.length === 0) return
+
+    await this._enqueueTransferTree(this.treeFacade.selectedDragIndex, sourcePaths, (targetPath) =>
+      this._doTransferTree(targetPath, sourcePaths, "cut")
+    )
   }
 
   private async _enqueuePasteTree(targetIndex: number): Promise<void> {
+    // The clipboard is read again inside the queue; this copy only answers
+    // which target a collapsed directory should be expanded for.
+    await this._enqueueTransferTree(targetIndex, this.treeFacade.getClipboardPaths(), (targetPath) =>
+      this._doPasteTree(targetPath)
+    )
+  }
+
+  private async _enqueueTransferTree(
+    targetIndex: number,
+    sourcePaths: readonly string[],
+    transfer: (targetPath: string) => Promise<unknown>
+  ): Promise<void> {
     if (targetIndex === -1) return
 
     // Capture the target as a path: the index may shift before the queued task runs.
     const targetViewModel = this.treeFacade.getTreeViewModelByIndex(targetIndex)
     if (!targetViewModel) return
 
-    await this._expandPasteTarget(targetIndex, targetViewModel)
+    await this._expandTransferTarget(targetIndex, targetViewModel, sourcePaths)
 
-    return this.commandQueue.enqueue(() => this._doPasteTree(targetViewModel.path))
+    await this.commandQueue.enqueue(() => transfer(targetViewModel.path))
   }
 
   /**
-   * Opens a collapsed target before pasting into it, the way create already does.
+   * Opens a collapsed target before moving into it, the way create already does.
    *
    * The file otherwise lands somewhere the user cannot see, and a collapsed parent
    * keeps its children out of the flatten tree, so an undo could not find the node
-   * the paste had just added. Expanding first puts the paste on the ordinary path.
+   * that had just been added. Expanding first puts it on the ordinary path.
    *
    * Runs before the queue: opening a directory enqueues, and enqueueing from
    * inside a queued task would deadlock the chain.
    */
-  private async _expandPasteTarget(targetIndex: number, targetViewModel: TreeViewModel) {
+  private async _expandTransferTarget(
+    targetIndex: number,
+    targetViewModel: TreeViewModel,
+    sourcePaths: readonly string[]
+  ) {
     // Index 0 is the root, which has no node element of its own and is never
     // collapsed. A file target redirects to its parent, which is already open —
     // its child is on screen.
     if (targetIndex <= 0 || !targetViewModel.directory || targetViewModel.expanded) return
 
-    // Pasting onto one of the cut nodes redirects to its parent instead.
-    if (this.treeFacade.getClipboardPaths().includes(targetViewModel.path)) return
+    // Landing on one of the moved nodes redirects to its parent instead.
+    if (sourcePaths.includes(targetViewModel.path)) return
 
     await this.performOpenDirectoryByTreeNode(this.treeFacade.getTreeNodeByIndex(targetIndex))
   }
 
   private async _doPasteTree(targetPath: string) {
+    // Read inside the queue: the clipboard may have moved on while this waited.
+    const clipboardMode = this.treeFacade.clipboardMode
+    const transferred = await this._doTransferTree(targetPath, this.treeFacade.getClipboardPaths() ?? [], clipboardMode)
+
+    // A cut is consumed by its paste. Without this the sources keep their
+    // greyed-out cut styling forever and the mode never leaves "cut", so
+    // Paste stays enabled pointing at nodes that have already moved.
+    // Copy keeps its clipboard so it can be pasted repeatedly.
+    if (transferred && clipboardMode === "cut") this.treeFacade.clearClipboard()
+  }
+
+  /**
+   * Copies or moves `sourcePaths` into `targetPath`, as one undoable step.
+   *
+   * Shared by paste and by a drag drop; the two differ only in where the sources
+   * come from and in whether a clipboard is consumed afterwards. Returns whether
+   * anything was transferred.
+   */
+  private async _doTransferTree(
+    targetPath: string,
+    sourcePaths: readonly string[],
+    mode: ClipboardMode
+  ): Promise<boolean> {
     let targetIndex = this.treeFacade.getFlattenIndexByPath(targetPath)
-    if (targetIndex === undefined) return
+    if (targetIndex === undefined) return false
 
     let targetViewModel = this.treeFacade.getTreeViewModelByIndex(targetIndex)
 
-    const clipboardPaths = this.treeFacade.getClipboardPaths() ?? []
-    const isPastingOnSelf = clipboardPaths.includes(targetViewModel.path)
+    const isTargetingSelf = sourcePaths.includes(targetViewModel.path)
 
-    if (!targetViewModel.directory || isPastingOnSelf) {
+    if (!targetViewModel.directory || isTargetingSelf) {
       targetIndex = this.treeFacade.findParentDirectoryIndex(targetIndex)
       targetViewModel = this.treeFacade.getTreeViewModelByIndex(targetIndex)
     }
 
+    // Re-resolved here rather than carried in: a source may have been deleted
+    // while this waited its turn in the queue.
     const selectedViewModels = []
-    for (const path of clipboardPaths) {
+    for (const path of sourcePaths) {
       const viewModel = this.treeFacade.getTreeViewModelByPath(path)
       if (viewModel) selectedViewModels.push(viewModel)
     }
-    if (selectedViewModels.length === 0) return
+    if (selectedViewModels.length === 0) return false
 
-    const clipboardMode = this.treeFacade.clipboardMode
-    const cmd = new PasteCommand(
-      this.treeFacade,
-      this.tabEditorFacade,
-      targetViewModel,
-      selectedViewModels,
-      clipboardMode
-    )
+    const cmd = new PasteCommand(this.treeFacade, this.tabEditorFacade, targetViewModel, selectedViewModels, mode)
 
     try {
       await this._withWatchSkip(() => cmd.execute())
       this._pushUndoable(cmd)
-
-      // A cut is consumed by its paste. Without this the sources keep their
-      // greyed-out cut styling forever and the mode never leaves "cut", so
-      // Paste stays enabled pointing at nodes that have already moved.
-      // Copy keeps its clipboard so it can be pasted repeatedly.
-      if (clipboardMode === "cut") this.treeFacade.clearClipboard()
+      return true
     } catch (error) {
-      console.error("[CommandManager] paste failed:", error)
+      console.error("[CommandManager] tree transfer failed:", error)
+      return false
     }
   }
 

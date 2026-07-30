@@ -119,9 +119,13 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
       when: inTask("tree"),
       run: (extend: boolean) => commandManager.performFocusTreeDown(extend),
     },
+    // A drop moves what was dragged, and the clipboard is no part of that. It
+    // used to be spelled `tree.cut` followed by a paste, which meant a drag
+    // silently threw away whatever the user had cut or copied earlier.
+    "tree.move": { when: inTreeSelection, run: () => commandManager.performMoveTreeFromDrag() },
 
     // Tree clipboard. Paste splits by where the target comes from: the
-    // right-clicked node, the selection, or the node a drag was dropped on.
+    // right-clicked node or the selection.
     "tree.cut": { when: inTreeSelection, run: () => commandManager.performCutTree() },
     "tree.copy": { when: inTreeSelection, run: () => commandManager.performCopyTree() },
     // Esc completes the cut lifecycle: without a way to call one off, the
@@ -139,10 +143,6 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "tree.pasteFromShortcut": {
       when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
       run: () => commandManager.performPasteTreeWithShortcut(),
-    },
-    "tree.pasteFromDrag": {
-      when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
-      run: () => commandManager.performPasteTreeWithDrag(),
     },
 
     // Editor clipboard. The native variants let the browser move the text and
