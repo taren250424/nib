@@ -1,0 +1,107 @@
+import { vi } from "vitest"
+
+import { ContextKeyService } from "@renderer/core"
+import { TabDragManager } from "@renderer/modules/tab_editor/TabDragManager"
+import { TabEditorElements } from "@renderer/modules/tab_editor/TabEditorElements"
+import { TabEditorFacade } from "@renderer/modules/tab_editor/TabEditorFacade"
+import { TabEditorRenderer } from "@renderer/modules/tab_editor/TabEditorRenderer"
+import { TabEditorStore } from "@renderer/modules/tab_editor/TabEditorStore"
+
+import { installLayoutShim } from "./editorHarness"
+
+/**
+ * The find widget plus the two containers tabs and editors are appended to,
+ * carrying the ids TabEditorElements looks for.
+ *
+ * The widget is here because it is where the facade writes what it knows:
+ * `find-info` holds the counter and `find-option-selection` the per-document
+ * toggle, and both were eye-only until this harness existed.
+ *
+ * Exported separately from the builder so a harness that needs the tree in the
+ * same document can mount both.
+ */
+export const TAB_EDITOR_MARKUP = `
+  <div id="tab-context-menu">
+    <div id="tab-context-close"></div>
+    <div id="tab-context-close-others"></div>
+    <div id="tab-context-close-right"></div>
+    <div id="tab-context-close-all"></div>
+  </div>
+  <div id="tab-container"></div>
+  <div id="editor-container">
+    <div id="find-replace-container">
+      <div id="find">
+        <button id="find-replace-toggle"></button>
+        <input id="find-input" type="text" />
+        <button id="find-option-case"></button>
+        <button id="find-option-word"></button>
+        <button id="find-option-selection"></button>
+        <button id="find-up"></button>
+        <button id="find-down"></button>
+        <button id="close-find-replace"></button>
+        <span id="find-info"></span>
+      </div>
+      <div id="replace">
+        <input id="replace-input" type="text" />
+        <button id="find-option-preserve-case"></button>
+        <button id="replace-current"></button>
+        <button id="replace-all"></button>
+        <span id="replace-info"></span>
+      </div>
+    </div>
+  </div>
+`
+
+export type FacadeHarness = ReturnType<typeof buildFacadeHarness>
+
+/**
+ * A facade wired to real tabs holding real editors, minus the DI container.
+ *
+ * Everything the facade does across more than one tab — clearing the highlights
+ * it left in the tab being left, holding the counter still, redrawing the Find
+ * in Selection button for the document that has arrived under the widget —
+ * needs two live views to be visible at all, which is what this builds.
+ */
+export function createFacadeHarness(): FacadeHarness {
+  document.body.innerHTML = TAB_EDITOR_MARKUP
+  return buildFacadeHarness()
+}
+
+/** Wires the facade to markup that is already in the document. */
+export function buildFacadeHarness() {
+  installLayoutShim()
+  installIpcStub()
+
+  const store = new TabEditorStore()
+  const elements = new TabEditorElements()
+  const renderer = new TabEditorRenderer(elements)
+  const contextKeyService = new ContextKeyService()
+  const facade = new TabEditorFacade(store, renderer, new TabDragManager(), contextKeyService)
+
+  return { facade, store, renderer, elements, contextKeyService }
+}
+
+/**
+ * The main-process calls a tab makes on its own: a throttled temp save while
+ * editing, and a session sync after a rename.
+ */
+function installIpcStub() {
+  window.rendererToMain = {
+    tempSave: vi.fn().mockResolvedValue({ result: true }),
+    save: vi.fn().mockResolvedValue({ result: false }),
+    syncTabSessionFromRenderer: vi.fn().mockResolvedValue(true),
+  } as unknown as typeof window.rendererToMain
+}
+
+type TabSpec = { id: number; content?: string; path?: string; isBinary?: boolean }
+
+/** Opens a tab the way the session and File > Open do; it becomes the active one. */
+export async function openTab(
+  harness: FacadeHarness,
+  { id, content = "", path = `root/${id}.md`, isBinary = false }: TabSpec
+) {
+  const fileName = path.slice(path.lastIndexOf("/") + 1)
+  await harness.facade.addTab(id, path, fileName, content, isBinary, true, false)
+
+  return harness.facade.getActiveTabEditorView()
+}
