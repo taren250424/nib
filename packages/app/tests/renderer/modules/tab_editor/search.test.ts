@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { buildSearchRegex, wordAt, INLINE_NODE_PLACEHOLDER } from "@renderer/modules/tab_editor/search"
+import { buildSearchRegex, preserveCaseOf, wordAt, INLINE_NODE_PLACEHOLDER } from "@renderer/modules/tab_editor/search"
 import type { SearchOptions } from "@renderer/modules/tab_editor/search"
 
 const DEFAULT_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false }
@@ -80,5 +80,52 @@ describe("wordAt", () => {
   it("tolerates an offset outside the text", () => {
     expect(wordAt("word", 99)).toBe("word")
     expect(wordAt("word", -1)).toBe("word")
+  })
+})
+
+describe("preserveCaseOf", () => {
+  it("follows the three shapes a word is written in", () => {
+    expect(preserveCaseOf("colour", "color")).toBe("color")
+    expect(preserveCaseOf("COLOUR", "color")).toBe("COLOR")
+    expect(preserveCaseOf("Colour", "color")).toBe("Color")
+  })
+
+  // What the option is for: one case-insensitive search, three spellings kept.
+  it("recases each hit of a case-insensitive search on its own", () => {
+    const hits = ["cat", "Cat", "CAT"]
+    expect(hits.map((hit) => preserveCaseOf(hit, "dog"))).toEqual(["dog", "Dog", "DOG"])
+  })
+
+  // Someone who typed a capital in the middle of the replacement meant it.
+  it("keeps the replacement's own capitals after the first letter", () => {
+    expect(preserveCaseOf("Old", "myVar")).toBe("MyVar")
+  })
+
+  it("leaves a mixed-case match alone — there is no obvious answer", () => {
+    expect(preserveCaseOf("myVar", "result")).toBe("result")
+    expect(preserveCaseOf("aBC", "xyz")).toBe("xyz")
+  })
+
+  // Every character of 한글 reports as both upper and lower case, so a naive
+  // "is it all upper case?" would shout every replacement next to one.
+  it("says nothing about case for scripts that have none", () => {
+    expect(preserveCaseOf("한글", "text")).toBe("text")
+    expect(preserveCaseOf("漢字", "text")).toBe("text")
+    expect(preserveCaseOf("123", "text")).toBe("text")
+    expect(preserveCaseOf("...", "text")).toBe("text")
+  })
+
+  // Cased and uncased characters mixed: the cased ones are what answer.
+  it("reads the casing through punctuation and digits", () => {
+    expect(preserveCaseOf("API-2", "rest-2")).toBe("REST-2")
+    expect(preserveCaseOf("v1-tag", "v2-name")).toBe("v2-name")
+  })
+
+  it("treats a lone capital as upper case, as VSCode does", () => {
+    expect(preserveCaseOf("A", "beta")).toBe("BETA")
+  })
+
+  it("has nothing to recase when the replacement is empty", () => {
+    expect(preserveCaseOf("WORD", "")).toBe("")
   })
 })

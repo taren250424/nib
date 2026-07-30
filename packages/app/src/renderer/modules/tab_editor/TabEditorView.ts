@@ -9,7 +9,7 @@ import { redo, undo } from "prosemirror-history"
 import type { Node } from "prosemirror-model"
 
 import { CLASS_SELECTED, DATASET_ATTR_TAB_ID } from "../../constants/dom"
-import { buildSearchRegex, wordAt, INLINE_NODE_PLACEHOLDER } from "./search"
+import { buildSearchRegex, preserveCaseOf, wordAt, INLINE_NODE_PLACEHOLDER } from "./search"
 import type { SearchOptions } from "./search"
 
 type SearchMatch = {
@@ -501,7 +501,7 @@ export class TabEditorView {
     view.updateState(newState)
   }
 
-  replaceCurrentMatch(replaceText: string): boolean {
+  replaceCurrentMatch(replaceText: string, preserveCase = false): boolean {
     if (!this._searchState) return false
     // Matches computed against an older doc must not rewrite arbitrary ranges.
     if (this.isSearchStateStale()) return false
@@ -520,12 +520,12 @@ export class TabEditorView {
       // a link or code would silently flatten it to plain text.
       const marks = state.doc.resolve(from).marksAcross(state.doc.resolve(to))
 
-      // schema.text("") throws; an empty replacement means deletion.
-      let tr = replaceText
-        ? state.tr.replaceWith(from, to, state.schema.text(replaceText, marks))
-        : state.tr.delete(from, to)
+      const text = preserveCase ? preserveCaseOf(state.doc.textBetween(from, to), replaceText) : replaceText
 
-      const cursorPos = tr.mapping.map(from) + replaceText.length
+      // schema.text("") throws; an empty replacement means deletion.
+      let tr = text ? state.tr.replaceWith(from, to, state.schema.text(text, marks)) : state.tr.delete(from, to)
+
+      const cursorPos = tr.mapping.map(from) + text.length
       tr = tr.setSelection(TextSelection.create(tr.doc, cursorPos))
 
       view.dispatch(tr)
@@ -536,7 +536,7 @@ export class TabEditorView {
     return replaced
   }
 
-  replaceAllMatches(searchText: string, replaceText: string, options: SearchOptions): number {
+  replaceAllMatches(searchText: string, replaceText: string, options: SearchOptions, preserveCase = false): number {
     if (!searchText) return 0
 
     let replacedCount = 0
@@ -558,8 +558,12 @@ export class TabEditorView {
         // going backwards keeps those positions valid.
         const marks = state.doc.resolve(from).marksAcross(state.doc.resolve(to))
 
+        // Each hit is recased from its own text, so one Replace All over a
+        // case-insensitive search keeps `Foo`, `FOO` and `foo` spelled apart.
+        const text = preserveCase ? preserveCaseOf(state.doc.textBetween(from, to), replaceText) : replaceText
+
         // schema.text("") throws; an empty replacement means deletion.
-        tr = replaceText ? tr.replaceWith(from, to, state.schema.text(replaceText, marks)) : tr.delete(from, to)
+        tr = text ? tr.replaceWith(from, to, state.schema.text(text, marks)) : tr.delete(from, to)
         replacedCount++
       }
 

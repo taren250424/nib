@@ -923,6 +923,12 @@ export class CommandManager {
     this._refreshFind()
   }
 
+  /** No re-search: what counts as a match has not changed, only how it is written back. */
+  performTogglePreserveCase() {
+    const enabled = this.tabEditorFacade.togglePreserveCase()
+    this.tabEditorFacade.findOptionPreserveCase.classList.toggle(DOM.CLASS_SELECTED, enabled)
+  }
+
   performFind(direction: "up" | "down") {
     this.tabEditorFacade.findNextMatch(direction)
   }
@@ -940,7 +946,7 @@ export class CommandManager {
 
     const replaceInput = this.tabEditorFacade.replaceQuery
 
-    const replaced = view.replaceCurrentMatch(replaceInput)
+    const replaced = view.replaceCurrentMatch(replaceInput, this.tabEditorFacade.preserveCase)
     if (!replaced) return
 
     this.tabEditorFacade.findNextMatch()
@@ -957,7 +963,12 @@ export class CommandManager {
     const findInput = this.tabEditorFacade.searchQuery
     const replaceInput = this.tabEditorFacade.replaceQuery
 
-    const replacedCount = view.replaceAllMatches(findInput, replaceInput, this.tabEditorFacade.searchOptions)
+    const replacedCount = view.replaceAllMatches(
+      findInput,
+      replaceInput,
+      this.tabEditorFacade.searchOptions,
+      this.tabEditorFacade.preserveCase
+    )
 
     // Match positions and the count label are invalid after the rewrite.
     this.tabEditorFacade.findNextMatch()

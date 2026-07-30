@@ -368,6 +368,10 @@ export class TabEditorRenderer {
     return this.elements.findOptionCase
   }
 
+  get findOptionPreserveCase() {
+    return this.elements.findOptionPreserveCase
+  }
+
   get findOptionWord() {
     return this.elements.findOptionWord
   }

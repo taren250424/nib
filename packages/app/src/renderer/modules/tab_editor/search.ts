@@ -43,3 +43,34 @@ export function buildSearchRegex(searchText: string, options: SearchOptions): Re
 
   return new RegExp(source, options.matchCase ? "g" : "gi")
 }
+
+/**
+ * `replacement` recased to read the way `matched` did.
+ *
+ * What "Preserve Case" is for: a case-insensitive search finds `Foo`, `FOO` and
+ * `foo` alike, and replacing all three with one literal would otherwise flatten
+ * the prose to whatever was typed in the box.
+ *
+ * Only the three shapes a word is actually written in are recognised — all
+ * lower, all upper, and capitalised. Anything else (camelCase, an acronym in
+ * the middle) has no obvious answer, so the replacement is left as typed.
+ */
+export function preserveCaseOf(matched: string, replacement: string): string {
+  if (!replacement) return replacement
+
+  // Only characters that have two cases say anything about casing. Hangul, CJK
+  // and digits have none, and would otherwise all read as "already upper case".
+  const cased = [...matched].filter((ch) => ch.toLowerCase() !== ch.toUpperCase())
+  if (cased.length === 0) return replacement
+
+  const isUpper = (ch: string) => ch === ch.toUpperCase()
+
+  if (cased.every(isUpper)) return replacement.toUpperCase()
+  if (!cased.some(isUpper)) return replacement.toLowerCase()
+
+  // Capitalised. The rest of the replacement keeps the case it was typed in:
+  // someone who wrote `myVar` there meant the capital in the middle.
+  if (isUpper(cased[0])) return replacement[0].toUpperCase() + replacement.slice(1)
+
+  return replacement
+}

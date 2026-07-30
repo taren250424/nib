@@ -22,6 +22,11 @@ export class TabEditorStore {
     wholeWord: false,
   }
 
+  // Kept apart from the two above: those decide which text is a match, this one
+  // only decides how a replacement is spelled. Toggling it leaves the match list
+  // untouched, and buildSearchRegex has no business being handed it.
+  private _preserveCase = false
+
   private _autoSaveMode = "off"
 
   //
@@ -121,6 +126,14 @@ export class TabEditorStore {
 
   get searchOptions() {
     return this._searchOptions
+  }
+
+  get preserveCase() {
+    return this._preserveCase
+  }
+
+  set preserveCase(enabled: boolean) {
+    this._preserveCase = enabled
   }
 
   get autoSaveMode() {

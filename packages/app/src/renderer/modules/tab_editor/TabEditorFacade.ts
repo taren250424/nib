@@ -130,6 +130,15 @@ export class TabEditorFacade {
     return options[option]
   }
 
+  get preserveCase() {
+    return this.store.preserveCase
+  }
+
+  togglePreserveCase(): boolean {
+    this.store.preserveCase = !this.store.preserveCase
+    return this.store.preserveCase
+  }
+
   // renderer
 
   getTabEditorViewByIndex(index: number) {
@@ -273,6 +282,10 @@ export class TabEditorFacade {
 
   get findOptionWord() {
     return this.renderer.findOptionWord
+  }
+
+  get findOptionPreserveCase() {
+    return this.renderer.findOptionPreserveCase
   }
 
   // drag

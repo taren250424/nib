@@ -53,6 +53,7 @@ export type CommandId =
   | "find.queryChanged"
   | "find.replaceQueryChanged"
   | "find.toggleOption"
+  | "find.togglePreserveCase"
   | "find.next"
   | "find.replace"
   | "find.replaceAll"

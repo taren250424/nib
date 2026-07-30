@@ -169,6 +169,10 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "find.toggleOption": {
       run: (option: "matchCase" | "wholeWord") => commandManager.performToggleSearchOption(option),
     },
+    // Separate from the two above because it answers a different question: those
+    // decide what counts as a match, this one only how a replacement is spelled,
+    // so toggling it leaves the match list and the count alone.
+    "find.togglePreserveCase": { run: () => commandManager.performTogglePreserveCase() },
     // Reachable from F3 with the box closed, so it carries the whole condition
     // for searching: a document to search and a query to search for.
     "find.next": {
