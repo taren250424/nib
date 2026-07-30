@@ -1,8 +1,7 @@
-import { CUSTOM_EVENTS } from "@renderer/constants"
+import { MOUSE_EVENTS, type MouseEventBus } from "@renderer/core"
 import type { SideFacade } from "@renderer/modules"
-import { EventEmitter } from "events"
 
-export function handleSide(emitter: EventEmitter, sideFacade: SideFacade) {
+export function handleSide(mouseBus: MouseEventBus, sideFacade: SideFacade) {
   const { resizer } = sideFacade.renderer.elements
 
   resizer.addEventListener("mousedown", () => {
@@ -10,14 +9,14 @@ export function handleSide(emitter: EventEmitter, sideFacade: SideFacade) {
     sideFacade.initDrag()
   })
 
-  emitter.on(CUSTOM_EVENTS.MOUSE_MOVE.DEFAULT, (e) => {
+  mouseBus.on(MOUSE_EVENTS.MOVE, (e) => {
     if (!sideFacade.isDragging()) return
 
     const width = sideFacade.calculateWidth(e.clientX)
     sideFacade.updateSideWidth(width)
   })
 
-  emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, (e) => {
+  mouseBus.on(MOUSE_EVENTS.UP, (e) => {
     if (!sideFacade.isDragging()) return
 
     sideFacade.clearDrag()
@@ -27,7 +26,7 @@ export function handleSide(emitter: EventEmitter, sideFacade: SideFacade) {
     sideFacade.syncSession()
   })
 
-  emitter.on(CUSTOM_EVENTS.MOUSE_LEAVE.DEFAULT, () => {
+  mouseBus.on(MOUSE_EVENTS.LEAVE, () => {
     if (!sideFacade.isDragging()) return
     sideFacade.clearDrag()
   })

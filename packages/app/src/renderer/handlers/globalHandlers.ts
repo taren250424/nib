@@ -1,6 +1,12 @@
-import { CUSTOM_EVENTS } from "@renderer/constants"
-import { FocusManager, KeybindingService, UI_ZONES_VALUES, type Task } from "@renderer/core"
-import { EventEmitter } from "events"
+import {
+  FocusManager,
+  KeybindingService,
+  MOUSE_EVENTS,
+  MouseEventBus,
+  UI_ZONES_VALUES,
+  mouseDownOutside,
+  type Task,
+} from "@renderer/core"
 
 const state = {
   down: false,
@@ -8,24 +14,24 @@ const state = {
 }
 
 export function handleGlobalInput(
-  emitter: EventEmitter,
+  mouseBus: MouseEventBus,
   focusManager: FocusManager,
   keybindingService: KeybindingService
 ) {
-  bindDocumentMousedownEvnet(focusManager, emitter)
+  bindDocumentMousedownEvnet(focusManager, mouseBus)
   bindDocumentFocusEvents(focusManager)
 
-  bindDocumentMousedownEvnetForDrag(emitter)
-  bindDocumentMousemoveEvnetForDrag(emitter)
-  bindDocumentMouseupEvnetForDrag(emitter)
-  bindDocumentMouseleaveEvnetForDrag(emitter)
+  bindDocumentMousedownEvnetForDrag(mouseBus)
+  bindDocumentMousemoveEvnetForDrag(mouseBus)
+  bindDocumentMouseupEvnetForDrag(mouseBus)
+  bindDocumentMouseleaveEvnetForDrag(mouseBus)
 
   bindDocumentKeydownEvent(focusManager, keybindingService)
 }
 
 //
 
-function bindDocumentMousedownEvnet(focusManager: FocusManager, emitter: EventEmitter) {
+function bindDocumentMousedownEvnet(focusManager: FocusManager, mouseBus: MouseEventBus) {
   document.addEventListener("mousedown", (e) => {
     const target = e.target as HTMLElement
 
@@ -40,7 +46,7 @@ function bindDocumentMousedownEvnet(focusManager: FocusManager, emitter: EventEm
 
     UI_ZONES_VALUES.forEach((item) => {
       if (item !== activeItem) {
-        emitter.emit(item.outEvent, e)
+        mouseBus.emit(mouseDownOutside(item.id), e)
       }
     })
 
@@ -60,39 +66,39 @@ function bindDocumentFocusEvents(focusManager: FocusManager) {
 
 //
 
-function bindDocumentMousedownEvnetForDrag(emitter: EventEmitter) {
+function bindDocumentMousedownEvnetForDrag(mouseBus: MouseEventBus) {
   document.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return
     state.down = true
-    emitter.emit(CUSTOM_EVENTS.MOUSE_DOWN.DEFAULT, e)
+    mouseBus.emit(MOUSE_EVENTS.DOWN, e)
   })
 }
 
-function bindDocumentMousemoveEvnetForDrag(emitter: EventEmitter) {
+function bindDocumentMousemoveEvnetForDrag(mouseBus: MouseEventBus) {
   document.addEventListener("mousemove", (e) => {
     if (!state.ticking) {
       state.ticking = true
       window.requestAnimationFrame(() => {
-        emitter.emit(CUSTOM_EVENTS.MOUSE_MOVE.DEFAULT, e)
+        mouseBus.emit(MOUSE_EVENTS.MOVE, e)
         state.ticking = false
       })
     }
   })
 }
 
-function bindDocumentMouseupEvnetForDrag(emitter: EventEmitter) {
+function bindDocumentMouseupEvnetForDrag(mouseBus: MouseEventBus) {
   document.addEventListener("mouseup", (e) => {
     if (state.down) {
-      emitter.emit(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, e)
+      mouseBus.emit(MOUSE_EVENTS.UP, e)
       state.down = false
     }
   })
 }
 
-function bindDocumentMouseleaveEvnetForDrag(emitter: EventEmitter) {
+function bindDocumentMouseleaveEvnetForDrag(mouseBus: MouseEventBus) {
   document.addEventListener("mouseleave", (e) => {
     if (state.down) state.down = false
-    emitter.emit(CUSTOM_EVENTS.MOUSE_LEAVE.DEFAULT, e)
+    mouseBus.emit(MOUSE_EVENTS.LEAVE, e)
   })
 }
 

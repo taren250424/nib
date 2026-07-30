@@ -42,5 +42,5 @@ export const DI = {
 
   CommandManager: Symbol("CommandManager"),
   CommandQueue: Symbol("CommandQueue"),
-  EventEmitter: Symbol("EventEmitter"),
+  MouseEventBus: Symbol("MouseEventBus"),
 }

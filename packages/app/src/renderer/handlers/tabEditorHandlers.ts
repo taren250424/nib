@@ -1,31 +1,37 @@
 import "@milkdown/theme-nord/style.css"
 
-import { CUSTOM_EVENTS, DOM } from "../constants"
+import { DOM } from "../constants"
 import { TabEditorFacade } from "../modules"
 import { TAB_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
-import type { CommandRegistry, FocusManager } from "@renderer/core"
-import { EventEmitter } from "events"
+import {
+  MOUSE_EVENTS,
+  UI_ZONES,
+  mouseDownOutside,
+  type CommandRegistry,
+  type FocusManager,
+  type MouseEventBus,
+} from "@renderer/core"
 import { debounce } from "@renderer/utils"
 import { bindContextMenu, renderContextMenuState } from "./menu"
 import type { RunCommand } from "./runCommand"
 
 export function handleTabEditor(
   run: RunCommand,
-  emitter: EventEmitter,
+  mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
   focusManager: FocusManager,
   tabEditorFacade: TabEditorFacade
 ) {
   bindContainerClickEvent(run, tabEditorFacade)
 
-  bindContextmenuToggleEvents(emitter, commandRegistry, focusManager, tabEditorFacade)
+  bindContextmenuToggleEvents(mouseBus, commandRegistry, focusManager, tabEditorFacade)
 
   bindFindReplaceEvents(run, tabEditorFacade)
 
-  bindMousedownEventsForDrag(emitter, tabEditorFacade)
-  bindMousemoveEventsForDrag(emitter, tabEditorFacade)
-  bindMouseupEventsForDrag(emitter, tabEditorFacade)
-  bindMouseleaveEventsForDrag(emitter, tabEditorFacade)
+  bindMousedownEventsForDrag(mouseBus, tabEditorFacade)
+  bindMousemoveEventsForDrag(mouseBus, tabEditorFacade)
+  bindMouseupEventsForDrag(mouseBus, tabEditorFacade)
+  bindMouseleaveEventsForDrag(mouseBus, tabEditorFacade)
 
   bindWindowBlurEventForAutoSave(tabEditorFacade)
 }
@@ -53,7 +59,7 @@ function bindContainerClickEvent(run: RunCommand, tabEditorFacade: TabEditorFaca
 //
 
 function bindContextmenuToggleEvents(
-  emitter: EventEmitter,
+  mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
   focusManager: FocusManager,
   tabEditorFacade: TabEditorFacade
@@ -67,7 +73,7 @@ function bindContextmenuToggleEvents(
     renderContextMenuState(commandRegistry, focusManager, TAB_CONTEXT_MENU_BINDINGS, elements)
   })
 
-  emitter.on(CUSTOM_EVENTS.MOUSE_DOWN.OUT.TAB_CONTEXTMENU, () => {
+  mouseBus.on(mouseDownOutside(UI_ZONES.TAB_CONTEXT_MENU.id), () => {
     tabEditorFacade.handleHideContextmenu()
   })
 }
@@ -150,8 +156,8 @@ function bindWindowBlurEventForAutoSave(tabEditorFacade: TabEditorFacade) {
 
 //
 
-function bindMousedownEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
-  emitter.on(CUSTOM_EVENTS.MOUSE_DOWN.DEFAULT, (e) => {
+function bindMousedownEventsForDrag(mouseBus: MouseEventBus, tabEditorFacade: TabEditorFacade) {
+  mouseBus.on(MOUSE_EVENTS.DOWN, (e) => {
     const target = e.target as HTMLElement
     const tab = target.closest(DOM.SELECTOR_TAB) as HTMLElement
     if (!tab) return
@@ -159,8 +165,8 @@ function bindMousedownEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabE
   })
 }
 
-function bindMousemoveEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
-  emitter.on(CUSTOM_EVENTS.MOUSE_MOVE.DEFAULT, (e) => {
+function bindMousemoveEventsForDrag(mouseBus: MouseEventBus, tabEditorFacade: TabEditorFacade) {
+  mouseBus.on(MOUSE_EVENTS.MOVE, (e) => {
     if (!tabEditorFacade.isMouseDown()) return
 
     if (!tabEditorFacade.isDrag()) {
@@ -182,10 +188,10 @@ function bindMousemoveEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabE
   })
 }
 
-function bindMouseupEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
-  // EventEmitter neither awaits nor catches async listeners, so the drop has to
+function bindMouseupEventsForDrag(mouseBus: MouseEventBus, tabEditorFacade: TabEditorFacade) {
+  // The bus neither awaits nor catches async listeners, so the drop has to
   // terminate its own promise or a failing session sync becomes an unhandled rejection.
-  emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, () => {
+  mouseBus.on(MOUSE_EVENTS.UP, () => {
     dropDraggedTab(tabEditorFacade).catch((err) => {
       console.error("[tabEditorHandlers] tab drag drop failed:", err)
     })
@@ -210,8 +216,8 @@ async function dropDraggedTab(tabEditorFacade: TabEditorFacade) {
   if (!response) tabEditorFacade.moveTabEditorViewAndUpdateActiveIndex(to, from)
 }
 
-function bindMouseleaveEventsForDrag(emitter: EventEmitter, tabEditorFacade: TabEditorFacade) {
-  emitter.on(CUSTOM_EVENTS.MOUSE_LEAVE.DEFAULT, () => {
+function bindMouseleaveEventsForDrag(mouseBus: MouseEventBus, tabEditorFacade: TabEditorFacade) {
+  mouseBus.on(MOUSE_EVENTS.LEAVE, () => {
     if (tabEditorFacade.isDrag()) {
       tabEditorFacade.clearDrag()
     }

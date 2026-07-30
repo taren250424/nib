@@ -8,10 +8,16 @@ import diContainer from "./diContainer"
 // Registers the <velin-select> custom element before any module queries it.
 import "./components/VelinSelect"
 
-import { CommandQueue, CommandRegistry, ContextKeyService, FocusManager, KeybindingService } from "./core"
+import {
+  CommandQueue,
+  CommandRegistry,
+  ContextKeyService,
+  FocusManager,
+  KeybindingService,
+  MouseEventBus,
+} from "./core"
 import { createCommandDescriptors } from "./commands"
 import { KEYBINDINGS } from "./commands/keybindings"
-import { EventEmitter } from "events"
 
 import {
   CommandManager,
@@ -58,7 +64,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const sideFacade = diContainer.get<SideFacade>(DI.SideFacade)
   const windowFacade = diContainer.get<WindowFacade>(DI.WindowFacade)
 
-  const emitter = diContainer.get<EventEmitter>(DI.EventEmitter)
+  const mouseBus = diContainer.get<MouseEventBus>(DI.MouseEventBus)
 
   // Commands and their bindings must exist before any input can reach one,
   // including the ones session load runs.
@@ -82,16 +88,16 @@ window.addEventListener("DOMContentLoaded", () => {
   const run = createCommandRunner(commandRegistry, focusManager)
 
   handleContextKeys(focusManager, contextKeyService)
-  handleGlobalInput(emitter, focusManager, keybindingService)
-  handleMenuItems(emitter, menuElements)
+  handleGlobalInput(mouseBus, focusManager, keybindingService)
+  handleMenuItems(mouseBus, menuElements)
   handleCommandMenus(commandRegistry, contextKeyService, menuElements)
   handleShortcutLabels(menuElements, treeFacade.renderer.elements, tabEditorFacade.renderer.elements)
 
-  handleTabEditor(run, emitter, commandRegistry, focusManager, tabEditorFacade)
+  handleTabEditor(run, mouseBus, commandRegistry, focusManager, tabEditorFacade)
   handleInfo(infoFacade)
   handleWindow(windowFacade, run)
-  handleTree(run, emitter, commandRegistry, focusManager, treeFacade)
-  handleSide(emitter, sideFacade)
+  handleTree(run, mouseBus, commandRegistry, focusManager, treeFacade)
+  handleSide(mouseBus, sideFacade)
   handleSettings(run, settingsFacade)
   handleSync(commandQueue, tabEditorFacade, treeFacade)
 

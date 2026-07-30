@@ -1,15 +1,21 @@
 import "@milkdown/theme-nord/style.css"
 import { TreeFacade } from "../modules"
-import { DOM, CUSTOM_EVENTS } from "../constants"
+import { DOM } from "../constants"
 import { TREE_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
-import type { CommandRegistry, FocusManager } from "@renderer/core"
-import { EventEmitter } from "events"
+import {
+  MOUSE_EVENTS,
+  UI_ZONES,
+  mouseDownOutside,
+  type CommandRegistry,
+  type FocusManager,
+  type MouseEventBus,
+} from "@renderer/core"
 import { bindContextMenu, renderContextMenuState } from "./menu"
 import type { RunCommand } from "./runCommand"
 
 export function handleTree(
   run: RunCommand,
-  emitter: EventEmitter,
+  mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
   focusManager: FocusManager,
   treeFacade: TreeFacade
@@ -18,12 +24,12 @@ export function handleTree(
 
   bindContainerClickEvent(run, treeFacade)
 
-  bindContextmenuToggleEvents(emitter, commandRegistry, focusManager, treeFacade)
+  bindContextmenuToggleEvents(mouseBus, commandRegistry, focusManager, treeFacade)
 
-  bindMousedownEventsForDrag(emitter, treeFacade)
-  bindMousemoveEventsForDrag(emitter, treeFacade)
-  bindMouseupEventsForDrag(run, emitter, treeFacade)
-  bindMouseleaveEventsForDrag(emitter, treeFacade)
+  bindMousedownEventsForDrag(mouseBus, treeFacade)
+  bindMousemoveEventsForDrag(mouseBus, treeFacade)
+  bindMouseupEventsForDrag(run, mouseBus, treeFacade)
+  bindMouseleaveEventsForDrag(mouseBus, treeFacade)
 }
 
 // NOTE: nothing here clears the selected/focused marks when a click lands
@@ -100,7 +106,7 @@ function bindContainerClickEvent(run: RunCommand, treeFacade: TreeFacade) {
 //
 
 function bindContextmenuToggleEvents(
-  emitter: EventEmitter,
+  mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
   focusManager: FocusManager,
   treeFacade: TreeFacade
@@ -117,7 +123,7 @@ function bindContextmenuToggleEvents(
     renderContextMenuState(commandRegistry, focusManager, TREE_CONTEXT_MENU_BINDINGS, elements)
   })
 
-  emitter.on(CUSTOM_EVENTS.MOUSE_DOWN.OUT.TREE_CONTEXTMENU, () => {
+  mouseBus.on(mouseDownOutside(UI_ZONES.TREE_CONTEXT_MENU.id), () => {
     treeFacade.handleHideContextmenu()
   })
 }
@@ -126,8 +132,8 @@ function bindContextmenuToggleEvents(
 
 //
 
-function bindMousedownEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacade) {
-  emitter.on(CUSTOM_EVENTS.MOUSE_DOWN.DEFAULT, (e) => {
+function bindMousedownEventsForDrag(mouseBus: MouseEventBus, treeFacade: TreeFacade) {
+  mouseBus.on(MOUSE_EVENTS.DOWN, (e) => {
     const target = e.target as HTMLElement
     const node = target.closest(DOM.SELECTOR_TREE_NODE) as HTMLElement
     if (!node) return
@@ -145,8 +151,8 @@ function bindMousedownEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacad
   })
 }
 
-function bindMousemoveEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacade) {
-  emitter.on(CUSTOM_EVENTS.MOUSE_MOVE.DEFAULT, (e) => {
+function bindMousemoveEventsForDrag(mouseBus: MouseEventBus, treeFacade: TreeFacade) {
+  mouseBus.on(MOUSE_EVENTS.MOVE, (e) => {
     if (!treeFacade.isMouseDown()) return
 
     if (!treeFacade.isDrag()) {
@@ -159,14 +165,14 @@ function bindMousemoveEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacad
     }
 
     treeFacade.moveGhost(e.clientX, e.clientY)
-    treeFacade.updateDragOverStatus(e.target)
+    treeFacade.updateDragOverStatus(e.target as HTMLElement)
   })
 }
 
-function bindMouseupEventsForDrag(run: RunCommand, emitter: EventEmitter, treeFacade: TreeFacade) {
-  // EventEmitter neither awaits nor catches async listeners, so the drop has to
+function bindMouseupEventsForDrag(run: RunCommand, mouseBus: MouseEventBus, treeFacade: TreeFacade) {
+  // The bus neither awaits nor catches async listeners, so the drop has to
   // terminate its own promise or a failing move becomes an unhandled rejection.
-  emitter.on(CUSTOM_EVENTS.MOUSE_UP.DEFAULT, () => {
+  mouseBus.on(MOUSE_EVENTS.UP, () => {
     dropDraggedTreeNodes(run, treeFacade).catch((err) => {
       console.error("[treeHandlers] drag drop failed:", err)
     })
@@ -191,8 +197,8 @@ async function dropDraggedTreeNodes(run: RunCommand, treeFacade: TreeFacade) {
   }
 }
 
-function bindMouseleaveEventsForDrag(emitter: EventEmitter, treeFacade: TreeFacade) {
-  emitter.on(CUSTOM_EVENTS.MOUSE_LEAVE.DEFAULT, () => {
+function bindMouseleaveEventsForDrag(mouseBus: MouseEventBus, treeFacade: TreeFacade) {
+  mouseBus.on(MOUSE_EVENTS.LEAVE, () => {
     if (treeFacade.isDrag()) {
       treeFacade.clearDrag()
     }

@@ -7,6 +7,7 @@ import { ContextKeyService } from "./core/ContextKeyService"
 import { FocusManager } from "./core/FocusManager"
 import { KeybindingService } from "./core/KeybindingService"
 import { CommandQueue } from "./core/CommandQueue"
+import { MouseEventBus } from "./core/EventBus"
 
 import { MenuElements } from "./modules/menu/MenuElements"
 
@@ -44,7 +45,6 @@ import { InfoElements } from "./modules/info/InfoElements"
 import { ZoomManager } from "./modules/zoom/ZoomManager"
 
 import { CommandManager } from "./modules/CommandManager"
-import { EventEmitter } from "events"
 
 const diContainer = new Container()
 
@@ -90,6 +90,6 @@ diContainer.bind(DI.ZoomManager).to(ZoomManager).inSingletonScope()
 
 diContainer.bind(DI.CommandQueue).to(CommandQueue).inSingletonScope()
 diContainer.bind(DI.CommandManager).to(CommandManager).inSingletonScope()
-diContainer.bind(DI.EventEmitter).to(EventEmitter).inSingletonScope()
+diContainer.bind(DI.MouseEventBus).to(MouseEventBus).inSingletonScope()
 
 export default diContainer

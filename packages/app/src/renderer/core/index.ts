@@ -1,5 +1,9 @@
-export type { Zone, Task } from "./types"
+export type { Zone, ZoneId, Task } from "./types"
 export { UI_ZONES, UI_ZONES_VALUES } from "./types"
+
+export type { MouseBusEvents } from "./types"
+export { MOUSE_EVENTS, mouseDownOutside } from "./types"
+export { EventBus, MouseEventBus } from "./EventBus"
 
 export type { ContextKey, ContextKeyMap } from "./types"
 export { DEFAULT_CONTEXT_KEYS } from "./types"
