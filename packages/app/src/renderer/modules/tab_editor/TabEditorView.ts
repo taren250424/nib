@@ -14,6 +14,7 @@ import {
   blockTouchesSearchRange,
   buildSearchRegex,
   isWithinSearchRange,
+  paintedMatchRange,
   preserveCaseOf,
   wordAt,
   INLINE_NODE_PLACEHOLDER,
@@ -577,11 +578,19 @@ export class TabEditorView {
           // said nothing about where the user wanted to look.
           if (meta === null || !meta.matches.length) return { decorations: DecorationSet.empty, range }
 
-          const decorations = meta.matches.map((match, idx) =>
-            Decoration.inline(match.from, match.to, {
-              class: idx === meta.currentIndex ? "search-highlight-current" : "search-highlight",
-            })
-          )
+          // Only the matches worth drawing; see paintedMatchRange.
+          const { start, end } = paintedMatchRange(meta.matches.length, meta.currentIndex)
+
+          const decorations = []
+          for (let idx = start; idx < end; idx++) {
+            const match = meta.matches[idx]
+            decorations.push(
+              Decoration.inline(match.from, match.to, {
+                class: idx === meta.currentIndex ? "search-highlight-current" : "search-highlight",
+              })
+            )
+          }
+
           return { decorations: DecorationSet.create(tr.doc, decorations), range }
         },
       },

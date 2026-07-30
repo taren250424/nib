@@ -4,6 +4,7 @@ import {
   blockTouchesSearchRange,
   buildSearchRegex,
   isWithinSearchRange,
+  paintedMatchRange,
   preserveCaseOf,
   wordAt,
   INLINE_NODE_PLACEHOLDER,
@@ -177,5 +178,37 @@ describe("blockTouchesSearchRange", () => {
   it("skips blocks that end before it or start after it", () => {
     expect(blockTouchesSearchRange(0, 5, range)).toBe(false)
     expect(blockTouchesSearchRange(25, 5, range)).toBe(false)
+  })
+})
+
+/**
+ * Painting every match is what made a common word freeze the editor; the count
+ * itself was never the expensive part. So the window moves, and the total does not.
+ */
+describe("paintedMatchRange", () => {
+  const CAP = 10
+
+  it("paints all of them when there are few enough", () => {
+    expect(paintedMatchRange(4, 0, CAP)).toEqual({ start: 0, end: 4 })
+    expect(paintedMatchRange(CAP, 3, CAP)).toEqual({ start: 0, end: CAP })
+  })
+
+  it("centres the window on the current match", () => {
+    expect(paintedMatchRange(100, 50, CAP)).toEqual({ start: 45, end: 55 })
+  })
+
+  it("stops the window at either end rather than shrinking it", () => {
+    expect(paintedMatchRange(100, 1, CAP)).toEqual({ start: 0, end: CAP })
+    expect(paintedMatchRange(100, 99, CAP)).toEqual({ start: 90, end: 100 })
+  })
+
+  // The current match has its own colour, so it is the one that must never
+  // fall outside what gets drawn.
+  it("keeps the current match inside the window wherever it is", () => {
+    for (const currentIndex of [0, 1, 4, 5, 6, 50, 94, 95, 99]) {
+      const { start, end } = paintedMatchRange(100, currentIndex, CAP)
+      expect(currentIndex).toBeGreaterThanOrEqual(start)
+      expect(currentIndex).toBeLessThan(end)
+    }
   })
 })

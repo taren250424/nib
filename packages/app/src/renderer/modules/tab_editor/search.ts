@@ -35,6 +35,35 @@ export function blockTouchesSearchRange(pos: number, nodeSize: number, range: Se
 // offsets stay aligned with document positions; never matches user input.
 export const INLINE_NODE_PLACEHOLDER = "￼"
 
+/**
+ * How many matches get a highlight.
+ *
+ * Measured, because the guess was wrong: scanning a 680KB document for a word
+ * occurring 16000 times costs 4.5ms, and painting those 16000 highlights costs
+ * 440ms — so a single letter typed into the find box froze the editor for the
+ * better part of a second. The number below is where the paint stops being the
+ * dominant cost; past a few hundred highlights nobody is reading them anyway.
+ */
+export const MAX_PAINTED_MATCHES = 500
+
+/**
+ * Which slice of `matches` to paint: at most {@link MAX_PAINTED_MATCHES} of them,
+ * centred on the current one.
+ *
+ * Centred rather than the first N, so the highlights are always around where the
+ * user is — including the current match itself, which has its own colour and
+ * would be the one thing that must never be dropped.
+ *
+ * Only the painting is capped. The count in the widget and every match the arrows
+ * step through stay exact: it is the drawing that got expensive, not the knowing.
+ */
+export function paintedMatchRange(count: number, currentIndex: number, cap = MAX_PAINTED_MATCHES) {
+  if (count <= cap) return { start: 0, end: count }
+
+  const start = Math.min(Math.max(currentIndex - Math.floor(cap / 2), 0), count - cap)
+  return { start, end: start + cap }
+}
+
 // Letters, digits and underscore in any script — a markdown editor is not an
 // ASCII-only place, and the placeholder above is deliberately none of these.
 const WORD_CHARACTER = /[\p{L}\p{N}_]/u

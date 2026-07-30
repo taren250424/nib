@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest"
 
+import { MAX_PAINTED_MATCHES } from "@renderer/modules/tab_editor/search"
+
 import { createEditorView } from "./editorHarness"
 
 const OPTIONS = { matchCase: false, wholeWord: false }
@@ -123,6 +125,48 @@ describe("TabEditorView find in selection", () => {
 
     expect(view.hasSearchRange()).toBe(false)
     expect(view.toggleSearchInRange()).toBe(false)
+  })
+})
+
+/**
+ * Scanning a large document was never the expensive part — painting a highlight
+ * onto every hit was. A common word in a 680KB document froze the editor for
+ * 440ms per keystroke; capping what gets drawn brought that to 22ms.
+ */
+describe("TabEditorView highlight cap", () => {
+  const painted = (view: Awaited<ReturnType<typeof createEditorView>>) =>
+    view.editorBox.querySelectorAll(".search-highlight, .search-highlight-current").length
+
+  const manyMatches = (count: number) => "cat ".repeat(count)
+
+  it("paints every match while there are few of them", async () => {
+    const view = await createEditorView(manyMatches(20))
+
+    expect(view.refreshMatches("cat", OPTIONS)).toBe(20)
+    expect(painted(view)).toBe(20)
+  })
+
+  it("counts them all but stops painting past the cap", async () => {
+    const total = MAX_PAINTED_MATCHES * 2
+    const view = await createEditorView(manyMatches(total))
+
+    // The count in the widget is the exact one; only the drawing is bounded.
+    expect(view.refreshMatches("cat", OPTIONS)).toBe(total)
+    expect(painted(view)).toBe(MAX_PAINTED_MATCHES)
+  })
+
+  // The current match is the one with its own colour, so it is the one that
+  // must never be left out of the window.
+  it("still paints the current match when it is past the cap", async () => {
+    const total = MAX_PAINTED_MATCHES * 2
+    const view = await createEditorView(manyMatches(total))
+
+    // Searching up from a freshly loaded document lands on the last match,
+    // which is well past where a window anchored at the start would end.
+    expect(view.searchNextMatch("cat", "up", OPTIONS)).toBe(total - 1)
+
+    expect(view.editorBox.querySelectorAll(".search-highlight-current")).toHaveLength(1)
+    expect(painted(view)).toBe(MAX_PAINTED_MATCHES)
   })
 })
 
