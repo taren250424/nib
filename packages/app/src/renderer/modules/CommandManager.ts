@@ -15,7 +15,13 @@ import closedFolderSvg from "../assets/icons/closed_folder.svg?raw"
 import openedFolderSvg from "../assets/icons/opened_folder.svg?raw"
 
 import { CommandQueue, ContextKeyService, FocusManager } from "../core"
-import { TabEditorFacade, TreeFacade, SettingsFacade } from "./index"
+// Straight from the files, not from ./index: the barrel exports this class too,
+// so importing through it would have the module depend on itself. The value form
+// is needed here rather than `import type` because emitDecoratorMetadata writes
+// these into the constructor's design:paramtypes.
+import { SettingsFacade } from "./settings/SettingsFacade"
+import { TabEditorFacade } from "./tab_editor/TabEditorFacade"
+import { TreeFacade } from "./tree/TreeFacade"
 import { CreateEdit, DeleteEdit, RenameEdit, TransferEdit } from "../edits"
 
 import { isPathInside } from "../utils/paths"

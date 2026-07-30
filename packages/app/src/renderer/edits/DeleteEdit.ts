@@ -3,7 +3,8 @@ import type Response from "@shared/types/Response"
 import type { TreeViewModel } from "../viewmodels/TreeViewModel"
 import type { UndoableEdit } from "./UndoableEdit"
 
-import { TabEditorFacade, TreeFacade } from "../modules"
+import type { TabEditorFacade } from "../modules/tab_editor/TabEditorFacade"
+import type { TreeFacade } from "../modules/tree/TreeFacade"
 
 type DeletedItemInfo = {
   path: string

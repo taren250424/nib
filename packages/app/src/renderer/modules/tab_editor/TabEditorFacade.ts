@@ -15,8 +15,9 @@ import { ContextKeyService } from "@renderer/core"
 import { adjustMenuPosition, assert } from "@renderer/utils"
 import { DI, DOM } from "@renderer/constants"
 
-// export const BINARY_FILE_WARNING = '❌'
-export const BINARY_FILE_WARNING = `Can't read this file`
+import { BINARY_FILE_WARNING } from "./messages"
+
+export { BINARY_FILE_WARNING }
 
 const AUTO_SAVE_DELAY_MS = 1000
 
