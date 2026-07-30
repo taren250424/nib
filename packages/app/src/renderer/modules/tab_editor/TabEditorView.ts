@@ -271,8 +271,15 @@ export class TabEditorView {
 
   //
 
+  /**
+   * A binary tab has no editor to put the caret in. Every other `_editor!` here
+   * is reached through a caller that checked `isBinary` first, but activating a
+   * tab does not get to choose which kind it is.
+   */
   focus() {
-    this._editor!.action((ctx) => {
+    if (!this._editor) return
+
+    this._editor.action((ctx) => {
       const view = ctx.get(editorViewCtx)
       view.focus()
     })
