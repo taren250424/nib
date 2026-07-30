@@ -1,3 +1,5 @@
+import { editorViewCtx } from "@milkdown/kit/core"
+import { TextSelection } from "prosemirror-state"
 import { vi } from "vitest"
 
 import { ContextKeyService } from "@renderer/core"
@@ -6,6 +8,7 @@ import { TabEditorElements } from "@renderer/modules/tab_editor/TabEditorElement
 import { TabEditorFacade } from "@renderer/modules/tab_editor/TabEditorFacade"
 import { TabEditorRenderer } from "@renderer/modules/tab_editor/TabEditorRenderer"
 import { TabEditorStore } from "@renderer/modules/tab_editor/TabEditorStore"
+import type { TabEditorView } from "@renderer/modules/tab_editor/TabEditorView"
 
 import { installLayoutShim } from "./editorHarness"
 
@@ -67,15 +70,20 @@ export function createFacadeHarness(): FacadeHarness {
   return buildFacadeHarness()
 }
 
-/** Wires the facade to markup that is already in the document. */
-export function buildFacadeHarness() {
+/**
+ * Wires the facade to markup that is already in the document.
+ *
+ * The context key service is a parameter because it is a singleton in the app:
+ * a harness that also builds the tree has to hand both the same one, or whoever
+ * reads the keys sees half the picture.
+ */
+export function buildFacadeHarness(contextKeyService: ContextKeyService = new ContextKeyService()) {
   installLayoutShim()
   installIpcStub()
 
   const store = new TabEditorStore()
   const elements = new TabEditorElements()
   const renderer = new TabEditorRenderer(elements)
-  const contextKeyService = new ContextKeyService()
   const facade = new TabEditorFacade(store, renderer, new TabDragManager(), contextKeyService)
 
   return { facade, store, renderer, elements, contextKeyService }
@@ -84,13 +92,29 @@ export function buildFacadeHarness() {
 /**
  * The main-process calls a tab makes on its own: a throttled temp save while
  * editing, and a session sync after a rename.
+ *
+ * Added to whatever is already stubbed rather than replacing it, so a harness
+ * that stubs the tree's calls too can build the two in either order.
  */
 function installIpcStub() {
   window.rendererToMain = {
+    ...window.rendererToMain,
     tempSave: vi.fn().mockResolvedValue({ result: true }),
     save: vi.fn().mockResolvedValue({ result: false }),
     syncTabSessionFromRenderer: vi.fn().mockResolvedValue(true),
   } as unknown as typeof window.rendererToMain
+}
+
+/**
+ * Selects a stretch of the document, which the mouse is otherwise the only way
+ * to do — and what the find widget reads on the way in to decide whether the
+ * selection is what to look for or where to look.
+ */
+export function selectInEditor(view: TabEditorView, from: number, to: number) {
+  view.editor!.action((ctx) => {
+    const editorView = ctx.get(editorViewCtx)
+    editorView.dispatch(editorView.state.tr.setSelection(TextSelection.create(editorView.state.doc, from, to)))
+  })
 }
 
 type TabSpec = { id: number; content?: string; path?: string; isBinary?: boolean }

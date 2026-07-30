@@ -8,24 +8,44 @@ import { TreeStore } from "@renderer/modules/tree/TreeStore"
 import { TreeDragManager } from "@renderer/modules/tree/TreeDragManager"
 
 /**
+ * The elements TreeElements looks for.
+ *
+ * Exported separately from the builder so a harness that needs the tab editor in
+ * the same document can mount both.
+ */
+export const TREE_MARKUP = `
+  <div id="tree-top"><span id="tree-top-name"></span></div>
+  <div id="tree-node-container"><div id="content"></div></div>
+  <div id="tree-context-menu">
+    <div id="tree-context-cut"></div>
+    <div id="tree-context-copy"></div>
+    <div id="tree-context-paste"></div>
+    <div id="tree-context-rename"></div>
+    <div id="tree-context-delete"></div>
+  </div>
+`
+
+export type TreeHarness = ReturnType<typeof buildTreeHarness>
+
+/**
  * A tree wired to a real document, minus SimpleBar and the DI container.
  *
  * The renderer's own tests are the point: every bug that reached a user so far
  * has been in this DOM code, and the node-environment suites cannot see it.
  */
-export function createTreeHarness() {
-  document.body.innerHTML = `
-    <div id="tree-top"><span id="tree-top-name"></span></div>
-    <div id="tree-node-container"><div id="content"></div></div>
-    <div id="tree-context-menu">
-      <div id="tree-context-cut"></div>
-      <div id="tree-context-copy"></div>
-      <div id="tree-context-paste"></div>
-      <div id="tree-context-rename"></div>
-      <div id="tree-context-delete"></div>
-    </div>
-  `
+export function createTreeHarness(contextKeyService?: ContextKeyService): TreeHarness {
+  document.body.innerHTML = TREE_MARKUP
+  return buildTreeHarness(contextKeyService)
+}
 
+/**
+ * Wires the tree to markup that is already in the document.
+ *
+ * The context key service is a parameter because it is a singleton in the app:
+ * a harness that also builds the tab editor has to hand both the same one, or
+ * whoever reads the keys sees half the picture.
+ */
+export function buildTreeHarness(contextKeyService: ContextKeyService = new ContextKeyService()) {
   const treeNodeContainer = document.querySelector("#tree-node-container") as HTMLElement
   const content = document.querySelector("#content") as HTMLElement
 
@@ -48,14 +68,13 @@ export function createTreeHarness() {
 
   const store = new TreeStore()
   const renderer = new TreeRenderer(elements, store)
-  const contextKeyService = new ContextKeyService()
   const facade = new TreeFacade(store, renderer, new TreeDragManager(), contextKeyService)
 
   return { facade, store, renderer, contextKeyService, elements, content }
 }
 
 /** Loads a tree the way the session and the directory dialog do. */
-export function loadTree(harness: ReturnType<typeof createTreeHarness>, dto: TreeDto) {
+export function loadTree(harness: TreeHarness, dto: TreeDto) {
   const viewModel = harness.facade.toTreeViewModel(dto)
   harness.facade.render(viewModel)
   harness.facade.setRootTreeViewModel(viewModel)
@@ -79,11 +98,11 @@ export function buildDto(root: NodeSpec, parentPath = "", indent = 0): TreeDto {
   }
 }
 
-export function rowOf(harness: ReturnType<typeof createTreeHarness>, path: string) {
+export function rowOf(harness: TreeHarness, path: string) {
   return harness.renderer.getTreeNodeByPath(path)
 }
 
-export function wrapperOf(harness: ReturnType<typeof createTreeHarness>, path: string) {
+export function wrapperOf(harness: TreeHarness, path: string) {
   return harness.renderer.getTreeWrapperByPath(path)
 }
 
