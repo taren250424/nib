@@ -7,8 +7,12 @@ import type ClipboardMode from "@shared/types/ClipboardMode"
 import { CommandQueue, ContextKeyService, FocusManager } from "@renderer/core"
 import { handleSync } from "@renderer/handlers/syncHandlers"
 import { CommandManager } from "@renderer/modules/CommandManager"
-import type { SettingsFacade } from "@renderer/modules/settings/SettingsFacade"
+import { SettingsElements } from "@renderer/modules/settings/SettingsElements"
+import { SettingsFacade } from "@renderer/modules/settings/SettingsFacade"
+import { SettingsRenderer } from "@renderer/modules/settings/SettingsRenderer"
+import { SettingsStore } from "@renderer/modules/settings/SettingsStore"
 
+import { SETTINGS_MARKUP } from "./settings/settingsMarkup"
 import { buildFacadeHarness, TAB_EDITOR_MARKUP } from "./tab_editor/facadeHarness"
 import { buildTreeHarness, installWindowUtils, TREE_MARKUP } from "./tree/treeHarness"
 
@@ -23,7 +27,7 @@ export type CommandHarness = ReturnType<typeof createCommandHarness>
  * between two facades and the queue rather than inside any one of them.
  */
 export function createCommandHarness() {
-  document.body.innerHTML = TREE_MARKUP + TAB_EDITOR_MARKUP
+  document.body.innerHTML = TREE_MARKUP + TAB_EDITOR_MARKUP + SETTINGS_MARKUP
   installWindowUtils()
 
   const ipc = installTreeIpcStub()
@@ -37,9 +41,7 @@ export function createCommandHarness() {
   const focusManager = new FocusManager()
   const commandQueue = new CommandQueue()
 
-  // Only the settings dialog and the settings session go through this, and
-  // nothing here opens either.
-  const settingsFacade = {} as SettingsFacade
+  const settingsFacade = new SettingsFacade(new SettingsRenderer(new SettingsElements()), new SettingsStore())
 
   const commandManager = new CommandManager(
     focusManager,
@@ -58,6 +60,7 @@ export function createCommandHarness() {
     commandManager,
     tree,
     tabEditor,
+    settingsFacade,
     contextKeyService,
     focusManager,
     commandQueue,
@@ -132,6 +135,7 @@ function installTreeIpcStub() {
     showWarning: vi.fn().mockResolvedValue(undefined),
     syncTreeSessionFromRenderer: vi.fn().mockResolvedValue(true),
     copyTree: vi.fn().mockResolvedValue({ result: true }),
+    syncSettingsSessionFromRenderer: vi.fn().mockResolvedValue(true),
     deletePermanently: vi.fn().mockResolvedValue({ result: true }),
   }
 
