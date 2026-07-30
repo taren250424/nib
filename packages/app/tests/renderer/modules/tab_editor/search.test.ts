@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { buildSearchRegex, preserveCaseOf, wordAt, INLINE_NODE_PLACEHOLDER } from "@renderer/modules/tab_editor/search"
+import {
+  blockTouchesSearchRange,
+  buildSearchRegex,
+  isWithinSearchRange,
+  preserveCaseOf,
+  wordAt,
+  INLINE_NODE_PLACEHOLDER,
+} from "@renderer/modules/tab_editor/search"
 import type { SearchOptions } from "@renderer/modules/tab_editor/search"
 
 const DEFAULT_OPTIONS: SearchOptions = { matchCase: false, wholeWord: false }
@@ -127,5 +134,48 @@ describe("preserveCaseOf", () => {
 
   it("has nothing to recase when the replacement is empty", () => {
     expect(preserveCaseOf("WORD", "")).toBe("")
+  })
+})
+
+describe("isWithinSearchRange", () => {
+  const range = { from: 10, to: 20 }
+
+  it("counts everything when there is no range", () => {
+    expect(isWithinSearchRange(0, 5, null)).toBe(true)
+  })
+
+  it("counts a match the range contains, edges included", () => {
+    expect(isWithinSearchRange(12, 15, range)).toBe(true)
+    expect(isWithinSearchRange(10, 20, range)).toBe(true)
+  })
+
+  // Replacing one of these would edit text the user did not pick out.
+  it("does not count a match hanging out of either end", () => {
+    expect(isWithinSearchRange(8, 12, range)).toBe(false)
+    expect(isWithinSearchRange(18, 22, range)).toBe(false)
+  })
+
+  it("does not count a match outside altogether", () => {
+    expect(isWithinSearchRange(0, 5, range)).toBe(false)
+    expect(isWithinSearchRange(30, 35, range)).toBe(false)
+  })
+})
+
+describe("blockTouchesSearchRange", () => {
+  const range = { from: 10, to: 20 }
+
+  it("scans every block when there is no range", () => {
+    expect(blockTouchesSearchRange(100, 5, null)).toBe(true)
+  })
+
+  it("scans a block the range reaches into", () => {
+    expect(blockTouchesSearchRange(8, 6, range)).toBe(true)
+    expect(blockTouchesSearchRange(12, 4, range)).toBe(true)
+    expect(blockTouchesSearchRange(18, 8, range)).toBe(true)
+  })
+
+  it("skips blocks that end before it or start after it", () => {
+    expect(blockTouchesSearchRange(0, 5, range)).toBe(false)
+    expect(blockTouchesSearchRange(25, 5, range)).toBe(false)
   })
 })

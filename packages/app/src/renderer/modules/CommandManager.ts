@@ -850,15 +850,27 @@ export class CommandManager {
     const activeView = this.tabEditorFacade.getActiveTabEditorView()
     if (!activeView || activeView.isBinary) return
 
-    // Seed the query from the selection, or from the word the caret is in when
-    // there is none — usually the word just typed, which is what the box was
-    // opened to look for. Neither case disturbs the last query.
+    // What the selection is for depends on its shape. A phrase on one line is
+    // what to look for; several lines are where to look, which is the same call
+    // VSCode makes. Either way the last query is left alone if there is neither.
     const selectedText = activeView.getSelectedText()
-    const seed = selectedText && !selectedText.includes("\n") ? selectedText : activeView.getWordAtCursor()
+    const spansLines = selectedText.includes("\n")
+
+    const seed = selectedText && !spansLines ? selectedText : activeView.getWordAtCursor()
     if (seed) {
       this._setSearchQuery(seed)
       this.tabEditorFacade.findInput.value = seed
     }
+
+    // Offered on the way in and not later: stepping to a match selects it, so by
+    // the time anyone presses the button the editor has forgotten what was
+    // picked out. Only on the way in, too — Ctrl+F on an open box would
+    // otherwise narrow the range to the match currently selected.
+    if (!this.tabEditorFacade.findReplaceOpen) {
+      activeView.offerSearchRange(activeView.selectionRangeAtOpen())
+      if (spansLines) activeView.toggleSearchInRange()
+    }
+    this.tabEditorFacade.syncFindInSelectionButton()
 
     this.tabEditorFacade.findAndReplaceContainer.style.display = "flex"
     this.tabEditorFacade.setReplaceRowVisible(showReplace)
@@ -930,6 +942,18 @@ export class CommandManager {
   performTogglePreserveCase() {
     const enabled = this.tabEditorFacade.togglePreserveCase()
     this.tabEditorFacade.findOptionPreserveCase.classList.toggle(DOM.CLASS_SELECTED, enabled)
+  }
+
+  performToggleFindInSelection() {
+    const view = this.tabEditorFacade.getActiveTabEditorView()
+    if (!view || view.isBinary || !view.hasSearchRange()) return
+
+    view.toggleSearchInRange()
+    this.tabEditorFacade.syncFindInSelectionButton()
+
+    // Unlike Preserve Case this does change what counts as a match. Only this
+    // view's list is affected — the range is a stretch of its own document.
+    this._refreshFind()
   }
 
   performFind(direction: "up" | "down") {
@@ -1009,6 +1033,7 @@ export class CommandManager {
     this.tabEditorFacade.searchHistory.record(this.tabEditorFacade.searchQuery)
 
     this.tabEditorFacade.clearAllSearches()
+    this.tabEditorFacade.clearAllSearchRanges()
     this.tabEditorFacade.replaceInfo.textContent = ""
 
     this.tabEditorFacade.findReplaceOpen = false

@@ -22,6 +22,7 @@ export class TabEditorElements {
   public readonly findOptionCase: HTMLElement
   public readonly findOptionWord: HTMLElement
   public readonly findOptionPreserveCase: HTMLElement
+  public readonly findOptionSelection: HTMLElement
   public readonly findUp: HTMLElement
   public readonly findDown: HTMLElement
   public readonly replaceCurrent: HTMLElement
@@ -50,6 +51,7 @@ export class TabEditorElements {
     this.findOptionCase = document.querySelector("#find-option-case") as HTMLElement
     this.findOptionWord = document.querySelector("#find-option-word") as HTMLElement
     this.findOptionPreserveCase = document.querySelector("#find-option-preserve-case") as HTMLElement
+    this.findOptionSelection = document.querySelector("#find-option-selection") as HTMLElement
     this.findUp = document.querySelector("#find-up") as HTMLElement
     this.findDown = document.querySelector("#find-down") as HTMLElement
     this.replaceCurrent = document.querySelector("#replace-current") as HTMLElement

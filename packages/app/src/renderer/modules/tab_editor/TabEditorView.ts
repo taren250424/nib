@@ -7,10 +7,18 @@ import { Decoration, DecorationSet, EditorView } from "prosemirror-view"
 import { Plugin, PluginKey } from "prosemirror-state"
 import { redo, undo } from "prosemirror-history"
 import type { Node } from "prosemirror-model"
+import type { Mapping } from "prosemirror-transform"
 
 import { CLASS_SELECTED, DATASET_ATTR_TAB_ID } from "../../constants/dom"
-import { buildSearchRegex, preserveCaseOf, wordAt, INLINE_NODE_PLACEHOLDER } from "./search"
-import type { SearchOptions } from "./search"
+import {
+  blockTouchesSearchRange,
+  buildSearchRegex,
+  isWithinSearchRange,
+  preserveCaseOf,
+  wordAt,
+  INLINE_NODE_PLACEHOLDER,
+} from "./search"
+import type { SearchOptions, SearchRange } from "./search"
 
 type SearchMatch = {
   from: number
@@ -25,10 +33,24 @@ type SearchState = {
   doc: Node
 }
 
-type SearchHighlightMeta = {
-  matches: SearchMatch[]
-  currentIndex: number
-} | null
+type SearchHighlightMeta = { matches: SearchMatch[]; currentIndex: number } | { range: SearchRange | null } | null
+
+type SearchPluginState = {
+  decorations: DecorationSet
+  /**
+   * The stretch of document searching is confined to, or null for all of it.
+   *
+   * Kept here rather than on the view because it has to survive editing: the
+   * plugin sees every transaction, so the range can be mapped through each one
+   * and still cover the same text after a replacement inside it changed its
+   * length. `to` maps with bias 1 so text typed at the very end stays inside.
+   */
+  range: SearchRange | null
+}
+
+function mapSearchRange(range: SearchRange, mapping: Mapping): SearchRange {
+  return { from: mapping.map(range.from), to: mapping.map(range.to, 1) }
+}
 
 export class TabEditorView {
   private _tabBox: HTMLElement
@@ -44,12 +66,16 @@ export class TabEditorView {
   private _suppressInputEvent = false
 
   private _searchState: SearchState | null = null
-  private _searchHighlightKey = new PluginKey<DecorationSet>("searchHighlight")
+  private _searchHighlightKey = new PluginKey<SearchPluginState>("searchHighlight")
 
   // Where an incremental search measures "next match" from. Kept separate from the
   // caret because focusing a match moves the caret onto it, and searching forward
   // from there would walk one occurrence further on every keystroke in the query.
   private _searchAnchor: number | null = null
+
+  // Whether the offered range is being honoured. Per view: the range is a
+  // stretch of this document, so it means nothing in the tab next door.
+  private _searchInRange = false
 
   constructor(
     tabBox: HTMLElement,
@@ -292,9 +318,13 @@ export class TabEditorView {
     if (!searchText) return matches
 
     const regex = buildSearchRegex(searchText, options)
+    const range = this._activeSearchRange()
 
     doc.descendants((node, pos) => {
       if (!node.isTextblock) return true
+
+      // Whole blocks outside the range have nothing to offer.
+      if (!blockTouchesSearchRange(pos, node.nodeSize, range)) return false
 
       // Concatenate the block's inline content so matches can cross
       // mark boundaries (e.g. a word partially bolded).
@@ -312,12 +342,14 @@ export class TabEditorView {
       let m: RegExpExecArray | null
       while ((m = regex.exec(text)) !== null) {
         // Matches spanning a non-text inline node are not real text.
-        if (!m[0].includes(INLINE_NODE_PLACEHOLDER)) {
-          matches.push({
-            from: contentStart + m.index,
-            to: contentStart + m.index + m[0].length,
-          })
-        }
+        if (m[0].includes(INLINE_NODE_PLACEHOLDER)) continue
+
+        const from = contentStart + m.index
+        const to = from + m[0].length
+
+        if (!isWithinSearchRange(from, to, range)) continue
+
+        matches.push({ from, to })
       }
 
       return false
@@ -334,6 +366,56 @@ export class TabEditorView {
   captureSearchAnchor() {
     const view = this._editor!.ctx.get(editorViewCtx)
     this._searchAnchor = view.state.selection.from
+  }
+
+  /**
+   * The text that was selected when the find widget opened, or null if none was.
+   *
+   * Read here and not later because the first search takes the selection over:
+   * stepping to a match selects it, so by the time anyone presses the button the
+   * editor no longer remembers what the user had picked out.
+   */
+  selectionRangeAtOpen(): SearchRange | null {
+    const { selection } = this._editor!.ctx.get(editorViewCtx).state
+    if (selection.empty) return null
+    return { from: selection.from, to: selection.to }
+  }
+
+  /**
+   * Offers `range` as the stretch searching may be confined to.
+   *
+   * Kept whether or not the option is on, so it goes on being mapped through
+   * edits and turning the option back on later still means the same text.
+   */
+  offerSearchRange(range: SearchRange | null) {
+    const view = this._editor!.ctx.get(editorViewCtx)
+    this._ensureSearchHighlightPlugin(view)
+    view.dispatch(view.state.tr.setMeta(this._searchHighlightKey, { range } satisfies SearchHighlightMeta))
+  }
+
+  /** Whether there is a range to confine searching to. */
+  hasSearchRange(): boolean {
+    return this._offeredRange() !== null
+  }
+
+  get searchInRange(): boolean {
+    return this._searchInRange
+  }
+
+  /** Turns confinement on or off. Returns where it ended up; without a range, off. */
+  toggleSearchInRange(): boolean {
+    this._searchInRange = !this._searchInRange && this.hasSearchRange()
+    return this._searchInRange
+  }
+
+  /** The range searching is confined to right now, or null for the whole document. */
+  private _activeSearchRange(): SearchRange | null {
+    return this._searchInRange ? this._offeredRange() : null
+  }
+
+  private _offeredRange(): SearchRange | null {
+    const view = this._editor!.ctx.get(editorViewCtx)
+    return this._searchHighlightKey.getState(view.state)?.range ?? null
   }
 
   searchNextMatch(query: string, direction: "up" | "down", options: SearchOptions): number {
@@ -473,25 +555,31 @@ export class TabEditorView {
     const key = this._searchHighlightKey
     if (key.get(view.state)) return
 
-    const searchHighlightPlugin = new Plugin<DecorationSet>({
+    const searchHighlightPlugin = new Plugin<SearchPluginState>({
       key,
       state: {
-        init: () => DecorationSet.empty,
+        init: () => ({ decorations: DecorationSet.empty, range: null }),
         apply: (tr, old) => {
+          const range = old.range && tr.docChanged ? mapSearchRange(old.range, tr.mapping) : old.range
+          const mapped = () => old.decorations.map(tr.mapping, tr.doc)
           const meta = tr.getMeta(key) as SearchHighlightMeta | undefined
-          if (meta === undefined) return old.map(tr.mapping, tr.doc)
-          if (meta === null || !meta.matches.length) return DecorationSet.empty
+
+          if (meta === undefined) return { decorations: mapped(), range }
+          if (meta !== null && "range" in meta) return { decorations: mapped(), range: meta.range }
+          // The range outlives the highlights: a query that found nothing has
+          // said nothing about where the user wanted to look.
+          if (meta === null || !meta.matches.length) return { decorations: DecorationSet.empty, range }
 
           const decorations = meta.matches.map((match, idx) =>
             Decoration.inline(match.from, match.to, {
               class: idx === meta.currentIndex ? "search-highlight-current" : "search-highlight",
             })
           )
-          return DecorationSet.create(tr.doc, decorations)
+          return { decorations: DecorationSet.create(tr.doc, decorations), range }
         },
       },
       props: {
-        decorations: (state) => key.getState(state),
+        decorations: (state) => key.getState(state)?.decorations,
       },
     })
 
@@ -582,14 +670,21 @@ export class TabEditorView {
     }
   }
 
+  /** Drops the highlights and the match list. The range survives; see the plugin. */
   clearSearch() {
     this._searchState = null
 
     const view = this._editor!.ctx.get(editorViewCtx)
-    const decorations = this._searchHighlightKey.getState(view.state)
-    if (!decorations || decorations === DecorationSet.empty) return
+    const pluginState = this._searchHighlightKey.getState(view.state)
+    if (!pluginState || pluginState.decorations === DecorationSet.empty) return
 
     view.dispatch(view.state.tr.setMeta(this._searchHighlightKey, null))
+  }
+
+  /** Forgets the range as well — what closing the find widget means. */
+  clearSearchRange() {
+    this._searchInRange = false
+    if (this._offeredRange()) this.offerSearchRange(null)
   }
 
   get searchState() {

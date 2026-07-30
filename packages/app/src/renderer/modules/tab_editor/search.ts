@@ -3,6 +3,34 @@ export type SearchOptions = {
   wholeWord: boolean
 }
 
+/** A stretch of document, in the editor's own positions. */
+export type SearchRange = {
+  from: number
+  to: number
+}
+
+/**
+ * Whether a match at [from, to) counts, given the range searching is confined to.
+ *
+ * A match hanging half out of the range does not: replacing it would edit text
+ * the user did not pick out. Null means the whole document, where everything counts.
+ */
+export function isWithinSearchRange(from: number, to: number, range: SearchRange | null): boolean {
+  if (!range) return true
+  return from >= range.from && to <= range.to
+}
+
+/**
+ * Whether a block starting at `pos` holds any of the range, and so is worth scanning.
+ *
+ * `pos` is the block's own position and its content starts one further in, so a
+ * block ending exactly where the range begins has nothing inside it.
+ */
+export function blockTouchesSearchRange(pos: number, nodeSize: number, range: SearchRange | null): boolean {
+  if (!range) return true
+  return pos + nodeSize >= range.from && pos <= range.to
+}
+
 // Stands in for non-text inline nodes (images, hard breaks) so string
 // offsets stay aligned with document positions; never matches user input.
 export const INLINE_NODE_PLACEHOLDER = "￼"

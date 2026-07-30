@@ -292,6 +292,10 @@ export class TabEditorFacade {
     return this.renderer.findOptionPreserveCase
   }
 
+  get findOptionSelection() {
+    return this.renderer.findOptionSelection
+  }
+
   // drag
 
   isDrag(): boolean {
@@ -873,8 +877,11 @@ export class TabEditorFacade {
    * is what made the count alternate as tabs were switched back and forth.
    */
   private _syncSearchTo(view: TabEditorView) {
-    if (!this.findReplaceOpen || !this.searchQuery) return
-    if (view.isBinary) return
+    if (!this.findReplaceOpen) return
+    // The range belongs to the document now under the widget, not to the query.
+    this.syncFindInSelectionButton()
+
+    if (!this.searchQuery || view.isBinary) return
 
     const count = view.refreshMatches(this.searchQuery, this.searchOptions)
     const state = view.searchState
@@ -905,6 +912,31 @@ export class TabEditorFacade {
     for (const view of this.renderer.tabEditorViews) {
       if (!view.isBinary) view.clearSearch()
     }
+  }
+
+  /** Closing the widget also gives up where each document was being searched. */
+  clearAllSearchRanges() {
+    for (const view of this.renderer.tabEditorViews) {
+      if (!view.isBinary) view.clearSearchRange()
+    }
+    this.syncFindInSelectionButton()
+  }
+
+  /**
+   * Paints the Find in Selection button from the active view.
+   *
+   * Unlike the other three options this state belongs to one document — the
+   * range is a stretch of it — so the button has to be told when the tab under
+   * it changes.
+   */
+  syncFindInSelectionButton() {
+    const view = this.getActiveTabEditorView()
+    const usable = !!view && !view.isBinary
+
+    // Greyed the way every other unavailable action in the app is: nothing was
+    // selected when the widget opened, so there is no range to confine anything to.
+    this.renderer.findOptionSelection.classList.toggle(DOM.CLASS_SELECTED, usable && view.searchInRange)
+    this.renderer.findOptionSelection.classList.toggle(DOM.CLASS_DEACTIVE, !(usable && view.hasSearchRange()))
   }
 
   private _processFindAndSelect(view: TabEditorView) {

@@ -55,6 +55,7 @@ export type CommandId =
   | "find.toggleOption"
   | "find.togglePreserveCase"
   | "find.history"
+  | "find.toggleInSelection"
   | "find.next"
   | "find.replace"
   | "find.replaceAll"

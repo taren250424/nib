@@ -93,6 +93,7 @@ function bindFindReplaceEvents(run: RunCommand, tabEditorFacade: TabEditorFacade
     findOptionCase,
     findOptionWord,
     findOptionPreserveCase,
+    findOptionSelection,
   } = tabEditorFacade.renderer.elements
 
   // Prevent buttons from stealing focus from the input when clicked.
@@ -105,6 +106,7 @@ function bindFindReplaceEvents(run: RunCommand, tabEditorFacade: TabEditorFacade
     findOptionCase,
     findOptionWord,
     findOptionPreserveCase,
+    findOptionSelection,
     findReplaceToggle,
   ].forEach((btn) => {
     btn.addEventListener("mousedown", (e) => e.preventDefault())
@@ -120,6 +122,10 @@ function bindFindReplaceEvents(run: RunCommand, tabEditorFacade: TabEditorFacade
 
   findOptionPreserveCase.addEventListener("click", async () => {
     await run("find.togglePreserveCase")
+  })
+
+  findOptionSelection.addEventListener("click", async () => {
+    await run("find.toggleInSelection")
   })
 
   findUp.addEventListener("click", async () => {

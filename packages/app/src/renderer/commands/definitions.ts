@@ -173,6 +173,9 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     // decide what counts as a match, this one only how a replacement is spelled,
     // so toggling it leaves the match list and the count alone.
     "find.togglePreserveCase": { run: () => commandManager.performTogglePreserveCase() },
+    // Per tab rather than global like the other three: the range is a stretch of
+    // one document, so it says nothing about the tab next door.
+    "find.toggleInSelection": { run: () => commandManager.performToggleFindInSelection() },
     // Invoked from the find input's own ↑/↓ rather than the keybinding table:
     // this is navigation within one field, not a shortcut, and binding the arrows
     // for the whole zone would swallow them in the replace input next door.
