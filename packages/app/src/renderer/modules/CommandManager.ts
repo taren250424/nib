@@ -39,6 +39,24 @@ export class CommandManager {
   // queued task would deadlock the chain).
 
   /**
+   * Runs a command's forward edit. The only place that calls execute().
+   *
+   * Every ICommand mutates the file system, and every such mutation has to mute
+   * the Main-side watcher or it echoes back as an external change. That was
+   * spelled out at each of the six call sites, which is one per chance to forget
+   * it; the call sites keep their own bookkeeping, which is what actually
+   * differs between them.
+   */
+  private _executeCommand(cmd: ICommand): Promise<void> {
+    return this._withWatchSkip(() => cmd.execute())
+  }
+
+  /** Runs a command backwards. The only place that calls undo(). */
+  private _undoCommand(cmd: ICommand): Promise<void> {
+    return this._withWatchSkip(() => cmd.undo())
+  }
+
+  /**
    * Holds the Main-side watcher skip (a counter) around an FS-mutating operation.
    * The release is delayed so trailing watcher events from this operation are
    * still ignored, without stalling the queue; overlapping holds are safe.
@@ -67,7 +85,7 @@ export class CommandManager {
     if (!cmd) return
 
     try {
-      await this._withWatchSkip(() => cmd.undo())
+      await this._undoCommand(cmd)
       this.redoStack.push(cmd)
     } catch (err) {
       // Undo failed (e.g., parent copied into child, or src/dest no longer exists).
@@ -93,7 +111,7 @@ export class CommandManager {
     if (!cmd) return
 
     try {
-      await this._withWatchSkip(() => cmd.execute())
+      await this._executeCommand(cmd)
       this.undoStack.push(cmd)
     } catch (err) {
       console.error("[CommandManager] redo(tree) failed:", err)
@@ -460,7 +478,7 @@ export class CommandManager {
     const cmd = new CreateCommand(this.treeFacade, this.tabEditorFacade, parentPath, name, isDirectory)
 
     try {
-      await this._withWatchSkip(() => cmd.execute())
+      await this._executeCommand(cmd)
       this._pushUndoable(cmd)
     } catch (error) {
       console.error("[CommandManager] create failed:", error)
@@ -579,7 +597,7 @@ export class CommandManager {
     const cmd = new RenameCommand(this.treeFacade, this.tabEditorFacade, treeNode, isDirectory, prePath, newPath)
 
     try {
-      await this._withWatchSkip(() => cmd.execute())
+      await this._executeCommand(cmd)
       this._pushUndoable(cmd)
     } catch (error) {
       console.error("[CommandManager] rename failed:", error)
@@ -614,7 +632,7 @@ export class CommandManager {
     const cmd = new DeleteCommand(this.treeFacade, this.tabEditorFacade, selectedPaths)
 
     try {
-      await this._withWatchSkip(() => cmd.execute())
+      await this._executeCommand(cmd)
       this._pushUndoable(cmd)
     } catch (error) {
       console.error("[CommandManager] delete failed:", error)
@@ -817,7 +835,7 @@ export class CommandManager {
     const cmd = new PasteCommand(this.treeFacade, this.tabEditorFacade, targetViewModel, selectedViewModels, mode)
 
     try {
-      await this._withWatchSkip(() => cmd.execute())
+      await this._executeCommand(cmd)
 
       // Dropping a node onto the directory it is already in is a no-op, and a
       // common enough gesture that letting it take an undo step — and clear the
