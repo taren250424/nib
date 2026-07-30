@@ -15,6 +15,17 @@ type UndoInfo = {
 export class PasteCommand implements ICommand {
   private undoInfos: UndoInfo[] = []
 
+  /**
+   * Whether execute() actually moved or copied anything.
+   *
+   * Main drops the sources that already live in the target directory, so a paste
+   * or a drop onto a node's own parent succeeds having done nothing. There is
+   * nothing to undo in that case, and nothing to spend an undo step on.
+   */
+  get didTransfer(): boolean {
+    return this.undoInfos.length > 0
+  }
+
   constructor(
     private treeFacade: TreeFacade,
     private tabEditorFacade: TabEditorFacade,

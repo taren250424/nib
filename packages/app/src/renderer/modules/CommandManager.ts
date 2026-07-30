@@ -818,6 +818,12 @@ export class CommandManager {
 
     try {
       await this._withWatchSkip(() => cmd.execute())
+
+      // Dropping a node onto the directory it is already in is a no-op, and a
+      // common enough gesture that letting it take an undo step — and clear the
+      // redo stack — would make undo answer for something the user never did.
+      if (!cmd.didTransfer) return false
+
       this._pushUndoable(cmd)
       return true
     } catch (error) {

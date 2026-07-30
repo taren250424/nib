@@ -1,0 +1,97 @@
+// @vitest-environment jsdom
+import { beforeEach, describe, expect, it, vi } from "vitest"
+
+import { PasteCommand } from "@renderer/commands/PasteCommand"
+import type { TabEditorFacade, TreeFacade } from "@renderer/modules"
+import type { TreeViewModel } from "@renderer/viewmodels/TreeViewModel"
+
+function node(path: string, directory = false): TreeViewModel {
+  return {
+    path,
+    name: path.slice(path.lastIndexOf("/") + 1),
+    indent: 1,
+    directory,
+    expanded: directory,
+    children: directory ? [] : null,
+  } as TreeViewModel
+}
+
+/**
+ * The tree and tabs as far as a paste can see them, plus the two IPC calls it
+ * makes. Enough to run execute() end to end without the DI container.
+ */
+function harness(pasteResult: { result: boolean; data: string[] }) {
+  const pasteTree = vi.fn().mockResolvedValue(pasteResult)
+
+  window.rendererToMain = {
+    pasteTree,
+    syncTreeSessionFromRenderer: vi.fn().mockResolvedValue(true),
+  } as unknown as typeof window.rendererToMain
+
+  window.utils = {
+    getDirName: (p: string) => p.slice(0, p.lastIndexOf("/")),
+    getBaseName: (p: string) => p.slice(p.lastIndexOf("/") + 1),
+  } as unknown as typeof window.utils
+
+  const treeFacade = {
+    toTreeDto: (viewModel: TreeViewModel) => ({ ...viewModel }),
+    getFlattenIndexByPath: vi.fn().mockReturnValue(1),
+    getRootTreeViewModel: () => node("/root", true),
+    applyDelete: vi.fn(),
+    applyPaste: vi.fn(),
+  } as unknown as TreeFacade
+
+  const tabEditorFacade = {
+    getTabEditorViewByPath: () => undefined,
+    deleteTabEditorViewByPath: vi.fn(),
+    setTabEditorViewByPath: vi.fn(),
+  } as unknown as TabEditorFacade
+
+  return { treeFacade, tabEditorFacade, pasteTree }
+}
+
+describe("PasteCommand", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("reports the transfer it made", async () => {
+    const { treeFacade, tabEditorFacade } = harness({ result: true, data: ["/root/dir/a.md"] })
+
+    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
+    await cmd.execute()
+
+    expect(cmd.didTransfer).toBe(true)
+  })
+
+  // Main drops the sources that already live in the target directory. Dropping a
+  // node onto the directory it is already in is a common gesture, and it must not
+  // cost an undo step for work that never happened.
+  it("reports nothing transferred when every source was already in the target", async () => {
+    const { treeFacade, tabEditorFacade, pasteTree } = harness({ result: true, data: [] })
+
+    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root", true), [node("/root/a.md")], "cut")
+    await cmd.execute()
+
+    expect(pasteTree).toHaveBeenCalledOnce()
+    expect(cmd.didTransfer).toBe(false)
+    expect(treeFacade.applyDelete).not.toHaveBeenCalled()
+  })
+
+  it("reports nothing transferred when main refused", async () => {
+    const { treeFacade, tabEditorFacade } = harness({ result: false, data: [] })
+
+    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
+    await cmd.execute()
+
+    expect(cmd.didTransfer).toBe(false)
+  })
+
+  it("has nothing to report before it runs", () => {
+    const { treeFacade, tabEditorFacade } = harness({ result: true, data: ["/root/dir/a.md"] })
+
+    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
+
+    expect(cmd.didTransfer).toBe(false)
+  })
+})
