@@ -151,16 +151,46 @@ describe("settings dialog", () => {
     expect(elements().contents[0].style.display).toBe("none")
   })
 
-  // Nothing calls resetChangeSet on close, so an edit that was never applied is
-  // still in the draft the next time Apply is pressed. The field still shows it
-  // too, so the box and the draft agree — but the editor does not. If that is
-  // meant to be discarded, this is the test to change.
-  it("keeps an unapplied edit after the dialog is closed", () => {
+  it("gives up an edit that was never applied", () => {
     handleSettings(async () => undefined, harness.settingsFacade)
     change(elements().fontSizeInput, "20")
 
     elements().close.click()
 
-    expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(20)
+    expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(12)
+  })
+
+  // The field has to go back with the draft. Showing 20 over a draft that says
+  // 12 would be worse than not reverting at all.
+  it("puts the field back to what is in force", () => {
+    handleSettings(async () => undefined, harness.settingsFacade)
+    change(elements().fontSizeInput, "20")
+
+    elements().close.click()
+
+    expect(elements().fontSizeInput.value).toBe("12")
+  })
+
+  it("gives it up through the X as well as the Close button", () => {
+    handleSettings(async () => undefined, harness.settingsFacade)
+    change(elements().fontSizeInput, "20")
+
+    elements().exit.click()
+
+    expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(12)
+  })
+
+  // What the abandoned draft actually cost: the change set is not a diff, so
+  // whatever was left in it rode along with the next thing the user applied.
+  it("applies only what was changed after coming back", () => {
+    handleSettings(async () => undefined, harness.settingsFacade)
+    change(elements().fontSizeInput, "20")
+    elements().close.click()
+
+    pick(elements().themeSelect, "slate")
+    const changes = harness.settingsFacade.getChangeSet()
+
+    expect(changes.settingThemeViewModel.theme).toBe("slate")
+    expect(editorOf(changes).fontSize).toBe(12)
   })
 })

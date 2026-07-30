@@ -26,7 +26,21 @@ export class SettingsFacade {
     this.renderer.openSettings()
   }
 
+  /**
+   * Leaving the dialog gives up whatever was not applied.
+   *
+   * Both the draft and the fields, together. The draft alone would leave the box
+   * showing an edit it has already forgotten; the fields alone would show the
+   * applied values over a draft still holding the abandoned ones — and the change
+   * set is not a diff, so the next Apply would carry them in beside whatever the
+   * user actually came back to change.
+   *
+   * The dialog is an overlay rather than its own window, so nothing is destroyed
+   * on the way out and the draft outlives the box unless it is told not to.
+   */
   closeSettings() {
+    this.store.resetChangeSet()
+    this.renderer.render(this.store.getCurrentSettings())
     this.renderer.closeSettings()
   }
 
