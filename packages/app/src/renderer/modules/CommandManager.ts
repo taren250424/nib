@@ -6,7 +6,7 @@ import type { TreeDto } from "@shared/dto/TreeDto"
 import type { TreeViewModel } from "../viewmodels/TreeViewModel"
 import type { TabEditorDto, TabEditorsDto } from "@shared/dto/TabEditorDto"
 
-import type { ICommand } from "../commands/"
+import type { UndoableEdit } from "../edits"
 import type { SettingsViewModel } from "../viewmodels/SettingsViewModel"
 
 import { DI, DOM } from "../constants"
@@ -16,14 +16,14 @@ import openedFolderSvg from "../assets/icons/opened_folder.svg?raw"
 
 import { CommandQueue, ContextKeyService, FocusManager } from "../core"
 import { TabEditorFacade, TreeFacade, SettingsFacade } from "./index"
-import { CreateCommand, DeleteCommand, PasteCommand, RenameCommand } from "../commands"
+import { CreateEdit, DeleteEdit, RenameEdit, TransferEdit } from "../edits"
 
 import { sleep } from "../utils/sleep"
 
 @injectable()
 export class CommandManager {
-  private undoStack: ICommand[] = []
-  private redoStack: ICommand[] = []
+  private undoStack: UndoableEdit[] = []
+  private redoStack: UndoableEdit[] = []
 
   constructor(
     @inject(DI.FocusManager) private readonly focusManager: FocusManager,
@@ -39,21 +39,21 @@ export class CommandManager {
   // queued task would deadlock the chain).
 
   /**
-   * Runs a command's forward edit. The only place that calls execute().
+   * Runs an edit forwards. The only place that calls apply().
    *
-   * Every ICommand mutates the file system, and every such mutation has to mute
-   * the Main-side watcher or it echoes back as an external change. That was
-   * spelled out at each of the six call sites, which is one per chance to forget
-   * it; the call sites keep their own bookkeeping, which is what actually
-   * differs between them.
+   * Every edit mutates the file system, and every such mutation has to mute the
+   * Main-side watcher or it echoes back as an external change. That was spelled
+   * out at each of the six call sites, which is one per chance to forget it; the
+   * call sites keep their own bookkeeping, which is what actually differs
+   * between them.
    */
-  private _executeCommand(cmd: ICommand): Promise<void> {
-    return this._withWatchSkip(() => cmd.execute())
+  private _applyEdit(edit: UndoableEdit): Promise<void> {
+    return this._withWatchSkip(() => edit.apply())
   }
 
-  /** Runs a command backwards. The only place that calls undo(). */
-  private _undoCommand(cmd: ICommand): Promise<void> {
-    return this._withWatchSkip(() => cmd.undo())
+  /** Runs an edit backwards. The only place that calls revert(). */
+  private _revertEdit(edit: UndoableEdit): Promise<void> {
+    return this._withWatchSkip(() => edit.revert())
   }
 
   /**
@@ -81,12 +81,12 @@ export class CommandManager {
   }
 
   private async _doUndoTree() {
-    const cmd = this.undoStack.pop()
-    if (!cmd) return
+    const edit = this.undoStack.pop()
+    if (!edit) return
 
     try {
-      await this._undoCommand(cmd)
-      this.redoStack.push(cmd)
+      await this._revertEdit(edit)
+      this.redoStack.push(edit)
     } catch (err) {
       // Undo failed (e.g., parent copied into child, or src/dest no longer exists).
       // OS/File system may have ignored the operation; we just skip it to avoid breaking the stack.
@@ -107,12 +107,12 @@ export class CommandManager {
   }
 
   private async _doRedoTree() {
-    const cmd = this.redoStack.pop()
-    if (!cmd) return
+    const edit = this.redoStack.pop()
+    if (!edit) return
 
     try {
-      await this._executeCommand(cmd)
-      this.undoStack.push(cmd)
+      await this._applyEdit(edit)
+      this.undoStack.push(edit)
     } catch (err) {
       console.error("[CommandManager] redo(tree) failed:", err)
     }
@@ -121,11 +121,11 @@ export class CommandManager {
   }
 
   /**
-   * Records a command that can be undone. A new command invalidates the redo
-   * branch, exactly as every other editor does.
+   * Records an edit that can be undone. A new edit invalidates the redo branch,
+   * exactly as every other editor does.
    */
-  private _pushUndoable(cmd: ICommand) {
-    this.undoStack.push(cmd)
+  private _pushUndoable(edit: UndoableEdit) {
+    this.undoStack.push(edit)
     this.redoStack.length = 0
     this._publishHistoryContext()
   }
@@ -404,13 +404,11 @@ export class CommandManager {
     if (!name) return
 
     await this.commandQueue.enqueue(async () => {
-      const cmd = await this._executeCreation(viewModel.path, name, isDirectory)
-      const filePath = cmd.getCreatedPath()
+      const filePath = await this._executeCreation(viewModel.path, name, isDirectory)
+      if (!filePath) return
 
-      if (filePath) {
-        this._selectTreeNodeAfterCreate(filePath)
-        if (!isDirectory) await this._openTabEditorAfterCreate(filePath, cmd)
-      }
+      this._selectTreeNodeAfterCreate(filePath)
+      if (!isDirectory) await this._openTabEditorAfterCreate(filePath)
     })
   }
 
@@ -474,17 +472,18 @@ export class CommandManager {
     })
   }
 
+  /** Returns where the file landed, or "" if it did not. Main picks a unique name. */
   private async _executeCreation(parentPath: string, name: string, isDirectory: boolean) {
-    const cmd = new CreateCommand(this.treeFacade, this.tabEditorFacade, parentPath, name, isDirectory)
+    const edit = new CreateEdit(this.treeFacade, this.tabEditorFacade, parentPath, name, isDirectory)
 
     try {
-      await this._executeCommand(cmd)
-      this._pushUndoable(cmd)
+      await this._applyEdit(edit)
+      this._pushUndoable(edit)
     } catch (error) {
       console.error("[CommandManager] create failed:", error)
     }
 
-    return cmd
+    return edit.getCreatedPath()
   }
 
   private _selectTreeNodeAfterCreate(filePath: string) {
@@ -495,11 +494,9 @@ export class CommandManager {
     this.treeFacade.focusIndex(idx)
   }
 
-  private async _openTabEditorAfterCreate(filePath: string, cmd: CreateCommand) {
+  private async _openTabEditorAfterCreate(filePath: string) {
     await this._doOpenFile(filePath)
     this.focusManager.setFocusedTask("editor")
-    const tabView = this.tabEditorFacade.getTabEditorViewByPath(filePath)
-    if (tabView) cmd.setOpenedTabId(tabView.getId())
   }
 
   //
@@ -520,11 +517,11 @@ export class CommandManager {
     const newPath = window.utils.getJoinedPath(dir, newName)
 
     if (oldPath === newPath) {
-      this._restoreTreeSpan(treeNode, newPath)
+      this._restoreTreeSpan(newPath)
       return
     }
 
-    await this.commandQueue.enqueue(() => this._executeRename(treeNode, isDirectory, oldPath, newPath))
+    await this.commandQueue.enqueue(() => this._executeRename(isDirectory, oldPath, newPath))
   }
 
   private _resolveRenameTarget() {
@@ -593,24 +590,21 @@ export class CommandManager {
     })
   }
 
-  private async _executeRename(treeNode: HTMLElement, isDirectory: boolean, prePath: string, newPath: string) {
-    const cmd = new RenameCommand(this.treeFacade, this.tabEditorFacade, treeNode, isDirectory, prePath, newPath)
+  private async _executeRename(isDirectory: boolean, prePath: string, newPath: string) {
+    const edit = new RenameEdit(this.treeFacade, this.tabEditorFacade, isDirectory, prePath, newPath)
 
     try {
-      await this._executeCommand(cmd)
-      this._pushUndoable(cmd)
+      await this._applyEdit(edit)
+      this._pushUndoable(edit)
     } catch (error) {
       console.error("[CommandManager] rename failed:", error)
-      this._restoreTreeSpan(treeNode, prePath)
+      this._restoreTreeSpan(prePath)
     }
   }
 
-  private _restoreTreeSpan(treeNode: HTMLElement, path: string) {
-    const treeNodeInput = treeNode.querySelector(`.${DOM.CLASS_TREE_NODE_INPUT}`) as HTMLElement
-    const restoreSpan = document.createElement("span")
-    restoreSpan.classList.add(DOM.CLASS_TREE_NODE_TEXT, "ellipsis")
-    restoreSpan.textContent = window.utils.getBaseName(path)
-    treeNode.replaceChild(restoreSpan, treeNodeInput)
+  /** Takes the rename input back off a row that is keeping its name. */
+  private _restoreTreeSpan(path: string) {
+    this.treeFacade.renderNodeLabel(path)
 
     // Opening the input dropped the current-item border; the node is still the
     // current item, so put back what the state says.
@@ -629,11 +623,11 @@ export class CommandManager {
     const selectedPaths = this.treeFacade.getSelectedPaths()
     if (selectedPaths.length === 0) return
 
-    const cmd = new DeleteCommand(this.treeFacade, this.tabEditorFacade, selectedPaths)
+    const edit = new DeleteEdit(this.treeFacade, this.tabEditorFacade, selectedPaths)
 
     try {
-      await this._executeCommand(cmd)
-      this._pushUndoable(cmd)
+      await this._applyEdit(edit)
+      this._pushUndoable(edit)
     } catch (error) {
       console.error("[CommandManager] delete failed:", error)
     }
@@ -832,17 +826,17 @@ export class CommandManager {
     }
     if (selectedViewModels.length === 0) return false
 
-    const cmd = new PasteCommand(this.treeFacade, this.tabEditorFacade, targetViewModel, selectedViewModels, mode)
+    const edit = new TransferEdit(this.treeFacade, this.tabEditorFacade, targetViewModel, selectedViewModels, mode)
 
     try {
-      await this._executeCommand(cmd)
+      await this._applyEdit(edit)
 
       // Dropping a node onto the directory it is already in is a no-op, and a
       // common enough gesture that letting it take an undo step — and clear the
       // redo stack — would make undo answer for something the user never did.
-      if (!cmd.didTransfer) return false
+      if (!edit.didTransfer) return false
 
-      this._pushUndoable(cmd)
+      this._pushUndoable(edit)
       return true
     } catch (error) {
       console.error("[CommandManager] tree transfer failed:", error)

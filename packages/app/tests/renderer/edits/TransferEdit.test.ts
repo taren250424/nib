@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-import { PasteCommand } from "@renderer/commands/PasteCommand"
+import { TransferEdit } from "@renderer/edits/TransferEdit"
 import type { TabEditorFacade, TreeFacade } from "@renderer/modules"
 import type { TreeViewModel } from "@renderer/viewmodels/TreeViewModel"
 
@@ -18,7 +18,7 @@ function node(path: string, directory = false): TreeViewModel {
 
 /**
  * The tree and tabs as far as a paste can see them, plus the two IPC calls it
- * makes. Enough to run execute() end to end without the DI container.
+ * makes. Enough to run apply() end to end without the DI container.
  */
 function harness(pasteResult: { result: boolean; data: string[] }) {
   const pasteTree = vi.fn().mockResolvedValue(pasteResult)
@@ -50,7 +50,7 @@ function harness(pasteResult: { result: boolean; data: string[] }) {
   return { treeFacade, tabEditorFacade, pasteTree }
 }
 
-describe("PasteCommand", () => {
+describe("TransferEdit", () => {
   beforeEach(() => {
     vi.restoreAllMocks()
   })
@@ -58,10 +58,10 @@ describe("PasteCommand", () => {
   it("reports the transfer it made", async () => {
     const { treeFacade, tabEditorFacade } = harness({ result: true, data: ["/root/dir/a.md"] })
 
-    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
-    await cmd.execute()
+    const edit = new TransferEdit(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
+    await edit.apply()
 
-    expect(cmd.didTransfer).toBe(true)
+    expect(edit.didTransfer).toBe(true)
   })
 
   // Main drops the sources that already live in the target directory. Dropping a
@@ -70,28 +70,28 @@ describe("PasteCommand", () => {
   it("reports nothing transferred when every source was already in the target", async () => {
     const { treeFacade, tabEditorFacade, pasteTree } = harness({ result: true, data: [] })
 
-    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root", true), [node("/root/a.md")], "cut")
-    await cmd.execute()
+    const edit = new TransferEdit(treeFacade, tabEditorFacade, node("/root", true), [node("/root/a.md")], "cut")
+    await edit.apply()
 
     expect(pasteTree).toHaveBeenCalledOnce()
-    expect(cmd.didTransfer).toBe(false)
+    expect(edit.didTransfer).toBe(false)
     expect(treeFacade.applyDelete).not.toHaveBeenCalled()
   })
 
   it("reports nothing transferred when main refused", async () => {
     const { treeFacade, tabEditorFacade } = harness({ result: false, data: [] })
 
-    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
-    await cmd.execute()
+    const edit = new TransferEdit(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
+    await edit.apply()
 
-    expect(cmd.didTransfer).toBe(false)
+    expect(edit.didTransfer).toBe(false)
   })
 
   it("has nothing to report before it runs", () => {
     const { treeFacade, tabEditorFacade } = harness({ result: true, data: ["/root/dir/a.md"] })
 
-    const cmd = new PasteCommand(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
+    const edit = new TransferEdit(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
 
-    expect(cmd.didTransfer).toBe(false)
+    expect(edit.didTransfer).toBe(false)
   })
 })

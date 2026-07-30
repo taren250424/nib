@@ -371,6 +371,11 @@ export class TreeFacade {
     this.renderer.syncNodeState(path)
   }
 
+  /** Puts a node's row back to a plain label reading its own name. */
+  renderNodeLabel(path: string) {
+    this.renderer.renderNodeLabel(path)
+  }
+
   getTreeWrapperByPath(path: string) {
     return this.renderer.getTreeWrapperByPath(path)
   }

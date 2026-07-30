@@ -1,7 +1,7 @@
-import type { ICommand } from "./index"
 import type { TreeViewModel } from "../viewmodels/TreeViewModel"
 import type ClipboardMode from "@shared/types/ClipboardMode"
 import type Response from "@shared/types/Response"
+import type { UndoableEdit } from "./UndoableEdit"
 
 import { TabEditorFacade, TreeFacade } from "../modules"
 
@@ -12,11 +12,12 @@ type UndoInfo = {
   isDir: boolean
 }
 
-export class PasteCommand implements ICommand {
+/** Copies or moves nodes into a directory — what a paste and a drag drop both are. */
+export class TransferEdit implements UndoableEdit {
   private undoInfos: UndoInfo[] = []
 
   /**
-   * Whether execute() actually moved or copied anything.
+   * Whether apply() actually moved or copied anything.
    *
    * Main drops the sources that already live in the target directory, so a paste
    * or a drop onto a node's own parent succeeds having done nothing. There is
@@ -34,7 +35,7 @@ export class PasteCommand implements ICommand {
     private clipboardMode: ClipboardMode
   ) {}
 
-  async execute(): Promise<void> {
+  async apply(): Promise<void> {
     const targetDto = this.treeFacade.toTreeDto(this.targetViewModel)
     const selectedDtos = this.selectedViewModels.map((viewModel) => {
       return this.treeFacade.toTreeDto(viewModel)
@@ -110,7 +111,7 @@ export class PasteCommand implements ICommand {
     }
   }
 
-  async undo(): Promise<void> {
+  async revert(): Promise<void> {
     for (let i = this.undoInfos.length - 1; i >= 0; i--) {
       const { src, dest, mode, isDir } = this.undoInfos[i]
 

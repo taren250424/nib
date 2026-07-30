@@ -1,10 +1,10 @@
-import type { ICommand } from "./index"
-import { TabEditorFacade, TreeFacade } from "../modules"
 import type Response from "@shared/types/Response"
+import type { UndoableEdit } from "./UndoableEdit"
 
-export class CreateCommand implements ICommand {
+import { TabEditorFacade, TreeFacade } from "../modules"
+
+export class CreateEdit implements UndoableEdit {
   private createdPath = ""
-  private openedTabId: number | null = null
 
   constructor(
     private treeFacade: TreeFacade,
@@ -14,7 +14,12 @@ export class CreateCommand implements ICommand {
     private isDirectory: boolean
   ) {}
 
-  async execute() {
+  /** Where the file landed. Empty until apply() succeeds — Main picks a unique name. */
+  getCreatedPath() {
+    return this.createdPath
+  }
+
+  async apply() {
     const requestPath = window.utils.getJoinedPath(this.parentPath, this.name)
     const response: Response<string> = await window.rendererToMain.create(requestPath, this.isDirectory)
     if (!response.result) return
@@ -28,7 +33,7 @@ export class CreateCommand implements ICommand {
     await window.rendererToMain.syncTreeSessionFromRenderer(treeDto)
   }
 
-  async undo() {
+  async revert() {
     if (!this.createdPath) return
 
     await window.rendererToMain.delete([this.createdPath])
@@ -38,22 +43,15 @@ export class CreateCommand implements ICommand {
       this.treeFacade.applyDelete([idx])
     }
 
-    if (this.openedTabId !== null) {
-      const tabEditorViewModel = this.tabEditorFacade.getTabEditorViewModelById(this.openedTabId)
-      const tabEditorView = this.tabEditorFacade.getTabEditorViewByPath(tabEditorViewModel.filePath)
-      this.tabEditorFacade.removeTab(tabEditorView.getId())
-    }
+    // Creating a file opens it, so undoing has to close that tab again. Found by
+    // path rather than remembered from the open: the caller used to hand the tab
+    // id back afterwards, which meant undoing after closing the tab by hand
+    // looked the id up and got nothing.
+    const view = this.tabEditorFacade.getTabEditorViewByPath(this.createdPath)
+    if (view) this.tabEditorFacade.removeTab(view.getId())
 
     const viewModel = this.treeFacade.getRootTreeViewModel()
     const treeDto = this.treeFacade.toTreeDto(viewModel)
     await window.rendererToMain.syncTreeSessionFromRenderer(treeDto)
-  }
-
-  getCreatedPath() {
-    return this.createdPath
-  }
-
-  setOpenedTabId(id: number) {
-    this.openedTabId = id
   }
 }

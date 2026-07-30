@@ -221,6 +221,30 @@ export class TreeRenderer {
     return wrapper.querySelector(DOM.SELECTOR_TREE_NODE) as HTMLElement
   }
 
+  /**
+   * Puts a row back to a plain label reading its own name.
+   *
+   * Renaming swaps the label for an input, and the path is what says how the
+   * label should read — so both directions of a rename end here instead of each
+   * reaching into the row itself.
+   */
+  renderNodeLabel(path: string) {
+    // The root has no row of its own; its name is shown by the tree header.
+    if (path === this._rootPath) return
+
+    const wrapper = this._pathToTreeWrapper.get(path)
+    const node = wrapper?.querySelector(DOM.SELECTOR_TREE_NODE)
+    const current =
+      node?.querySelector(DOM.SELECTOR_TREE_NODE_TEXT) ?? node?.querySelector(DOM.SELECTOR_TREE_NODE_INPUT)
+    if (!node || !current) return
+
+    const label = document.createElement("span")
+    label.classList.add(DOM.CLASS_TREE_NODE_TEXT, "ellipsis")
+    label.textContent = window.utils.getBaseName(path)
+
+    node.replaceChild(label, current)
+  }
+
   getTreeWrapperByPath(path: string) {
     return this._pathToTreeWrapper.get(path)!
   }

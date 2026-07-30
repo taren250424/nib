@@ -1,7 +1,7 @@
-import type { ICommand } from "./index"
 import type TrashMap from "@shared/types/TrashMap"
 import type Response from "@shared/types/Response"
 import type { TreeViewModel } from "../viewmodels/TreeViewModel"
+import type { UndoableEdit } from "./UndoableEdit"
 
 import { TabEditorFacade, TreeFacade } from "../modules"
 
@@ -11,7 +11,7 @@ type DeletedItemInfo = {
   parentPath: string
 }
 
-export class DeleteCommand implements ICommand {
+export class DeleteEdit implements UndoableEdit {
   private trashMap: TrashMap[] | null = null
   private deletedItems: DeletedItemInfo[] = []
 
@@ -23,20 +23,20 @@ export class DeleteCommand implements ICommand {
     private selectedPaths: string[]
   ) {}
 
-  async execute(): Promise<void> {
+  async apply(): Promise<void> {
     this.deletedItems = []
 
     const pathsToDelete: string[] = []
     const idsToDelete: number[] = []
     for (const path of this.selectedPaths) {
       const viewModel = this.treeFacade.getTreeViewModelByPath(path)
-      // Already gone (removed by an earlier command or watcher sync) — skip.
+      // Already gone (removed by an earlier edit or watcher sync) — skip.
       if (!viewModel) continue
 
       pathsToDelete.push(viewModel.path)
       idsToDelete.push(...this.getIdsFromTreeViewModel(viewModel))
 
-      // Save metadata for undo
+      // Save metadata for revert
       this.deletedItems.push({
         path: viewModel.path,
         isDirectory: viewModel.directory,
@@ -72,7 +72,7 @@ export class DeleteCommand implements ICommand {
     await window.rendererToMain.syncTreeSessionFromRenderer(treeDto)
   }
 
-  async undo(): Promise<void> {
+  async revert(): Promise<void> {
     const result = await window.rendererToMain.undo_delete(this.trashMap)
     if (!result) return
 
