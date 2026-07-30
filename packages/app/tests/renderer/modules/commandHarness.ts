@@ -51,11 +51,12 @@ export function createCommandHarness() {
 }
 
 /**
- * The main-process side of a tree transfer.
+ * The main-process side of the tree commands, answering the way Main does.
  *
- * `pasteTree` answers with the paths it created, and drops the sources that
- * already live in the target directory — the same filter TreeService.paste
- * applies, and the reason a paste can succeed having moved nothing.
+ * `pasteTree` drops the sources that already live in the target directory — the
+ * same filter TreeService.paste applies, and the reason a paste can succeed
+ * having moved nothing. `create` and `rename` echo the path they were asked for,
+ * which is Main's answer whenever the name is free.
  */
 function installTreeIpcStub() {
   const pasteTree = vi.fn(async (target: TreeDto, selected: TreeDto[], mode: ClipboardMode) => {
@@ -65,8 +66,27 @@ function installTreeIpcStub() {
     return { result: true, data: moved.map((dto) => `${target.path}/${dto.name}`) }
   })
 
+  // Main hands out the tab ids, so they have to keep climbing across one run.
+  let nextTabId = 100
+  const openFile = vi.fn(async (filePath: string) => ({
+    result: true,
+    data: {
+      id: nextTabId++,
+      isModified: false,
+      filePath,
+      fileName: window.utils.getBaseName(filePath),
+      content: "",
+      isBinary: false,
+    },
+  }))
+
   const stub = {
     pasteTree,
+    openFile,
+    create: vi.fn(async (path: string) => ({ result: true, data: path })),
+    rename: vi.fn(async (_from: string, to: string) => ({ result: true, data: to })),
+    delete: vi.fn(async (paths: string[]) => ({ result: true, data: paths.map((path) => ({ path })) })),
+    undo_delete: vi.fn().mockResolvedValue(true),
     setWatchSkipState: vi.fn().mockResolvedValue(undefined),
     showWarning: vi.fn().mockResolvedValue(undefined),
     syncTreeSessionFromRenderer: vi.fn().mockResolvedValue(true),

@@ -117,6 +117,19 @@ export function selectInEditor(view: TabEditorView, from: number, to: number) {
   })
 }
 
+/**
+ * Types `text` at the caret, replacing the selection as typing does.
+ *
+ * The edit goes through the editor's own dispatchTransaction, which is what
+ * tells the facade that whatever describes the document is now out of date.
+ */
+export function typeInEditor(view: TabEditorView, text: string) {
+  view.editor!.action((ctx) => {
+    const editorView = ctx.get(editorViewCtx)
+    editorView.dispatch(editorView.state.tr.insertText(text))
+  })
+}
+
 type TabSpec = { id: number; content?: string; path?: string; isBinary?: boolean }
 
 /** Opens a tab the way the session and File > Open do; it becomes the active one. */

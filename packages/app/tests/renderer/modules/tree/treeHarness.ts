@@ -14,8 +14,10 @@ import { TreeDragManager } from "@renderer/modules/tree/TreeDragManager"
  * the same document can mount both.
  */
 export const TREE_MARKUP = `
-  <div id="tree-top"><span id="tree-top-name"></span></div>
-  <div id="tree-node-container"><div id="content"></div></div>
+  <div id="side">
+    <div id="tree-top"><span id="tree-top-name"></span></div>
+    <div id="tree-node-container"><div id="content"></div></div>
+  </div>
   <div id="tree-context-menu">
     <div id="tree-context-cut"></div>
     <div id="tree-context-copy"></div>
@@ -112,7 +114,19 @@ export function installWindowUtils() {
     getBaseName: (p: string) => p.slice(p.lastIndexOf("/") + 1),
     getDirName: (p: string) => p.slice(0, p.lastIndexOf("/")),
     getJoinedPath: (a: string, b: string) => (b === "" ? a : `${a}/${b}`),
-    getRelativePath: (from: string, to: string) => (to === from ? "" : to.slice(from.length + 1)),
+    // Segment-wise, with the ".." path.relative answers with — callers read that
+    // prefix to decide whether `to` is under `from`, so a prefix-slice version
+    // would report a sibling as being inside.
+    getRelativePath: (from: string, to: string) => {
+      const fromSegments = from.split("/")
+      const toSegments = to.split("/")
+
+      let shared = 0
+      while (shared < fromSegments.length && fromSegments[shared] === toSegments[shared]) shared++
+
+      return [...fromSegments.slice(shared).map(() => ".."), ...toSegments.slice(shared)].join("/")
+    },
+    isAbsolute: (p: string) => p.startsWith("/"),
   }
 
   ;(window as unknown as { utils: typeof posix }).utils = posix
