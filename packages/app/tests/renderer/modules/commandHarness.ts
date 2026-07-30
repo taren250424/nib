@@ -1,9 +1,11 @@
 import { vi } from "vitest"
 
-import type { TreeDto } from "@shared/dto/TreeDto"
+import type { TabEditorsDto } from "@shared/dto/TabEditorDto"
+import type { TreeDto, TreePartialUpdate } from "@shared/dto/TreeDto"
 import type ClipboardMode from "@shared/types/ClipboardMode"
 
 import { CommandQueue, ContextKeyService, FocusManager } from "@renderer/core"
+import { handleSync } from "@renderer/handlers/syncHandlers"
 import { CommandManager } from "@renderer/modules/CommandManager"
 import type { SettingsFacade } from "@renderer/modules/settings/SettingsFacade"
 
@@ -25,6 +27,7 @@ export function createCommandHarness() {
   installWindowUtils()
 
   const ipc = installTreeIpcStub()
+  const watch = installWatchStub()
 
   // One service for both facades and the manager, as the container gives them.
   const contextKeyService = new ContextKeyService()
@@ -47,7 +50,45 @@ export function createCommandHarness() {
     commandQueue
   )
 
-  return { commandManager, tree, tabEditor, contextKeyService, focusManager, commandQueue, ipc }
+  // The watcher shares the queue with every command, which is the whole point
+  // of it, so the real wiring is registered rather than imitated.
+  handleSync(commandQueue, tabEditor.facade, tree.facade)
+
+  return {
+    commandManager,
+    tree,
+    tabEditor,
+    contextKeyService,
+    focusManager,
+    commandQueue,
+    ipc,
+    fireWatchSync: watch.fire,
+  }
+}
+
+/**
+ * Stands in for the preload bridge the watcher arrives over.
+ *
+ * `syncFromWatch` hands Main a callback; this keeps hold of it so a test can be
+ * the watcher. The returned promise is the queued work, so it can be awaited.
+ */
+function installWatchStub() {
+  let handler: ((tabs: TabEditorsDto | null, tree: TreeDto | null, partials?: TreePartialUpdate[]) => unknown) | null =
+    null
+
+  window.mainToRenderer = {
+    ...window.mainToRenderer,
+    syncFromWatch: (callback: typeof handler) => {
+      handler = callback
+    },
+  } as unknown as typeof window.mainToRenderer
+
+  return {
+    fire: (tabs: TabEditorsDto | null, tree: TreeDto | null, partials?: TreePartialUpdate[]) => {
+      if (!handler) throw new Error("handleSync never registered a callback")
+      return handler(tabs, tree, partials) as Promise<void>
+    },
+  }
 }
 
 /**

@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DOM } from "@renderer/constants"
 
-import { createFacadeHarness, openTab, typeInEditor, type FacadeHarness } from "./facadeHarness"
+import { blurEditor, createFacadeHarness, openTab, typeInEditor, type FacadeHarness } from "./facadeHarness"
 
 const FIRST = 1
+const ROOT_DIR = "root"
 const SECOND = 2
 
 let harness: FacadeHarness
@@ -267,5 +268,97 @@ describe("TabEditorFacade find in selection button", () => {
     harness.facade.activateTabEditorById(FIRST)
 
     expect(findInfo()).toBe("1 of 1")
+  })
+})
+
+/**
+ * Auto save, which nothing watched before: the three modes, and above all what
+ * it must refuse to touch.
+ */
+describe("TabEditorFacade auto save", () => {
+  const savedDtos = () => vi.mocked(window.rendererToMain.save).mock.calls.map(([dto]) => dto)
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  /** Opens a modified tab: auto save has nothing to do with a clean one. */
+  async function openModifiedTab(path = `${ROOT_DIR}/note.md`) {
+    const view = await openTab(harness, { id: FIRST, content: "cat", path })
+    vi.useFakeTimers()
+    typeInEditor(view, " dog")
+    return view
+  }
+
+  it("saves after a pause in the delay mode", async () => {
+    harness.facade.setAutoSaveMode("afterDelay")
+    await openModifiedTab()
+
+    expect(savedDtos()).toHaveLength(0)
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(savedDtos().map((dto) => dto.filePath)).toEqual([`${ROOT_DIR}/note.md`])
+  })
+
+  it("puts the delay off again on the next keystroke", async () => {
+    harness.facade.setAutoSaveMode("afterDelay")
+    const view = await openModifiedTab()
+
+    await vi.advanceTimersByTimeAsync(900)
+    typeInEditor(view, "!")
+    await vi.advanceTimersByTimeAsync(900)
+    expect(savedDtos()).toHaveLength(0)
+
+    await vi.advanceTimersByTimeAsync(200)
+    expect(savedDtos()).toHaveLength(1)
+  })
+
+  it("drops a pending save when the mode changes under it", async () => {
+    harness.facade.setAutoSaveMode("afterDelay")
+    await openModifiedTab()
+
+    harness.facade.setAutoSaveMode("off")
+    await vi.advanceTimersByTimeAsync(5000)
+
+    expect(savedDtos()).toHaveLength(0)
+  })
+
+  it("saves when the editor loses focus in the focus-change mode", async () => {
+    harness.facade.setAutoSaveMode("onFocusChange")
+    const view = await openModifiedTab()
+
+    blurEditor(view)
+
+    expect(savedDtos()).toHaveLength(1)
+  })
+
+  it("saves when the window goes away in the window-change mode", async () => {
+    harness.facade.setAutoSaveMode("onWindowChange")
+    await openModifiedTab()
+
+    harness.facade.notifyWindowBlurForAutoSave()
+
+    expect(savedDtos()).toHaveLength(1)
+  })
+
+  it("saves nothing while auto save is off", async () => {
+    const view = await openModifiedTab()
+
+    blurEditor(view)
+    harness.facade.notifyWindowBlurForAutoSave()
+    await vi.advanceTimersByTimeAsync(5000)
+
+    expect(savedDtos()).toHaveLength(0)
+  })
+
+  // Saving an untitled tab opens a file dialog, which is the one thing auto
+  // save must never do — it happens while the user is somewhere else.
+  it("never saves a tab that has no file yet", async () => {
+    harness.facade.setAutoSaveMode("afterDelay")
+    await openModifiedTab("")
+
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(savedDtos()).toHaveLength(0)
   })
 })

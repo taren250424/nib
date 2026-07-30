@@ -130,6 +130,18 @@ export function typeInEditor(view: TabEditorView, text: string) {
   })
 }
 
+/**
+ * Takes focus off the editor, which is one of the moments auto save listens for.
+ *
+ * Dispatched on the editor's own node because that is where ProseMirror puts the
+ * handler `handleDOMEvents` asked for.
+ */
+export function blurEditor(view: TabEditorView) {
+  view.editor!.action((ctx) => {
+    ctx.get(editorViewCtx).dom.dispatchEvent(new FocusEvent("blur"))
+  })
+}
+
 type TabSpec = { id: number; content?: string; path?: string; isBinary?: boolean }
 
 /** Opens a tab the way the session and File > Open do; it becomes the active one. */
