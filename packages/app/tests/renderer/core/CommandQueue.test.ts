@@ -76,4 +76,29 @@ describe("CommandQueue", () => {
     await expect(queue.enqueue(() => 42)).resolves.toBe(42)
     await expect(queue.enqueue(async () => "async")).resolves.toBe("async")
   })
+
+  // The convention this pins used to live only in a comment: a task that
+  // enqueues waits behind itself, and awaiting that never returns.
+  it("refuses a task that enqueues from inside the queue", async () => {
+    const queue = new CommandQueue()
+
+    await expect(queue.enqueue(() => queue.enqueue(() => "inner"))).rejects.toThrow(/deadlock/)
+  })
+
+  // The other half of the rule: a command awaits IPC for most of its life, and
+  // whatever the user does meanwhile enqueues from outside the queue.
+  it("still accepts work enqueued while a task is merely in flight", async () => {
+    const queue = new CommandQueue()
+    const first = deferred<void>()
+
+    const firstRun = queue.enqueue(() => first.promise)
+    // Let the first task start and hand back its promise.
+    await Promise.resolve()
+
+    const secondRun = queue.enqueue(() => "second")
+    first.resolve()
+
+    await expect(firstRun).resolves.toBeUndefined()
+    await expect(secondRun).resolves.toBe("second")
+  })
 })
