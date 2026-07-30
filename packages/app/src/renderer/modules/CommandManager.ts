@@ -18,6 +18,7 @@ import { CommandQueue, ContextKeyService, FocusManager } from "../core"
 import { TabEditorFacade, TreeFacade, SettingsFacade } from "./index"
 import { CreateEdit, DeleteEdit, RenameEdit, TransferEdit } from "../edits"
 
+import { isPathInside } from "../utils/paths"
 import { sleep } from "../utils/sleep"
 
 @injectable()
@@ -820,10 +821,19 @@ export class CommandManager {
     // Re-resolved here rather than carried in: a source may have been deleted
     // while this waited its turn in the queue.
     const selectedViewModels = []
+    const nested = []
     for (const path of sourcePaths) {
       const viewModel = this.treeFacade.getTreeViewModelByPath(path)
-      if (viewModel) selectedViewModels.push(viewModel)
+      if (!viewModel) continue
+
+      // A directory cannot go inside itself: the copy would be reading from what
+      // it is writing into. fs-extra throws on it, and nothing here said so —
+      // the drop simply did nothing and left the user to guess why.
+      if (viewModel.directory && isPathInside(targetViewModel.path, viewModel.path)) nested.push(viewModel)
+      else selectedViewModels.push(viewModel)
     }
+
+    if (nested.length > 0) await this._warnAboutNestedTransfer(nested, targetViewModel, mode)
     if (selectedViewModels.length === 0) return false
 
     const edit = new TransferEdit(this.treeFacade, this.tabEditorFacade, targetViewModel, selectedViewModels, mode)
@@ -842,6 +852,15 @@ export class CommandManager {
       console.error("[CommandManager] tree transfer failed:", error)
       return false
     }
+  }
+
+  private async _warnAboutNestedTransfer(nested: TreeViewModel[], target: TreeViewModel, mode: ClipboardMode) {
+    const names = nested.map((viewModel) => `"${viewModel.name}"`).join(", ")
+    const verb = mode === "copy" ? "copy" : "move"
+
+    await window.rendererToMain.showWarning(
+      `Cannot ${verb} ${names} into "${target.name}" — a folder cannot go inside itself.`
+    )
   }
 
   //

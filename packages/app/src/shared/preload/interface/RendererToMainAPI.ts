@@ -36,6 +36,7 @@ export default interface RendererToMainAPI {
   copyEditor: (text: string) => Promise<void>
   pasteEditor: () => Promise<string>
   copyTree: (src: string, dest: string) => Promise<void>
+  showWarning: (message: string) => Promise<void>
   pasteTree: (targetDto: TreeDto, selectedDtos: TreeDto[], clipboardMode: ClipboardMode) => Promise<Response<string[]>>
 
   rename: (prePath: string, newPath: string) => Promise<Response<string>>

@@ -1,5 +1,6 @@
 export { assert } from "./assert"
 export { debounce } from "./debounce"
+export { isPathInside } from "./paths"
 export { sleep } from "./sleep"
 export { throttle } from "./throttle"
 export { adjustMenuPosition } from "./ui"

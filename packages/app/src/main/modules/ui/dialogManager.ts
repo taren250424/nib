@@ -13,6 +13,15 @@ const dialogManager: IDialogManager = {
     return result.response === 0
   },
 
+  /** Tells the user why something they asked for did not happen. Nothing to answer. */
+  async showWarningDialog(message: string): Promise<void> {
+    await dialog.showMessageBox({
+      type: "warning",
+      buttons: ["OK"],
+      message,
+    })
+  },
+
   async showOpenFileDialog() {
     return await dialog.showOpenDialog({
       title: "Open",

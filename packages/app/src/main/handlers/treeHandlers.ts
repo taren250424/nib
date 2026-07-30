@@ -6,8 +6,14 @@ import { electronAPI } from "@shared/constants/electronAPI/electronAPI"
 import { ipcMain } from "electron"
 
 import TreeService from "@main/services/TreeService"
+import type IDialogManager from "@main/modules/contracts/IDialogManager"
 
-export default function registerTreeHandlers(treeService: TreeService) {
+export default function registerTreeHandlers(treeService: TreeService, dialogManager: IDialogManager) {
+  // The renderer has no way of its own to say anything to the user.
+  ipcMain.handle(electronAPI.events.rendererToMain.showWarning, async (_e, message: string) => {
+    await dialogManager.showWarningDialog(message)
+  })
+
   ipcMain.handle(electronAPI.events.rendererToMain.rename, async (_e, prePath: string, newPath: string) => {
     return await treeService.rename(prePath, newPath)
   })

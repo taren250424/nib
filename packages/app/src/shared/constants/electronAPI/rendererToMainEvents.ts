@@ -27,6 +27,8 @@ export const rendererToMainEvents = {
   copyTree: "copyTree",
   pasteTree: "pasteTree",
 
+  showWarning: "showWarning",
+
   rename: "rename",
   delete: "delete",
   undo_delete: "undo_delete",

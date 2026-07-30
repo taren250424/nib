@@ -78,6 +78,9 @@ const rendererToMain: RendererToMainAPI = {
   copyTree: (src: string, dest: string) => {
     return ipcRenderer.invoke(electronAPI.events.rendererToMain.copyTree, src, dest)
   },
+  showWarning: (message: string) => {
+    return ipcRenderer.invoke(electronAPI.events.rendererToMain.showWarning, message)
+  },
   pasteEditor: () => {
     return ipcRenderer.invoke(electronAPI.events.rendererToMain.pasteEditor)
   },

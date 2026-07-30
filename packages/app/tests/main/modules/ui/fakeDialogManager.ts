@@ -6,6 +6,9 @@ export function setFakeConfirmResult(result: boolean) {
   fakeConfirmResult = result
 }
 
+/** Warnings shown so far, so a test can say what the user was told. */
+export const fakeWarnings: string[] = []
+
 let fakeSaveDialogResult: Electron.SaveDialogReturnValue = {
   canceled: false,
   filePath: undefined as any,
@@ -33,6 +36,10 @@ export function setFakeOpenDirectoryDialogResult(result: Electron.OpenDialogRetu
 const fakeDialogManager: IDialogManager = {
   async showConfirmDialog(_message: string): Promise<boolean> {
     return fakeConfirmResult
+  },
+
+  async showWarningDialog(message: string): Promise<void> {
+    fakeWarnings.push(message)
   },
 
   async showOpenFileDialog(): Promise<Electron.OpenDialogReturnValue> {
