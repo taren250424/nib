@@ -80,6 +80,20 @@ describe("watcher sync", () => {
     expect(wrapperOf(harness.tree, README)!.classList.contains(DOM.CLASS_CUT)).toBe(false)
   })
 
+  // The history stacks name the outgoing tree the same way the clipboard does:
+  // an undo surviving the resync would revert a delete against paths the new
+  // tree may have recreated under the same names.
+  it("drops the tree history with them", async () => {
+    harness.tree.facade.setSelection([indexOf(A)!])
+    await harness.commandManager.performDelete()
+    expect(harness.contextKeyService.get("canUndoTree")).toBe(true)
+
+    await harness.fireWatchSync(null, buildDto({ name: "root", children: [{ name: "readme.md" }] }), undefined)
+
+    expect(harness.contextKeyService.get("canUndoTree")).toBe(false)
+    expect(harness.contextKeyService.get("canRedoTree")).toBe(false)
+  })
+
   /**
    * The guarantee the shared queue exists for.
    *

@@ -54,7 +54,7 @@ export function createCommandHarness() {
 
   // The watcher shares the queue with every command, which is the whole point
   // of it, so the real wiring is registered rather than imitated.
-  handleSync(commandQueue, tabEditor.facade, tree.facade)
+  handleSync(commandQueue, tabEditor.facade, tree.facade, commandManager)
 
   return {
     commandManager,

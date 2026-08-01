@@ -99,7 +99,7 @@ window.addEventListener("DOMContentLoaded", () => {
   handleTree(run, mouseBus, commandRegistry, focusManager, treeFacade)
   handleSide(mouseBus, sideFacade)
   handleSettings(run, settingsFacade)
-  handleSync(commandQueue, tabEditorFacade, treeFacade)
+  handleSync(commandQueue, tabEditorFacade, treeFacade, commandManager)
 
   handleLoad(run, windowFacade, settingsFacade, tabEditorFacade, treeFacade, sideFacade, infoFacade, menuElements)
 

@@ -144,6 +144,18 @@ export class CommandManager {
     })
   }
 
+  /**
+   * Drops both tree history stacks. For when the tree they describe is gone:
+   * the edits hold absolute paths into the outgoing root, so replaying one
+   * would mutate a directory the tree no longer shows. Safe inside a queued
+   * task — it never enqueues — which is how the watcher's full resync calls it.
+   */
+  clearTreeHistory() {
+    this.undoStack.length = 0
+    this.redoStack.length = 0
+    this._publishHistoryContext()
+  }
+
   //
 
   performNewTab() {
@@ -197,9 +209,12 @@ export class CommandManager {
     // Everything below names the tree that is being replaced, so it has to be
     // dropped before the render: a selection or clipboard still holding paths
     // from the old directory would paint marks onto same-named nodes of the new
-    // one. (The wrapper map is cleared by the full render itself.)
+    // one. (The wrapper map is cleared by the full render itself.) The history
+    // stacks go too — an undo kept alive across the switch would edit the old
+    // directory on disk while the new tree shows none of it.
     this.treeFacade.clearSelection()
     this.treeFacade.clearClipboard()
+    this.clearTreeHistory()
 
     this.treeFacade.render(responseViewModel)
     this.treeFacade.setRootTreeViewModel(responseViewModel)

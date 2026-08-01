@@ -1,9 +1,14 @@
 import type { CommandQueue } from "@renderer/core"
-import type { TabEditorFacade, TreeFacade } from "@renderer/modules"
+import type { CommandManager, TabEditorFacade, TreeFacade } from "@renderer/modules"
 import type { TabEditorsDto } from "@shared/dto/TabEditorDto"
 import type { TreeDto, TreePartialUpdate } from "@shared/dto/TreeDto"
 
-export function handleSync(commandQueue: CommandQueue, tabEditorFacade: TabEditorFacade, treeFacade: TreeFacade) {
+export function handleSync(
+  commandQueue: CommandQueue,
+  tabEditorFacade: TabEditorFacade,
+  treeFacade: TreeFacade,
+  commandManager: CommandManager
+) {
   window.mainToRenderer.syncFromWatch(
     (tabEditorsDto: TabEditorsDto, treeDto: TreeDto, partialUpdates?: TreePartialUpdate[]) =>
       // Watcher sync mutates the same state as user commands, so it must run
@@ -38,8 +43,12 @@ export function handleSync(commandQueue: CommandQueue, tabEditorFacade: TabEdito
             // Cleared before the render, not after: the renderer paints each
             // node's selected/cut marks from this state, and paths from the
             // outgoing tree would mark same-named nodes of the incoming one.
+            // The history stacks go with them: a full resync means the tree
+            // changed under us, so replaying a recorded edit could hit
+            // recreated same-named paths it never touched.
             treeFacade.clearSelection()
             treeFacade.clearClipboard()
+            commandManager.clearTreeHistory()
 
             treeFacade.render(viewModel)
             treeFacade.setRootTreeViewModel(viewModel)
