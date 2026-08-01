@@ -242,6 +242,24 @@ describe("CommandManager create, delete and rename", () => {
     expect(harness.tree.facade.getFlattenIndexByPath(A)).toBeDefined()
   })
 
+  // Main can refuse without throwing. Same rule as a paste that moved nothing:
+  // an edit that did nothing earns no undo step and must not wipe the redo
+  // branch — undoing it would "restore" a file that was never removed.
+  it("takes no undo step for a delete Main refused", async () => {
+    select(A)
+    await harness.commandManager.performDelete()
+    await harness.commandManager.performUndoTree()
+    expect(canRedo()).toBe(true)
+
+    harness.ipc.delete.mockResolvedValueOnce({ result: false, data: [] })
+    select(README)
+    await harness.commandManager.performDelete()
+
+    expect(harness.tree.facade.getFlattenIndexByPath(README)).toBeDefined()
+    expect(canUndo()).toBe(false)
+    expect(canRedo()).toBe(true)
+  })
+
   it("rewrites the path of an open tab when its file is renamed", async () => {
     await harness.commandManager.performOpenFile(README)
     const view = harness.tabEditor.facade.getTabEditorViewByPath(README)!

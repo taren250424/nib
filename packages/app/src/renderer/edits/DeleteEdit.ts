@@ -15,6 +15,16 @@ type DeletedItemInfo = {
 export class DeleteEdit implements UndoableEdit {
   private trashMap: TrashMap[] | null = null
   private deletedItems: DeletedItemInfo[] = []
+  private _didDelete = false
+
+  /**
+   * Whether apply() actually removed anything. Every selected path may already
+   * be gone, or Main may refuse without throwing; either way there is nothing
+   * to undo and no step to spend.
+   */
+  get didDelete(): boolean {
+    return this._didDelete
+  }
 
   // Captures paths, not indices: indices shift whenever the tree mutates,
   // so they are re-resolved from paths at apply time instead.
@@ -52,6 +62,7 @@ export class DeleteEdit implements UndoableEdit {
     const response: Response<TrashMap[] | null> = await window.rendererToMain.delete(pathsToDelete)
     if (!response.result) return
     this.trashMap = response.data
+    this._didDelete = true
 
     for (let i = 0; i < idsToDelete.length; i++) {
       this.tabEditorFacade.removeTab(idsToDelete[i])

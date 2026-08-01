@@ -77,4 +77,16 @@ describe("CreateEdit", () => {
 
     expect(deleteFiles).not.toHaveBeenCalled()
   })
+
+  // The caller reads this to decide whether the edit earns an undo step; a
+  // refusal pushed anyway would wipe the redo branch for nothing.
+  it("reports whether the create landed", async () => {
+    const landed = harness({ createdPath: "/root/a.md" })
+    await landed.edit.apply()
+    expect(landed.edit.didCreate).toBe(true)
+
+    const refused = harness({ createdPath: null })
+    await refused.edit.apply()
+    expect(refused.edit.didCreate).toBe(false)
+  })
 })

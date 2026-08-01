@@ -20,6 +20,14 @@ export class CreateEdit implements UndoableEdit {
     return this.createdPath
   }
 
+  /**
+   * Whether apply() actually created anything. Main can refuse without
+   * throwing, and an edit that did nothing must not take an undo step.
+   */
+  get didCreate(): boolean {
+    return this.createdPath !== ""
+  }
+
   async apply() {
     const requestPath = window.utils.getJoinedPath(this.parentPath, this.name)
     const response: Response<string> = await window.rendererToMain.create(requestPath, this.isDirectory)

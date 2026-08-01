@@ -500,7 +500,11 @@ export class CommandManager {
 
     try {
       await this._applyEdit(edit)
-      this._pushUndoable(edit)
+
+      // Main can refuse a create without throwing. A refusal recorded on the
+      // stack would spend an undo step — and wipe the redo branch — on an edit
+      // whose revert has nothing to remove.
+      if (edit.didCreate) this._pushUndoable(edit)
     } catch (error) {
       console.error("[CommandManager] create failed:", error)
     }
@@ -649,7 +653,10 @@ export class CommandManager {
 
     try {
       await this._applyEdit(edit)
-      this._pushUndoable(edit)
+
+      // Same rule as a transfer that moved nothing: a delete that removed
+      // nothing (paths already gone, or Main refused) takes no undo step.
+      if (edit.didDelete) this._pushUndoable(edit)
     } catch (error) {
       console.error("[CommandManager] delete failed:", error)
     }
