@@ -22,6 +22,11 @@ export class ContextKeyService {
   private readonly values: ContextKeyMap = { ...DEFAULT_CONTEXT_KEYS }
   private readonly listeners = new Set<ChangeListener>()
 
+  // One snapshot per state, not per question: a menu repaint asks isEnabled
+  // for every row and candidate, and each asked for a fresh copy of a map
+  // that had not moved.
+  private cachedSnapshot: Readonly<ContextKeyMap> | null = null
+
   get<K extends ContextKey>(key: K): ContextKeyMap[K] {
     return this.values[key]
   }
@@ -41,6 +46,7 @@ export class ContextKeyService {
     }
 
     if (changed.size === 0) return
+    this.cachedSnapshot = null
     for (const listener of this.listeners) listener(changed)
   }
 
@@ -51,6 +57,8 @@ export class ContextKeyService {
   }
 
   snapshot(): Readonly<ContextKeyMap> {
-    return { ...this.values }
+    // Frozen so the sharing is safe: every caller reads the same object, and
+    // a write to it would otherwise leak into every other reader's answer.
+    return (this.cachedSnapshot ??= Object.freeze({ ...this.values }))
   }
 }
