@@ -29,6 +29,13 @@ describe("getKeyString", () => {
   it("keeps Shift on keys that do not produce a character with it", () => {
     expect(getKeyString(keyEvent("-", { ctrlKey: true, shiftKey: true }))).toBe("Ctrl+Shift+-")
   })
+
+  // No binding uses the OS key. It has to disqualify, not disappear: dropped,
+  // Win+ArrowUp resolved to the tree's plain ArrowUp and moved the selection.
+  it("keeps the OS key in the name so its chords match nothing", () => {
+    expect(getKeyString(keyEvent("ArrowUp", { metaKey: true }))).toBe("Meta+ARROWUP")
+    expect(getKeyString(keyEvent("Delete", { metaKey: true }))).toBe("Meta+DELETE")
+  })
 })
 
 describe("REPEATABLE_KEYS", () => {

@@ -19,6 +19,9 @@ export function getKeyString(e: KeyboardEvent): string {
   if (key === " ") key = "Space"
 
   const parts = []
+  // No binding uses the OS key, so it disqualifies rather than disappears:
+  // dropping it silently turned Win+ArrowUp into the tree's plain ArrowUp.
+  if (e.metaKey) parts.push("Meta")
   if (e.ctrlKey) parts.push("Ctrl")
   if (shift) parts.push("Shift")
   if (e.altKey) parts.push("Alt")
