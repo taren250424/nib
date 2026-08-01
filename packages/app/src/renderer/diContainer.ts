@@ -16,6 +16,7 @@ import { TabEditorStore } from "./modules/tab_editor/TabEditorStore"
 import { TabEditorRenderer } from "./modules/tab_editor/TabEditorRenderer"
 import { TabEditorElements } from "./modules/tab_editor/TabEditorElements"
 import { TabDragManager } from "./modules/tab_editor/TabDragManager"
+import { FindReplaceManager } from "./modules/tab_editor/FindReplaceManager"
 
 import { SideFacade } from "./modules/side/SideFacade"
 import { SideStore } from "./modules/side/SideStore"
@@ -60,6 +61,7 @@ diContainer.bind(DI.TabEditorStore).to(TabEditorStore).inSingletonScope()
 diContainer.bind(DI.TabEditorRenderer).to(TabEditorRenderer).inSingletonScope()
 diContainer.bind(DI.TabEditorElements).to(TabEditorElements).inSingletonScope()
 diContainer.bind(DI.TabDragManager).to(TabDragManager).inSingletonScope()
+diContainer.bind(DI.FindReplaceManager).to(FindReplaceManager).inSingletonScope()
 
 diContainer.bind(DI.SideFacade).to(SideFacade).inSingletonScope()
 diContainer.bind(DI.SideStore).to(SideStore).inSingletonScope()

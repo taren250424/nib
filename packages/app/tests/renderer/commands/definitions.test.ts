@@ -17,6 +17,7 @@ function recordingDeps() {
 
   const deps = {
     commandManager: service(),
+    findReplaceManager: service(),
     zoomManager: service(),
     sideFacade: service(),
     infoFacade: service(),

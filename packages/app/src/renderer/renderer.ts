@@ -21,6 +21,7 @@ import { KEYBINDINGS } from "./commands/keybindings"
 
 import {
   CommandManager,
+  FindReplaceManager,
   MenuElements,
   TabEditorFacade,
   TreeFacade,
@@ -70,9 +71,11 @@ window.addEventListener("DOMContentLoaded", () => {
   // including the ones session load runs.
   const commandRegistry = diContainer.get<CommandRegistry>(DI.CommandRegistry)
   const commandManager = diContainer.get<CommandManager>(DI.CommandManager)
+  const findReplaceManager = diContainer.get<FindReplaceManager>(DI.FindReplaceManager)
   commandRegistry.registerAll(
     createCommandDescriptors({
       commandManager,
+      findReplaceManager,
       zoomManager,
       sideFacade,
       infoFacade,

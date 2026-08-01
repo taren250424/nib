@@ -17,6 +17,7 @@ export const DI = {
   TabEditorRenderer: Symbol("TabEditorRenderer"),
   TabEditorElements: Symbol("TabEditorElements"),
   TabDragManager: Symbol("TabDragManager"),
+  FindReplaceManager: Symbol("FindReplaceManager"),
 
   SideFacade: Symbol("SideFacade"),
   SideStore: Symbol("SideStore"),
