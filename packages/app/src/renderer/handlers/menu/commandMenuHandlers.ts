@@ -19,11 +19,15 @@ export function handleCommandMenus(
   for (const binding of MENU_BINDINGS) {
     const element = menuElements[binding.element] as HTMLElement
 
-    element.addEventListener("click", () => {
+    element.addEventListener("click", async () => {
       const command = commandRegistry.firstEnabled(binding.commands)
       if (!command) return
 
-      void commandRegistry.execute(command, ...(binding.args ?? []))
+      try {
+        await commandRegistry.execute(command, ...(binding.args ?? []))
+      } catch (err) {
+        console.error(`[commandMenuHandlers] ${command} failed:`, err)
+      }
     })
   }
 

@@ -80,9 +80,21 @@ describe("MENU_BINDINGS", () => {
   it("keeps the always-available items available", () => {
     const { registry } = registryWithAllCommands()
 
-    for (const element of ["newTab", "save", "zoomIn", "information", "exit"]) {
+    for (const element of ["newTab", "zoomIn", "information", "exit"]) {
       const commands = MENU_BINDINGS.find((binding) => binding.element === element)!.commands
       expect(registry.firstEnabled(commands), `${element} should be available`).toBeDefined()
     }
+  })
+
+  // Save reads the active tab, so with no tab open the item greys out instead
+  // of crashing the command it would have run.
+  it("reports save as unavailable until a document is open", () => {
+    const { registry, context } = registryWithAllCommands()
+    const save = MENU_BINDINGS.find((binding) => binding.element === "save")!.commands
+
+    expect(registry.firstEnabled(save)).toBeUndefined()
+
+    context.update({ hasActiveEditor: true })
+    expect(registry.firstEnabled(save)).toBe("file.save")
   })
 })

@@ -59,6 +59,11 @@ export class KeybindingService {
 
     if (e.repeat && !REPEATABLE_KEYS.has(key)) return
 
-    void this.commandRegistry.execute(binding.command, ...(binding.args ?? []))
+    // The queue hands rejections back to whoever enqueued, and a key press has
+    // no caller left to hand them to — unlogged, they vanish as unhandled
+    // rejections, which is how the context menu channel treats them too.
+    this.commandRegistry
+      .execute(binding.command, ...(binding.args ?? []))
+      .catch((err) => console.error(`[KeybindingService] ${binding.command} failed:`, err))
   }
 }

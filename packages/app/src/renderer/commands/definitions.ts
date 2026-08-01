@@ -60,13 +60,15 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
   const definitions: Record<CommandId, CommandDefinition> = {
     // History. In the editor this performs the same prosemirror-history step the
     // editor's own keymap would; it also applies from the find widget, where
-    // focus sits in an input after a replace.
+    // focus sits in an input after a replace. Both need a document to act on:
+    // the empty editor container takes focus like any zone, and the run path
+    // reaches for the active view without checking it exists.
     "editor.undo": {
-      when: inTask("editor", "find-replace"),
+      when: (ctx) => inTask("editor", "find-replace")(ctx) && ctx.hasActiveEditor,
       run: () => commandManager.performUndoEditor(),
     },
     "editor.redo": {
-      when: inTask("editor", "find-replace"),
+      when: (ctx) => inTask("editor", "find-replace")(ctx) && ctx.hasActiveEditor,
       run: () => commandManager.performRedoEditor(),
     },
     // The tree keeps its own undo stack, so it can say whether there is anything
@@ -84,8 +86,12 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "file.newTab": { run: () => commandManager.performNewTab() },
     "file.open": { run: (path?: string) => commandManager.performOpenFile(path) },
     "file.openDirectory": { run: () => commandManager.performOpenDirectoryByDialog() },
-    "file.save": { run: () => commandManager.performSave() },
-    "file.saveAs": { run: () => commandManager.performSaveAs() },
+    // Save reads the active tab's dto without checking one exists, so the
+    // condition lives here — it is also what greys File > Save out when there
+    // is nothing to save. saveAll iterates whatever tabs there are and is
+    // content with none.
+    "file.save": { when: (ctx) => ctx.hasActiveEditor, run: () => commandManager.performSave() },
+    "file.saveAs": { when: (ctx) => ctx.hasActiveEditor, run: () => commandManager.performSaveAs() },
     "file.saveAll": { run: () => commandManager.performSaveAll() },
 
     // Tabs. Close takes its target from wherever the user pointed, so the close

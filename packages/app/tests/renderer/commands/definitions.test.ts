@@ -123,6 +123,7 @@ describe("createCommandDescriptors", () => {
   it("lets editor history apply from the find widget as well", () => {
     const { byId } = descriptorsById()
     const context = new ContextKeyService()
+    context.set("hasActiveEditor", true)
 
     for (const id of ["editor.undo", "editor.redo"]) {
       const when = byId.get(id)!.when!
@@ -133,10 +134,39 @@ describe("createCommandDescriptors", () => {
     }
   })
 
+  // The empty editor container takes focus like any zone, and the history run
+  // path reaches for the active view without checking it exists.
+  it("needs a document before editor history applies", () => {
+    const { byId } = descriptorsById()
+    const context = new ContextKeyService()
+    context.set("focusedTask", "editor")
+
+    for (const id of ["editor.undo", "editor.redo"]) {
+      expect(byId.get(id)!.when!(context.snapshot()), `${id} should not apply with no tab open`).toBe(false)
+    }
+  })
+
+  // Save reads the active tab without checking one exists; saveAll iterates
+  // whatever there is and is content with none.
+  it("needs a document to save, except for saveAll", () => {
+    const { byId } = descriptorsById()
+    const context = new ContextKeyService()
+
+    for (const id of ["file.save", "file.saveAs"]) {
+      const when = byId.get(id)!.when!
+      expect(when(context.snapshot()), `${id} should not apply with no tab open`).toBe(false)
+      context.set("hasActiveEditor", true)
+      expect(when(context.snapshot()), `${id} should apply with a tab open`).toBe(true)
+      context.set("hasActiveEditor", false)
+    }
+
+    expect(byId.get("file.saveAll")!.when).toBeUndefined()
+  })
+
   it("leaves globally available commands unconditional", () => {
     const { byId } = descriptorsById()
 
-    for (const id of ["file.newTab", "file.save", "view.zoomIn", "settings.apply"]) {
+    for (const id of ["file.newTab", "file.saveAll", "view.zoomIn", "settings.apply"]) {
       expect(byId.get(id)?.when, `${id} should not be scoped`).toBeUndefined()
     }
   })
