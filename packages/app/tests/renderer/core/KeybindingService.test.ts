@@ -92,6 +92,21 @@ describe("KeybindingService", () => {
     await vi.waitFor(() => expect(run).toHaveBeenCalledOnce())
   })
 
+  // The editor's own keymap runs first (target phase) and prevents the default;
+  // the event still bubbles to the document. Ctrl+Z must not undo twice.
+  it("leaves a key another handler already consumed alone", async () => {
+    const { service, registry } = createService()
+    const run = vi.fn()
+    registry.register({ id: "editor.undo", run })
+    service.register({ key: "Ctrl+Z", command: "editor.undo" })
+
+    const event = keyEvent("z", { ctrlKey: true, defaultPrevented: true })
+    service.handleKeyEvent(event)
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(run).not.toHaveBeenCalled()
+  })
+
   it("does nothing for a key nobody bound", () => {
     const { service } = createService()
     const event = keyEvent("q", { ctrlKey: true })

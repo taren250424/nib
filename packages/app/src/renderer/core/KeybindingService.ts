@@ -45,6 +45,11 @@ export class KeybindingService {
   }
 
   handleKeyEvent(e: KeyboardEvent): void {
+    // A key the editor's own keymap consumed still bubbles up here — Milkdown's
+    // history handles Mod-Z at the target and prevents the default, but not the
+    // propagation. Running the bound command on top would do the action twice.
+    if (e.defaultPrevented) return
+
     const key = getKeyString(e)
 
     const binding = this.resolve(key)
