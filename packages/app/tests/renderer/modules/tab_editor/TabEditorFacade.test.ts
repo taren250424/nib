@@ -83,6 +83,19 @@ describe("TabEditorFacade tab switching", () => {
     expect(findInfo()).toBe("No results")
   })
 
+  // Published from the same setter as hasActiveEditor: enablement has to know
+  // not just that a tab is open but whether it is one a search can run in.
+  it("announces whether the active tab is binary", async () => {
+    await openTab(harness, { id: FIRST, content: "cat" })
+    expect(harness.contextKeyService.get("editorIsBinary")).toBe(false)
+
+    await openTab(harness, { id: SECOND, isBinary: true })
+    expect(harness.contextKeyService.get("editorIsBinary")).toBe(true)
+
+    harness.facade.activateTabEditorById(FIRST)
+    expect(harness.contextKeyService.get("editorIsBinary")).toBe(false)
+  })
+
   it("says so when the query finds nothing in the tab arrived at", async () => {
     await openTab(harness, { id: FIRST, content: "cat" })
     await openTab(harness, { id: SECOND, content: "dog" })

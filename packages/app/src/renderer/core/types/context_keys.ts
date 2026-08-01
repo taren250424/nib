@@ -12,18 +12,14 @@ export type ContextKeyMap = {
   focusedTask: Task
 
   treeHasSelection: boolean
-  treeSelectionIsDirectory: boolean
   treeHasClipboard: boolean
   canUndoTree: boolean
   canRedoTree: boolean
 
   hasActiveEditor: boolean
   editorIsBinary: boolean
-  editorIsDirty: boolean
   findReplaceOpen: boolean
   hasSearchQuery: boolean
-
-  sideOpen: boolean
 }
 
 export type ContextKey = keyof ContextKeyMap
@@ -32,16 +28,12 @@ export const DEFAULT_CONTEXT_KEYS: ContextKeyMap = {
   focusedTask: "none",
 
   treeHasSelection: false,
-  treeSelectionIsDirectory: false,
   treeHasClipboard: false,
   canUndoTree: false,
   canRedoTree: false,
 
   hasActiveEditor: false,
   editorIsBinary: false,
-  editorIsDirty: false,
   findReplaceOpen: false,
   hasSearchQuery: false,
-
-  sideOpen: false,
 }

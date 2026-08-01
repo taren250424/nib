@@ -165,9 +165,11 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "editor.paste.native": { when: inEditor, run: () => commandManager.performPasteEditor() },
 
     // Find and replace. With no tab open there is nothing to search, and the key
-    // should reach whatever else wants it rather than being swallowed.
+    // should reach whatever else wants it rather than being swallowed. A binary
+    // tab has no editor to search in either — without the second key, Edit >
+    // Find paints enabled there and the click silently does nothing.
     "find.toggle": {
-      when: (ctx) => ctx.hasActiveEditor,
+      when: (ctx) => ctx.hasActiveEditor && !ctx.editorIsBinary,
       run: (replace: boolean) => commandManager.toggleFindReplaceBox(replace),
     },
     "find.queryChanged": { run: (query: string) => commandManager.performSearchQueryChanged(query) },
@@ -189,9 +191,9 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
       run: (direction: "older" | "newer") => commandManager.performSearchHistory(direction),
     },
     // Reachable from F3 with the box closed, so it carries the whole condition
-    // for searching: a document to search and a query to search for.
+    // for searching: a searchable document and a query to search for.
     "find.next": {
-      when: (ctx) => ctx.hasActiveEditor && ctx.hasSearchQuery,
+      when: (ctx) => ctx.hasActiveEditor && !ctx.editorIsBinary && ctx.hasSearchQuery,
       run: (direction: "up" | "down") => commandManager.performFind(direction),
     },
     "find.replace": { run: () => commandManager.performReplace() },

@@ -264,14 +264,8 @@ export class TreeFacade {
   }
 
   private _publishSelectionContext() {
-    const focusedPath = this.store.focusedPath
-    const focused = focusedPath !== null ? this.store.getTreeViewModelByPath(focusedPath) : undefined
-
     this.contextKeyService.update({
       treeHasSelection: this.store.getSelectedPaths().length > 0,
-      // The current item is what the single-target commands act on, so it is
-      // also what "is the selection a directory" has to mean for them.
-      treeSelectionIsDirectory: focused?.directory ?? false,
     })
   }
 

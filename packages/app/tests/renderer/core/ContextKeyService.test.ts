@@ -35,11 +35,11 @@ describe("ContextKeyService", () => {
   // must not cause work.
   it("says nothing when a write does not change the value", () => {
     const context = new ContextKeyService()
-    context.set("sideOpen", true)
+    context.set("findReplaceOpen", true)
 
     const listener = vi.fn()
     context.onDidChange(listener)
-    context.set("sideOpen", true)
+    context.set("findReplaceOpen", true)
 
     expect(listener).not.toHaveBeenCalled()
   })
@@ -61,7 +61,7 @@ describe("ContextKeyService", () => {
     const listener = vi.fn()
     context.onDidChange(listener)
 
-    context.update({ treeHasSelection: false, sideOpen: false })
+    context.update({ treeHasSelection: false, findReplaceOpen: false })
 
     expect(listener).not.toHaveBeenCalled()
   })
@@ -72,7 +72,7 @@ describe("ContextKeyService", () => {
     const unsubscribe = context.onDidChange(listener)
 
     unsubscribe()
-    context.set("editorIsDirty", true)
+    context.set("hasSearchQuery", true)
 
     expect(listener).not.toHaveBeenCalled()
   })

@@ -51,11 +51,18 @@ export class TabEditorFacade {
   }
 
   // Every path that changes which tab is active goes through here, so this is
-  // where "is there an editor at all" is announced. -1 is the explicit sentinel
-  // for none, set when the last tab closes.
+  // where "is there an editor at all" is announced — and whether it is one a
+  // command can actually edit or search in. -1 is the explicit sentinel for
+  // none, set when the last tab closes.
   set activeTabId(id: number) {
     this.store.activeTabId = id
-    this.contextKeyService.set("hasActiveEditor", id !== -1)
+
+    const index = id === -1 ? -1 : this.getTabEditorViewIndexById(id)
+    const view = index === -1 ? undefined : this.renderer.tabEditorViews[index]
+    this.contextKeyService.update({
+      hasActiveEditor: id !== -1,
+      editorIsBinary: view?.isBinary ?? false,
+    })
   }
 
   get activeTabIndex() {

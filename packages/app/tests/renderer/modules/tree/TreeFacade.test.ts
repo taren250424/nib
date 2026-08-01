@@ -68,18 +68,9 @@ describe("tree selection", () => {
 
     expect(rowOf(harness, A).classList.contains(DOM.CLASS_SELECTED)).toBe(false)
     expect(rowOf(harness, B).classList.contains(DOM.CLASS_SELECTED)).toBe(true)
-  })
-
-  it("reports whether the current item is a directory", () => {
-    harness.facade.setSelection([indexOf(harness, A)])
-    expect(harness.contextKeyService.get("treeSelectionIsDirectory")).toBe(false)
-
-    harness.facade.setSelection([indexOf(harness, DOCS)])
-    expect(harness.contextKeyService.get("treeSelectionIsDirectory")).toBe(true)
 
     harness.facade.clearSelection()
     expect(harness.contextKeyService.get("treeHasSelection")).toBe(false)
-    expect(harness.contextKeyService.get("treeSelectionIsDirectory")).toBe(false)
   })
 
   // The regression this file exists for: the marks used to live only as classes

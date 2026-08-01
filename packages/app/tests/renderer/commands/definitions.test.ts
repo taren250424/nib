@@ -118,6 +118,21 @@ describe("createCommandDescriptors", () => {
     expect(when(context.snapshot())).toBe(true)
   })
 
+  // A binary tab has no editor to search in; the run paths guard, but without
+  // the key the menu item painted enabled and the click silently did nothing.
+  it("greys the find commands out on a binary tab", () => {
+    const { byId } = descriptorsById()
+    const context = new ContextKeyService()
+    context.update({ hasActiveEditor: true, hasSearchQuery: true, editorIsBinary: true })
+
+    expect(byId.get("find.toggle")!.when!(context.snapshot())).toBe(false)
+    expect(byId.get("find.next")!.when!(context.snapshot())).toBe(false)
+
+    context.set("editorIsBinary", false)
+    expect(byId.get("find.toggle")!.when!(context.snapshot())).toBe(true)
+    expect(byId.get("find.next")!.when!(context.snapshot())).toBe(true)
+  })
+
   // Replace leaves focus in the find widget, and undo there belongs to the
   // editor history the replacement was written into.
   it("lets editor history apply from the find widget as well", () => {
