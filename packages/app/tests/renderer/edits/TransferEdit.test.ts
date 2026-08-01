@@ -39,6 +39,7 @@ function harness(pasteResult: { result: boolean; data: string[] }) {
     getRootTreeViewModel: () => node("/root", true),
     applyDelete: vi.fn(),
     applyPaste: vi.fn(),
+    applyCreate: vi.fn(),
   } as unknown as TreeFacade
 
   const tabEditorFacade = {
@@ -93,5 +94,37 @@ describe("TransferEdit", () => {
     const edit = new TransferEdit(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
 
     expect(edit.didTransfer).toBe(false)
+  })
+
+  // The revert used to write the tooltip onto tabBox — apply and the rest of
+  // the app keep it on tabSpan — and left the name showing where the file no
+  // longer is.
+  it("puts an open tab's path and name back where they were", async () => {
+    const { treeFacade, tabEditorFacade } = harness({ result: true, data: ["/root/dir/a (1).md"] })
+
+    const tabSpan = { title: "", textContent: "" }
+    const viewModel = { filePath: "", fileName: "" }
+    const view = { getId: () => 7, tabSpan }
+    Object.assign(tabEditorFacade, {
+      getTabEditorViewByPath: () => view,
+      getTabEditorViewModelById: () => viewModel,
+    })
+
+    const edit = new TransferEdit(treeFacade, tabEditorFacade, node("/root/dir", true), [node("/root/a.md")], "cut")
+    await edit.apply()
+    expect(tabSpan.title).toBe("/root/dir/a (1).md")
+
+    window.rendererToMain = {
+      ...window.rendererToMain,
+      copyTree: vi.fn().mockResolvedValue({ result: true }),
+      deletePermanently: vi.fn().mockResolvedValue({ result: true }),
+    } as unknown as typeof window.rendererToMain
+
+    await edit.revert()
+
+    expect(tabSpan.title).toBe("/root/a.md")
+    expect(tabSpan.textContent).toBe("a.md")
+    expect(viewModel.filePath).toBe("/root/a.md")
+    expect(viewModel.fileName).toBe("a.md")
   })
 })

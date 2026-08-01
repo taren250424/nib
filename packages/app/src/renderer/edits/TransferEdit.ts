@@ -131,12 +131,20 @@ export class TransferEdit implements UndoableEdit {
         this.treeFacade.applyCreate(parentPath, src, isDir)
       }
 
+      // The mirror of apply()'s cut branch: the tooltip lives on tabSpan, and
+      // the name goes back too — Main may have picked a different unique name
+      // on the way in, so dest's base name is not necessarily src's.
       const view = this.tabEditorFacade.getTabEditorViewByPath(dest)
       if (view) {
-        view.tabBox.title = src
+        const fileName = window.utils.getBaseName(src)
+        view.tabSpan.title = src
+        view.tabSpan.textContent = fileName
 
         const viewModel = this.tabEditorFacade.getTabEditorViewModelById(view.getId())
-        if (viewModel) viewModel.filePath = src
+        if (viewModel) {
+          viewModel.filePath = src
+          viewModel.fileName = fileName
+        }
 
         this.tabEditorFacade.deleteTabEditorViewByPath(dest)
         this.tabEditorFacade.setTabEditorViewByPath(src, view)
