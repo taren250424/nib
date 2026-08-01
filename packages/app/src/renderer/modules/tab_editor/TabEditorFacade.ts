@@ -570,7 +570,11 @@ export class TabEditorFacade {
     await this.renderer.createTabAndEditor(vm)
 
     if (activate) {
-      this.renderer.tabEditorViews[this.store.activeTabIndex]?.setDeactive()
+      const previousTab = this.renderer.tabEditorViews[this.store.activeTabIndex]
+      previousTab?.setDeactive()
+      // Same invariant as activateTabEditorById: the highlights belong to the
+      // search being shown, not to the tab it last ran in.
+      if (previousTab && !previousTab.isBinary) previousTab.clearSearch()
 
       this.activeTabIndex = this.renderer.tabEditorViews.length - 1
       this.activeTabId = id
@@ -882,7 +886,15 @@ export class TabEditorFacade {
     // The range belongs to the document now under the widget, not to the query.
     this.syncFindInSelectionButton()
 
-    if (!this.searchQuery || view.isBinary) return
+    if (view.isBinary) return
+
+    // An emptied query only cleared the tab it was emptied in; a tab arriving
+    // with highlights from before the clearing has to give them up here.
+    if (!this.searchQuery) {
+      view.clearSearch()
+      this.findInfo.textContent = `No results`
+      return
+    }
 
     const count = view.refreshMatches(this.searchQuery, this.searchOptions)
     const state = view.searchState
@@ -899,12 +911,21 @@ export class TabEditorFacade {
    * without repainting, so the count moved while the highlights did not.
    */
   private _refreshSearchAfterEdit(view: TabEditorView) {
-    if (!this.findReplaceOpen || !this.searchQuery) return
+    if (!this.searchQuery) return
 
     queueMicrotask(() => {
       // Re-checked on the way out: the tab may have been closed or switched
       // away from while this was waiting.
       if (view !== this.getActiveTabEditorView()) return
+
+      // F3 paints highlights with the box closed, and with it closed nothing
+      // will keep them describing the document; better gone than drifting
+      // onto text that no longer matches.
+      if (!this.findReplaceOpen) {
+        view.clearSearch()
+        return
+      }
+
       this._syncSearchTo(view)
     })
   }

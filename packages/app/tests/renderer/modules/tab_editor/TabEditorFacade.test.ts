@@ -92,6 +92,38 @@ describe("TabEditorFacade tab switching", () => {
 
     expect(findInfo()).toBe("No results")
   })
+
+  // Opening a file is the other way to leave a tab; it deactivated the old one
+  // without giving up its highlights, unlike a plain switch.
+  it("takes the highlights out of the tab a newly opened tab replaces", async () => {
+    const first = await openTab(harness, { id: FIRST, content: "cat cat" })
+    searchFor("cat")
+    harness.facade.activateTabEditorById(FIRST)
+    harness.facade.findNextMatch("down")
+    expect(first.searchState?.matches).toHaveLength(2)
+
+    await openTab(harness, { id: SECOND, content: "dog" })
+
+    expect(first.searchState).toBeNull()
+  })
+
+  // Emptying the query can only clear the tab it was emptied in; a tab that
+  // still wears the previous query's highlights gives them up on arrival.
+  it("takes stale highlights out of a tab arriving under an emptied query", async () => {
+    const first = await openTab(harness, { id: FIRST, content: "cat cat" })
+    searchFor("cat")
+    harness.facade.activateTabEditorById(FIRST)
+    harness.facade.findNextMatch("down")
+    expect(first.searchState?.matches).toHaveLength(2)
+
+    // Reproduce an arrival with leftovers: the query empties while first still
+    // holds its state (no departure path ran for it).
+    searchFor("")
+    harness.facade.activateTabEditorById(FIRST)
+
+    expect(first.searchState).toBeNull()
+    expect(findInfo()).toBe("No results")
+  })
 })
 
 /**
@@ -115,6 +147,21 @@ describe("TabEditorFacade editing while the widget is open", () => {
     await flushDeferred()
 
     expect(findInfo()).toBe("2 of 2")
+  })
+
+  // F3 works with the box closed and paints highlights; with it closed nothing
+  // refreshes them after an edit, so they are given up rather than left to
+  // drift onto text that no longer matches.
+  it("gives up closed-box highlights once the document is edited", async () => {
+    const view = await openTab(harness, { id: FIRST, content: "cat cat" })
+    harness.facade.searchQuery = "cat" // the query F3 was last given, box closed
+    harness.facade.findNextMatch("down")
+    expect(view.searchState?.matches).toHaveLength(2)
+
+    typeInEditor(view, "x")
+    await flushDeferred()
+
+    expect(view.searchState).toBeNull()
   })
 
   it("drops a catch-up for a tab that was switched away from while it waited", async () => {
