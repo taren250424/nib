@@ -35,6 +35,20 @@ describe("TabEditorView search", () => {
     expect(view.searchNextMatch("dog", "down", OPTIONS)).toBe(-1)
     expect(view.searchState).toBeNull()
   })
+
+  // The anchor is a document position like the range in plugin state; an edit
+  // earlier in the document shifts every position after it, and an unmapped
+  // anchor would measure the next refinement from different text.
+  it("keeps the anchor on its occurrence through an edit before it", async () => {
+    const view = await createEditorView("dog cat cat")
+
+    view.searchNextMatch("cat", "down", OPTIONS)
+    expect(view.searchNextMatch("cat", "down", OPTIONS)).toBe(1) // anchor on the second cat
+
+    view.replaceAllMatches("dog", "crocodile", OPTIONS, false) // lengthen the text before it
+
+    expect(view.searchFromAnchor("cat", OPTIONS)).toBe(1)
+  })
 })
 
 describe("TabEditorView replace", () => {

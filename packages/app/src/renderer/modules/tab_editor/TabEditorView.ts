@@ -127,6 +127,12 @@ export class TabEditorView {
           }
 
           if (tr.docChanged) {
+            // The anchor is a document position like the range in plugin
+            // state, and this is the one place the view sees every edit — an
+            // unmapped anchor silently comes to point at different text, and
+            // the next query refinement measures from the wrong place.
+            if (this._searchAnchor !== null) this._searchAnchor = tr.mapping.map(this._searchAnchor)
+
             if (this._suppressInputEvent) return
             onInput(this)
           }
