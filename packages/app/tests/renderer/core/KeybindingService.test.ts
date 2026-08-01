@@ -144,6 +144,17 @@ describe("KeybindingService", () => {
     expect(event.preventDefault).toHaveBeenCalledOnce()
   })
 
+  // Lookup is by string equality, so a key spelled outside getKeyString's
+  // canonical form registers fine and simply never fires.
+  it("rejects a binding whose key is not canonically spelled", () => {
+    const { service } = createService()
+
+    expect(() => service.register({ key: "Esc", command: "find.close" })).toThrow()
+    expect(() => service.register({ key: "Ctrl+SHIFT+Z", command: "editor.redo" })).toThrow()
+    expect(() => service.register({ key: "ESC", command: "find.close" })).not.toThrow()
+    expect(() => service.register({ key: "Ctrl++", command: "view.zoomIn" })).not.toThrow()
+  })
+
   it("keeps bindings on one key in registration order", () => {
     const { service } = createService()
     service.register({ key: "ENTER", command: "find.submit" })

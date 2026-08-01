@@ -2,8 +2,15 @@ import { inject, injectable } from "inversify"
 
 import { DI } from "../constants"
 import type { Keybinding } from "../commands/keybindings"
+import { assert } from "../utils"
 import { CommandRegistry } from "./CommandRegistry"
 import { getKeyString, REPEATABLE_KEYS } from "./keys"
+
+// The shape getKeyString produces: optional modifiers in Ctrl, Shift, Alt
+// order, then the key upper-cased. Written as a check because lookup is by
+// string equality — a binding spelled "Esc" or "Ctrl+SHIFT+Z" registers fine
+// and simply never fires.
+const CANONICAL_KEY = /^(Ctrl\+)?(Shift\+)?(Alt\+)?(\+|[^a-z+]+)$/
 
 /**
  * Turns key presses into commands.
@@ -21,6 +28,8 @@ export class KeybindingService {
   constructor(@inject(DI.CommandRegistry) private readonly commandRegistry: CommandRegistry) {}
 
   register(binding: Keybinding) {
+    assert(CANONICAL_KEY.test(binding.key), `Keybinding "${binding.key}" is not in getKeyString's canonical form`)
+
     const existing = this.bindings.get(binding.key)
     if (existing) existing.push(binding)
     else this.bindings.set(binding.key, [binding])
