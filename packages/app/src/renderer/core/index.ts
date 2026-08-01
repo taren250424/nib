@@ -1,4 +1,4 @@
-export type { Zone, ZoneId, Task } from "./types"
+export type { ZoneId, Task } from "./types"
 export { UI_ZONES, UI_ZONES_VALUES } from "./types"
 
 export type { MouseBusEvents } from "./types"

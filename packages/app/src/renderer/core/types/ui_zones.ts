@@ -50,5 +50,8 @@ export const UI_ZONES = {
 export const UI_ZONES_VALUES = Object.values(UI_ZONES)
 
 export type ZoneId = (typeof UI_ZONES)[keyof typeof UI_ZONES]["id"]
-export type Zone = ZoneId | "none"
-export type Task = (typeof UI_ZONES)[keyof typeof UI_ZONES]["task"] | "none"
+// "" is excluded: it marks a zone that has no task of its own (MENU_ITEM,
+// WINDOW) and is only ever a sentinel to skip, never a value to hold — with it
+// in the union, setFocusedTask("") compiled and the runtime guards that skip
+// it were unchecked convention. "none" is the one real empty value.
+export type Task = Exclude<(typeof UI_ZONES)[keyof typeof UI_ZONES]["task"], ""> | "none"

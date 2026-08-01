@@ -19,7 +19,6 @@ function options(overrides: Partial<SearchOptions> = {}): SearchOptions {
 
 function matches(text: string, query: string, overrides: Partial<SearchOptions> = {}): string[] {
   const regex = buildSearchRegex(query, options(overrides))
-  if (!regex) return []
   return [...text.matchAll(regex)].map((match) => match[0])
 }
 
@@ -55,8 +54,8 @@ describe("buildSearchRegex", () => {
   })
 
   it("is global so a single regex can collect every match", () => {
-    expect(buildSearchRegex("x", options())?.flags).toContain("g")
-    expect(buildSearchRegex("x", options({ matchCase: true }))?.flags).toBe("g")
+    expect(buildSearchRegex("x", options()).flags).toContain("g")
+    expect(buildSearchRegex("x", options({ matchCase: true })).flags).toBe("g")
   })
 })
 

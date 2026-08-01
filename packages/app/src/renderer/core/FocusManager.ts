@@ -1,9 +1,8 @@
 import { injectable } from "inversify"
-import { type Zone, type Task, UI_ZONES_VALUES } from "./types"
+import { type Task, UI_ZONES_VALUES } from "./types"
 
 @injectable()
 export class FocusManager {
-  private focusedZone: Zone = "none"
   private focusedTask: Task = "none"
 
   // getFocusedTask() derives from the DOM on every call, so nothing can tell when
@@ -11,14 +10,6 @@ export class FocusManager {
   // tree's active/inactive selection — needs to be told instead of polling.
   private readonly listeners = new Set<(task: Task) => void>()
   private notifiedTask: Task = "none"
-
-  setFocusedZone(zone: Zone) {
-    this.focusedZone = zone
-  }
-
-  getFocusedZone() {
-    return this.focusedZone
-  }
 
   setFocusedTask(task: Task) {
     this.focusedTask = task
@@ -29,7 +20,7 @@ export class FocusManager {
     if (!el) return this.focusedTask
 
     const activeItem = UI_ZONES_VALUES.find((item) => el.closest(item.dom))
-    if (activeItem && activeItem.task !== "") return activeItem.task as Task
+    if (activeItem && activeItem.task !== "") return activeItem.task
 
     return this.focusedTask
   }

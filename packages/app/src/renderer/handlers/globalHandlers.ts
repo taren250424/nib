@@ -5,7 +5,6 @@ import {
   MouseEventBus,
   UI_ZONES_VALUES,
   mouseDownOutside,
-  type Task,
 } from "@renderer/core"
 
 const state = {
@@ -18,30 +17,29 @@ export function handleGlobalInput(
   focusManager: FocusManager,
   keybindingService: KeybindingService
 ) {
-  bindDocumentMousedownEvnet(focusManager, mouseBus)
+  bindDocumentMousedownEvent(focusManager, mouseBus)
   bindDocumentFocusEvents(focusManager)
 
-  bindDocumentMousedownEvnetForDrag(mouseBus)
-  bindDocumentMousemoveEvnetForDrag(mouseBus)
-  bindDocumentMouseupEvnetForDrag(mouseBus)
-  bindDocumentMouseleaveEvnetForDrag(mouseBus)
+  bindDocumentMousedownEventForDrag(mouseBus)
+  bindDocumentMousemoveEventForDrag(mouseBus)
+  bindDocumentMouseupEventForDrag(mouseBus)
+  bindDocumentMouseleaveEventForDrag(mouseBus)
 
   bindDocumentKeydownEvent(focusManager, keybindingService)
 }
 
 //
 
-function bindDocumentMousedownEvnet(focusManager: FocusManager, mouseBus: MouseEventBus) {
+function bindDocumentMousedownEvent(focusManager: FocusManager, mouseBus: MouseEventBus) {
   document.addEventListener("mousedown", (e) => {
     const target = e.target as HTMLElement
 
     const activeItem = UI_ZONES_VALUES.find((item) => target.closest(item.dom))
     if (activeItem) {
-      focusManager.setFocusedZone(activeItem.id)
       // Update focusedTask only when the clicked zone has a task.
       // For zones without a task (e.g. MENU_ITEM, WINDOW),
       // keep the previously focused task.
-      if (activeItem.task !== "") focusManager.setFocusedTask(activeItem.task as Task)
+      if (activeItem.task !== "") focusManager.setFocusedTask(activeItem.task)
     }
 
     UI_ZONES_VALUES.forEach((item) => {
@@ -66,7 +64,7 @@ function bindDocumentFocusEvents(focusManager: FocusManager) {
 
 //
 
-function bindDocumentMousedownEvnetForDrag(mouseBus: MouseEventBus) {
+function bindDocumentMousedownEventForDrag(mouseBus: MouseEventBus) {
   document.addEventListener("mousedown", (e) => {
     if (e.button !== 0) return
     state.down = true
@@ -74,7 +72,7 @@ function bindDocumentMousedownEvnetForDrag(mouseBus: MouseEventBus) {
   })
 }
 
-function bindDocumentMousemoveEvnetForDrag(mouseBus: MouseEventBus) {
+function bindDocumentMousemoveEventForDrag(mouseBus: MouseEventBus) {
   // One MOVE per frame, carrying the last position of that frame. Emitting the
   // event that scheduled the frame would hand every consumer — ghost, insert
   // indicator, resizer — a position up to a frame old.
@@ -92,7 +90,7 @@ function bindDocumentMousemoveEvnetForDrag(mouseBus: MouseEventBus) {
   })
 }
 
-function bindDocumentMouseupEvnetForDrag(mouseBus: MouseEventBus) {
+function bindDocumentMouseupEventForDrag(mouseBus: MouseEventBus) {
   document.addEventListener("mouseup", (e) => {
     if (state.down) {
       mouseBus.emit(MOUSE_EVENTS.UP, e)
@@ -101,7 +99,7 @@ function bindDocumentMouseupEvnetForDrag(mouseBus: MouseEventBus) {
   })
 }
 
-function bindDocumentMouseleaveEvnetForDrag(mouseBus: MouseEventBus) {
+function bindDocumentMouseleaveEventForDrag(mouseBus: MouseEventBus) {
   document.addEventListener("mouseleave", (e) => {
     if (state.down) state.down = false
     mouseBus.emit(MOUSE_EVENTS.LEAVE, e)
