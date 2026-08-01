@@ -223,6 +223,10 @@ export class CommandManager {
     const tabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
     const closeAllTabsResponse = await window.rendererToMain.closeAllTabs(tabEditorsDto)
     if (closeAllTabsResponse.result) this.tabEditorFacade.removeAllTabs(closeAllTabsResponse.data)
+
+    // The find widget names documents of the directory being left, like the
+    // selection and the clipboard above.
+    if (this.tabEditorFacade.activeTabId === -1) this.performCloseFindReplaceBox()
   }
 
   performCloseActiveTab() {
@@ -423,6 +427,10 @@ export class CommandManager {
     const tabEditorsDto: TabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
     const response: Response<boolean[]> = await window.rendererToMain.closeAllTabs(tabEditorsDto)
     if (response.result) this.tabEditorFacade.removeAllTabs(response.data)
+
+    // Same rule as closing the last tab one by one: a find widget with no
+    // document under it searches nothing and swallows Esc.
+    if (this.tabEditorFacade.activeTabId === -1) this.performCloseFindReplaceBox()
   }
 
   //
