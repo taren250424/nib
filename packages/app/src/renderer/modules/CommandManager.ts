@@ -948,7 +948,23 @@ export class CommandManager {
     this.tabEditorFacade.setReplaceRowVisible(!this.tabEditorFacade.isReplaceRowVisible())
   }
 
+  /**
+   * The find input debounces its change event, so a submit can arrive while
+   * the store still holds the previous query. Every path that acts on the
+   * query commits what the box shows first — rewriting the document with a
+   * query the user has already corrected is the bug this prevents.
+   */
+  private _commitPendingQuery() {
+    const value = this.tabEditorFacade.findInput.value
+    if (value !== this.tabEditorFacade.searchQuery) this.performSearchQueryChanged(value)
+  }
+
   performSearchQueryChanged(query: string) {
+    // The debounced event also echoes a query a submit already committed;
+    // treating the echo as typing would clear the "N replaced" message it
+    // just earned and re-run the same search.
+    if (query === this.tabEditorFacade.searchQuery) return
+
     this._setSearchQuery(query)
     // Typing ends a walk through the history: the next ↑ starts from the newest
     // entry again, and the draft it would have restored is this text.
@@ -1004,6 +1020,8 @@ export class CommandManager {
   }
 
   performFind(direction: "up" | "down") {
+    this._commitPendingQuery()
+
     // Asking for a match is the moment a query stops being something half-typed
     // and becomes one worth offering back. Live search as you type is not.
     this.tabEditorFacade.searchHistory.record(this.tabEditorFacade.searchQuery)
@@ -1031,6 +1049,11 @@ export class CommandManager {
     const view = this.tabEditorFacade.getActiveTabEditorView()
     if (!view || view.isBinary) return
 
+    // The staleness check below only watches the document; a corrected query
+    // the debounce has not delivered yet would leave the old query's match
+    // selected — and replaced.
+    this._commitPendingQuery()
+
     // Edits since the last search invalidate match positions;
     // re-locate instead of replacing a stale range.
     if (view.isSearchStateStale()) {
@@ -1054,6 +1077,8 @@ export class CommandManager {
     const view = this.tabEditorFacade.getActiveTabEditorView()
     if (!view || view.isBinary) return
 
+    this._commitPendingQuery()
+
     const findInput = this.tabEditorFacade.searchQuery
     const replaceInput = this.tabEditorFacade.replaceQuery
 
@@ -1076,7 +1101,10 @@ export class CommandManager {
     this.tabEditorFacade.findAndReplaceContainer.style.display = "none"
 
     // Whatever the box was closed on is worth remembering too — searching as you
-    // type means a query often finds what it was after without ever being submitted.
+    // type means a query often finds what it was after without ever being
+    // submitted. Committed first, so closing within the debounce window
+    // remembers what the box showed and F3 keeps searching for it.
+    this._commitPendingQuery()
     this.tabEditorFacade.searchHistory.record(this.tabEditorFacade.searchQuery)
 
     this.tabEditorFacade.clearAllSearches()

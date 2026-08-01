@@ -336,4 +336,24 @@ describe("CommandManager find widget", () => {
 
     expect(view.findAllMatches("cat", OPTIONS)).toHaveLength(2)
   })
+
+  // The input debounces its change event, so a submit can arrive while the
+  // store still holds the previous query. Replace All is the destructive way
+  // to hit that window: the document would be rewritten with the old query
+  // while the box shows the corrected one.
+  it("replaces with the query the box shows, not the one the debounce delivered", async () => {
+    const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
+    harness.commandManager.toggleFindReplaceBox(true)
+
+    harness.commandManager.performSearchQueryChanged("cat") // what the debounce delivered
+    harness.tabEditor.facade.findInput.value = "one" // what was typed since
+    harness.commandManager.performReplaceQueryChanged("three")
+
+    harness.commandManager.performReplaceAll()
+
+    expect(harness.tabEditor.facade.searchQuery).toBe("one")
+    expect(view.findAllMatches("one", OPTIONS)).toHaveLength(0)
+    expect(view.findAllMatches("three", OPTIONS)).toHaveLength(1)
+    expect(view.findAllMatches("cat", OPTIONS)).toHaveLength(2)
+  })
 })
