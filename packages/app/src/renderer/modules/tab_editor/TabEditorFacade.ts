@@ -101,8 +101,12 @@ export class TabEditorFacade {
     return this.store.findReplaceOpen
   }
 
+  // Publishes from the single mutation point, like activeTabId: the store
+  // field and the context key are the same fact, and writing them separately
+  // at each call site is how they drift apart.
   set findReplaceOpen(open: boolean) {
     this.store.findReplaceOpen = open
+    this.contextKeyService.set("findReplaceOpen", open)
   }
 
   get findDirection() {
@@ -117,8 +121,11 @@ export class TabEditorFacade {
     return this.store.searchQuery
   }
 
+  // Whether there is a query is the whole of what F3's enablement needs, so
+  // it is announced from wherever the query is assigned.
   set searchQuery(query: string) {
     this.store.searchQuery = query
+    this.contextKeyService.set("hasSearchQuery", query.length > 0)
   }
 
   get replaceQuery() {

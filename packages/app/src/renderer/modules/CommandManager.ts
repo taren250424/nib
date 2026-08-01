@@ -930,7 +930,7 @@ export class CommandManager {
 
     const seed = selectedText && !spansLines ? selectedText : activeView.getWordAtCursor()
     if (seed) {
-      this._setSearchQuery(seed)
+      this.tabEditorFacade.searchQuery = seed
       this.tabEditorFacade.findInput.value = seed
     }
 
@@ -947,7 +947,6 @@ export class CommandManager {
     this.tabEditorFacade.findAndReplaceContainer.style.display = "flex"
     this.tabEditorFacade.setReplaceRowVisible(showReplace)
     this.tabEditorFacade.findReplaceOpen = true
-    this.contextKeyService.set("findReplaceOpen", true)
     this.tabEditorFacade.replaceInfo.textContent = ""
 
     if (showReplace) this.tabEditorFacade.replaceInput.select()
@@ -957,16 +956,6 @@ export class CommandManager {
     // outwards from the reading position rather than from the last match.
     activeView.captureSearchAnchor()
     this._refreshFind()
-  }
-
-  /**
-   * The query is the whole of what F3 needs, so whether there is one is
-   * published from wherever it is assigned rather than read from the box —
-   * F3 works with the box closed, on the query it was last given.
-   */
-  private _setSearchQuery(query: string) {
-    this.tabEditorFacade.searchQuery = query
-    this.contextKeyService.set("hasSearchQuery", query.length > 0)
   }
 
   performToggleReplaceRow() {
@@ -990,7 +979,7 @@ export class CommandManager {
     // just earned and re-run the same search.
     if (query === this.tabEditorFacade.searchQuery) return
 
-    this._setSearchQuery(query)
+    this.tabEditorFacade.searchQuery = query
     // Typing ends a walk through the history: the next ↑ starts from the newest
     // entry again, and the draft it would have restored is this text.
     this.tabEditorFacade.searchHistory.queryChanged(query)
@@ -1066,7 +1055,7 @@ export class CommandManager {
     // is usually to add to the recalled query rather than edit its middle.
     input.setSelectionRange(query.length, query.length)
 
-    this._setSearchQuery(query)
+    this.tabEditorFacade.searchQuery = query
     this._refreshFind()
   }
 
@@ -1137,7 +1126,6 @@ export class CommandManager {
     this.tabEditorFacade.replaceInfo.textContent = ""
 
     this.tabEditorFacade.findReplaceOpen = false
-    this.contextKeyService.set("findReplaceOpen", false)
 
     // Hand focus back so typing continues in the document instead of the input
     // that was just hidden. Closing the last tab also closes the box, and then
