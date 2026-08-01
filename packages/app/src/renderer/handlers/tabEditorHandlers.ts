@@ -245,9 +245,10 @@ async function dropDraggedTab(tabEditorFacade: TabEditorFacade) {
 }
 
 function bindMouseleaveEventsForDrag(mouseBus: MouseEventBus, tabEditorFacade: TabEditorFacade) {
+  // Unconditional for the same reason as the tree: leaving below the 5px
+  // threshold left _isMouseDown recorded, and the next mousemove after
+  // re-entry could start a drag with no button held.
   mouseBus.on(MOUSE_EVENTS.LEAVE, () => {
-    if (tabEditorFacade.isDrag()) {
-      tabEditorFacade.clearDrag()
-    }
+    tabEditorFacade.clearDrag()
   })
 }

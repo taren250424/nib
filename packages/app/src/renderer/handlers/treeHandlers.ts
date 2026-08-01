@@ -197,9 +197,11 @@ async function dropDraggedTreeNodes(run: RunCommand, treeFacade: TreeFacade) {
 }
 
 function bindMouseleaveEventsForDrag(mouseBus: MouseEventBus, treeFacade: TreeFacade) {
+  // Unconditional: below the 5px threshold isDrag() is still false but the
+  // mousedown has been recorded, and leaving then would keep it recorded —
+  // re-entering with the button up turned the first 5px of travel into a
+  // drag with nothing held. clearDrag resets both and repeats safely.
   mouseBus.on(MOUSE_EVENTS.LEAVE, () => {
-    if (treeFacade.isDrag()) {
-      treeFacade.clearDrag()
-    }
+    treeFacade.clearDrag()
   })
 }
