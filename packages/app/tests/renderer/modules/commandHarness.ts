@@ -34,12 +34,14 @@ export function createCommandHarness() {
   const watch = installWatchStub()
 
   // One service for both facades and the manager, as the container gives them.
+  // The queue too: auto save enqueues from inside the facade, and handing it a
+  // queue of its own would unwind exactly the serialization being tested.
   const contextKeyService = new ContextKeyService()
+  const commandQueue = new CommandQueue()
   const tree = buildTreeHarness(contextKeyService)
-  const tabEditor = buildFacadeHarness(contextKeyService)
+  const tabEditor = buildFacadeHarness(contextKeyService, commandQueue)
 
   const focusManager = new FocusManager()
-  const commandQueue = new CommandQueue()
 
   const settingsFacade = new SettingsFacade(new SettingsRenderer(new SettingsElements()), new SettingsStore())
 

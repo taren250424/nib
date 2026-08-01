@@ -11,7 +11,7 @@ import { TabEditorStore } from "./TabEditorStore"
 import { TabEditorView } from "./TabEditorView"
 import type { SearchOptions } from "./search"
 import { TabDragManager } from "./TabDragManager"
-import { ContextKeyService } from "@renderer/core"
+import { CommandQueue, ContextKeyService } from "@renderer/core"
 import { adjustMenuPosition, assert } from "@renderer/utils"
 import { DI, DOM } from "@renderer/constants"
 
@@ -29,7 +29,8 @@ export class TabEditorFacade {
     @inject(DI.TabEditorStore) public readonly store: TabEditorStore,
     @inject(DI.TabEditorRenderer) public readonly renderer: TabEditorRenderer,
     @inject(DI.TabDragManager) public readonly drag: TabDragManager,
-    @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService
+    @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService,
+    @inject(DI.CommandQueue) private readonly commandQueue: CommandQueue
   ) {
     this.renderer.setAutoSaveNotifier((kind) => this._handleAutoSaveEvent(kind))
     this.renderer.setEditNotifier((view) => this._refreshSearchAfterEdit(view))
@@ -655,7 +656,15 @@ export class TabEditorFacade {
     }
   }
 
-  private async _runAutoSave() {
+  // On the queue with closes and watcher sync: the loop awaits IPC per tab,
+  // and outside the queue a close landing in that gap could splice the view
+  // array out from under the iteration. Every trigger (timer, blur, window
+  // blur) arrives from outside the queue, so enqueueing here cannot deadlock.
+  private _runAutoSave() {
+    return this.commandQueue.enqueue(() => this._doRunAutoSave())
+  }
+
+  private async _doRunAutoSave() {
     // Untitled and binary tabs are skipped: saving an untitled tab opens a
     // dialog, which auto save must never do.
     for (const view of this.renderer.tabEditorViews) {

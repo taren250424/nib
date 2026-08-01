@@ -2,7 +2,7 @@ import { editorViewCtx } from "@milkdown/kit/core"
 import { TextSelection } from "prosemirror-state"
 import { vi } from "vitest"
 
-import { ContextKeyService } from "@renderer/core"
+import { CommandQueue, ContextKeyService } from "@renderer/core"
 import { TabDragManager } from "@renderer/modules/tab_editor/TabDragManager"
 import { TabEditorElements } from "@renderer/modules/tab_editor/TabEditorElements"
 import { TabEditorFacade } from "@renderer/modules/tab_editor/TabEditorFacade"
@@ -73,20 +73,24 @@ export function createFacadeHarness(): FacadeHarness {
 /**
  * Wires the facade to markup that is already in the document.
  *
- * The context key service is a parameter because it is a singleton in the app:
- * a harness that also builds the tree has to hand both the same one, or whoever
- * reads the keys sees half the picture.
+ * The context key service and the queue are parameters because both are
+ * singletons in the app: a harness that also builds the tree or the command
+ * manager has to hand every piece the same ones, or auto save stops sharing
+ * the queue with the commands it is serialized against.
  */
-export function buildFacadeHarness(contextKeyService: ContextKeyService = new ContextKeyService()) {
+export function buildFacadeHarness(
+  contextKeyService: ContextKeyService = new ContextKeyService(),
+  commandQueue: CommandQueue = new CommandQueue()
+) {
   installLayoutShim()
   installIpcStub()
 
   const store = new TabEditorStore()
   const elements = new TabEditorElements()
   const renderer = new TabEditorRenderer(elements)
-  const facade = new TabEditorFacade(store, renderer, new TabDragManager(), contextKeyService)
+  const facade = new TabEditorFacade(store, renderer, new TabDragManager(), contextKeyService, commandQueue)
 
-  return { facade, store, renderer, elements, contextKeyService }
+  return { facade, store, renderer, elements, contextKeyService, commandQueue }
 }
 
 /**

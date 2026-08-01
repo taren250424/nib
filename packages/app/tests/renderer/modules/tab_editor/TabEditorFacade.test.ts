@@ -375,6 +375,8 @@ describe("TabEditorFacade auto save", () => {
     const view = await openModifiedTab()
 
     blurEditor(view)
+    // The save now waits its turn on the command queue.
+    await vi.advanceTimersByTimeAsync(0)
 
     expect(savedDtos()).toHaveLength(1)
   })
@@ -384,6 +386,7 @@ describe("TabEditorFacade auto save", () => {
     await openModifiedTab()
 
     harness.facade.notifyWindowBlurForAutoSave()
+    await vi.advanceTimersByTimeAsync(0)
 
     expect(savedDtos()).toHaveLength(1)
   })

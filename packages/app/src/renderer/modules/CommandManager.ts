@@ -327,14 +327,27 @@ export class CommandManager {
 
   //
 
-  async performSave() {
+  // Saving is capture -> await -> apply over the same tabs the queue
+  // serializes everything else for; run outside it, a close or watcher sync
+  // landing during the IPC wait would apply the result to different tabs
+  // than were captured.
+
+  performSave() {
+    return this.commandQueue.enqueue(() => this._doSave())
+  }
+
+  private async _doSave() {
     const dto = this.tabEditorFacade.getActiveTabEditorDto()
     if (!dto.isModified) return
     const response: Response<TabEditorDto> = await window.rendererToMain.save(dto)
     if (response.result && !response.data.isModified) this.tabEditorFacade.applySaveResult(response.data)
   }
 
-  async performSaveAs() {
+  performSaveAs() {
+    return this.commandQueue.enqueue(() => this._doSaveAs())
+  }
+
+  private async _doSaveAs() {
     const dto: TabEditorDto = this.tabEditorFacade.getActiveTabEditorDto()
     const response: Response<TabEditorDto> = await window.rendererToMain.saveAs(dto)
     if (response.result && response.data) {
@@ -350,7 +363,11 @@ export class CommandManager {
     }
   }
 
-  async performSaveAll() {
+  performSaveAll() {
+    return this.commandQueue.enqueue(() => this._doSaveAll())
+  }
+
+  private async _doSaveAll() {
     const tabEditorsDto: TabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
     const response: Response<TabEditorsDto> = await window.rendererToMain.saveAll(tabEditorsDto)
     if (response.result) this.tabEditorFacade.applySaveAllResults(response.data)
