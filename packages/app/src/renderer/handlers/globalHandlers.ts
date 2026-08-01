@@ -75,12 +75,18 @@ function bindDocumentMousedownEvnetForDrag(mouseBus: MouseEventBus) {
 }
 
 function bindDocumentMousemoveEvnetForDrag(mouseBus: MouseEventBus) {
+  // One MOVE per frame, carrying the last position of that frame. Emitting the
+  // event that scheduled the frame would hand every consumer — ghost, insert
+  // indicator, resizer — a position up to a frame old.
+  let latest: MouseEvent | null = null
+
   document.addEventListener("mousemove", (e) => {
+    latest = e
     if (!state.ticking) {
       state.ticking = true
       window.requestAnimationFrame(() => {
-        mouseBus.emit(MOUSE_EVENTS.MOVE, e)
         state.ticking = false
+        if (latest) mouseBus.emit(MOUSE_EVENTS.MOVE, latest)
       })
     }
   })
