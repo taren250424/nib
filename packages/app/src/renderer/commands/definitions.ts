@@ -207,7 +207,14 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
       when: (ctx) => ctx.findReplaceOpen,
       run: () => commandManager.performToggleReplaceRow(),
     },
-    "find.close": { when: (ctx) => ctx.findReplaceOpen, run: () => commandManager.performCloseFindReplaceBox() },
+    // Scoped to where closing is what Esc means: from the tree the same key
+    // calls off a pending cut, and an unscoped close would win that race,
+    // shut the box and pull focus into the editor mid-task. Closing hands
+    // focus back to the editor, which is only right from these two zones.
+    "find.close": {
+      when: (ctx) => ctx.findReplaceOpen && inTask("editor", "find-replace")(ctx),
+      run: () => commandManager.performCloseFindReplaceBox(),
+    },
     "find.submit": {
       when: inTask("find-replace"),
       run: () => commandManager.performFindOrReplaceByActiveElement("down"),

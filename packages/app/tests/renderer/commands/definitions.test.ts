@@ -249,6 +249,7 @@ describe("createCommandDescriptors", () => {
   it("gates the find commands that a global key can reach", () => {
     const { byId } = descriptorsById()
     const context = new ContextKeyService()
+    context.set("focusedTask", "editor")
 
     for (const id of ["find.close", "find.replaceAll"]) {
       const when = byId.get(id)?.when
@@ -259,6 +260,17 @@ describe("createCommandDescriptors", () => {
       expect(when!(context.snapshot()), `${id} should apply while open`).toBe(true)
       context.set("findReplaceOpen", false)
     }
+  })
+
+  // From the tree, Esc means "call off the cut"; an unscoped close won that
+  // race, shut the box and pulled focus into the editor mid-task.
+  it("leaves Esc to the tree while focus is there", () => {
+    const { byId } = descriptorsById()
+    const context = new ContextKeyService()
+    context.update({ focusedTask: "tree", findReplaceOpen: true, treeHasClipboard: true })
+
+    expect(byId.get("find.close")!.when!(context.snapshot())).toBe(false)
+    expect(byId.get("tree.clearClipboard")!.when!(context.snapshot())).toBe(true)
   })
 
   it("points each command at the work it performs", async () => {

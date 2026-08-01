@@ -66,9 +66,9 @@ export const KEYBINDINGS: readonly Keybinding[] = [
   { key: "F3", command: "find.next", args: ["down"] },
   { key: "Shift+F3", command: "find.next", args: ["up"] },
   { key: "Ctrl+Alt+ENTER", command: "find.replaceAll" },
-  // Esc closes the find box if it is open, and otherwise calls off a pending
-  // tree cut. Neither applies with both closed and empty, so the key falls
-  // through to the editor.
+  // Esc closes the find box from the editor or the box itself, and calls off
+  // a pending cut from the tree — the zone scopes keep the two from racing.
+  // When neither applies the key falls through to the editor.
   { key: "ESC", command: "find.close" },
   { key: "ESC", command: "tree.clearClipboard" },
   { key: "ENTER", command: "find.submit" },
