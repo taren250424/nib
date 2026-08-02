@@ -1,5 +1,3 @@
-import "@milkdown/theme-nord/style.css"
-
 import { DOM } from "../constants"
 import { TabEditorFacade } from "../modules"
 import { TAB_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"

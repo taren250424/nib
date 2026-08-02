@@ -1,4 +1,3 @@
-import "@milkdown/theme-nord/style.css"
 import { TreeFacade } from "../modules"
 import { DOM } from "../constants"
 import { TREE_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"

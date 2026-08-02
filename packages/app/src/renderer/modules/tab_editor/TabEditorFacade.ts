@@ -1,4 +1,3 @@
-import "@milkdown/theme-nord/style.css"
 import type Response from "@shared/types/Response"
 import type { TabEditorDto, TabEditorsDto } from "@shared/dto/TabEditorDto"
 import type { TabEditorViewModel } from "../../viewmodels/TabEditorViewModel"

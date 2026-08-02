@@ -1,4 +1,3 @@
-import "@milkdown/theme-nord/style.css"
 import { serializerCtx } from "@milkdown/core"
 import { Editor, editorViewCtx, parserCtx } from "@milkdown/kit/core"
 

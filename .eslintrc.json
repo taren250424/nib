@@ -23,5 +23,31 @@
   },
   "rules": {
     // "@typescript-eslint/no-non-null-assertion": "off"
-  }
+  },
+  "overrides": [
+    {
+      // The editor engine stays behind TabEditorView/TabEditorRenderer: their
+      // public surface is markdown strings and opaque positions, so swapping
+      // the engine means rewriting those two files' internals — as long as
+      // nothing else imports the engine. This is what keeps that true.
+      "files": ["packages/app/**/*.ts"],
+      "excludedFiles": [
+        "packages/app/src/renderer/modules/tab_editor/**",
+        "packages/app/tests/renderer/modules/tab_editor/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@milkdown/**", "prosemirror-*"],
+                "message": "The editor engine is confined to modules/tab_editor — go through TabEditorView/TabEditorFacade instead."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
