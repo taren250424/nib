@@ -1,7 +1,7 @@
 import { injectable } from "inversify"
 
 @injectable()
-export class SideDragManager {
+export class SideDragState {
   readonly minWidth = 100
   readonly maxWidth = 500
 

@@ -15,20 +15,20 @@ import { TabEditorFacade } from "./modules/tab_editor/TabEditorFacade"
 import { TabEditorStore } from "./modules/tab_editor/TabEditorStore"
 import { TabEditorRenderer } from "./modules/tab_editor/TabEditorRenderer"
 import { TabEditorElements } from "./modules/tab_editor/TabEditorElements"
-import { TabDragManager } from "./modules/tab_editor/TabDragManager"
+import { TabDragState } from "./modules/tab_editor/TabDragState"
 import { FindReplaceManager } from "./modules/tab_editor/FindReplaceManager"
 
 import { SideFacade } from "./modules/side/SideFacade"
 import { SideStore } from "./modules/side/SideStore"
 import { SideRenderer } from "./modules/side/SideRenderer"
 import { SideElements } from "./modules/side/SideElements"
-import { SideDragManager } from "./modules/side/SideDragManager"
+import { SideDragState } from "./modules/side/SideDragState"
 
 import { TreeFacade } from "./modules/tree/TreeFacade"
 import { TreeStore } from "./modules/tree/TreeStore"
 import { TreeRenderer } from "./modules/tree/TreeRenderer"
 import { TreeElements } from "./modules/tree/TreeElements"
-import { TreeDragManager } from "./modules/tree/TreeDragManager"
+import { TreeDragState } from "./modules/tree/TreeDragState"
 
 import { SettingsFacade } from "./modules/settings/SettingsFacade"
 import { SettingsStore } from "./modules/settings/SettingsStore"
@@ -60,20 +60,20 @@ diContainer.bind(DI.TabEditorFacade).to(TabEditorFacade).inSingletonScope()
 diContainer.bind(DI.TabEditorStore).to(TabEditorStore).inSingletonScope()
 diContainer.bind(DI.TabEditorRenderer).to(TabEditorRenderer).inSingletonScope()
 diContainer.bind(DI.TabEditorElements).to(TabEditorElements).inSingletonScope()
-diContainer.bind(DI.TabDragManager).to(TabDragManager).inSingletonScope()
+diContainer.bind(DI.TabDragState).to(TabDragState).inSingletonScope()
 diContainer.bind(DI.FindReplaceManager).to(FindReplaceManager).inSingletonScope()
 
 diContainer.bind(DI.SideFacade).to(SideFacade).inSingletonScope()
 diContainer.bind(DI.SideStore).to(SideStore).inSingletonScope()
 diContainer.bind(DI.SideRenderer).to(SideRenderer).inSingletonScope()
 diContainer.bind(DI.SideElements).to(SideElements).inSingletonScope()
-diContainer.bind(DI.SideDragManager).to(SideDragManager).inSingletonScope()
+diContainer.bind(DI.SideDragState).to(SideDragState).inSingletonScope()
 
 diContainer.bind(DI.TreeFacade).to(TreeFacade).inSingletonScope()
 diContainer.bind(DI.TreeStore).to(TreeStore).inSingletonScope()
 diContainer.bind(DI.TreeRenderer).to(TreeRenderer).inSingletonScope()
 diContainer.bind(DI.TreeElements).to(TreeElements).inSingletonScope()
-diContainer.bind(DI.TreeDragManager).to(TreeDragManager).inSingletonScope()
+diContainer.bind(DI.TreeDragState).to(TreeDragState).inSingletonScope()
 
 diContainer.bind(DI.SettingsFacade).to(SettingsFacade).inSingletonScope()
 diContainer.bind(DI.SettingsStore).to(SettingsStore).inSingletonScope()

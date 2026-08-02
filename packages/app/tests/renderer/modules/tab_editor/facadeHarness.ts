@@ -3,7 +3,7 @@ import { TextSelection } from "prosemirror-state"
 import { vi } from "vitest"
 
 import { CommandQueue, ContextKeyService } from "@renderer/core"
-import { TabDragManager } from "@renderer/modules/tab_editor/TabDragManager"
+import { TabDragState } from "@renderer/modules/tab_editor/TabDragState"
 import { TabEditorElements } from "@renderer/modules/tab_editor/TabEditorElements"
 import { TabEditorFacade } from "@renderer/modules/tab_editor/TabEditorFacade"
 import { TabEditorRenderer } from "@renderer/modules/tab_editor/TabEditorRenderer"
@@ -88,7 +88,7 @@ export function buildFacadeHarness(
   const store = new TabEditorStore()
   const elements = new TabEditorElements()
   const renderer = new TabEditorRenderer(elements)
-  const facade = new TabEditorFacade(store, renderer, new TabDragManager(), contextKeyService, commandQueue)
+  const facade = new TabEditorFacade(store, renderer, new TabDragState(), contextKeyService, commandQueue)
 
   return { facade, store, renderer, elements, contextKeyService, commandQueue }
 }

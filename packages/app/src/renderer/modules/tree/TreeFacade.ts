@@ -6,7 +6,7 @@ import { inject, injectable } from "inversify"
 import { DI, DOM } from "../../constants"
 import { TreeRenderer } from "./TreeRenderer"
 import { TreeStore } from "./TreeStore"
-import { TreeDragManager } from "./TreeDragManager"
+import { TreeDragState } from "./TreeDragState"
 import { CLASS_SELECTED } from "@renderer/constants/dom"
 import { ContextKeyService } from "@renderer/core"
 import { adjustMenuPosition } from "@renderer/utils"
@@ -16,7 +16,7 @@ export class TreeFacade {
   constructor(
     @inject(DI.TreeStore) public readonly store: TreeStore,
     @inject(DI.TreeRenderer) public readonly renderer: TreeRenderer,
-    @inject(DI.TreeDragManager) public readonly drag: TreeDragManager,
+    @inject(DI.TreeDragState) public readonly drag: TreeDragState,
     @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService
   ) {
     // Whether this selection is the one being acted on is the same question the

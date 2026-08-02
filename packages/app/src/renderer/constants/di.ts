@@ -16,20 +16,20 @@ export const DI = {
   TabEditorStore: Symbol("TabEditorStore"),
   TabEditorRenderer: Symbol("TabEditorRenderer"),
   TabEditorElements: Symbol("TabEditorElements"),
-  TabDragManager: Symbol("TabDragManager"),
+  TabDragState: Symbol("TabDragState"),
   FindReplaceManager: Symbol("FindReplaceManager"),
 
   SideFacade: Symbol("SideFacade"),
   SideStore: Symbol("SideStore"),
   SideRenderer: Symbol("SideRenderer"),
   SideElements: Symbol("SideElements"),
-  SideDragManager: Symbol("SideDragManager"),
+  SideDragState: Symbol("SideDragState"),
 
   TreeFacade: Symbol("TreeFacade"),
   TreeStore: Symbol("TreeStore"),
   TreeRenderer: Symbol("TreeRenderer"),
   TreeElements: Symbol("TreeElements"),
-  TreeDragManager: Symbol("TreeDragManager"),
+  TreeDragState: Symbol("TreeDragState"),
 
   SettingsFacade: Symbol("SettingsFacade"),
   SettingsStore: Symbol("SettingsStore"),

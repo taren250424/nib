@@ -5,7 +5,7 @@ import { ContextKeyService } from "@renderer/core"
 import { TreeFacade } from "@renderer/modules/tree/TreeFacade"
 import { TreeRenderer } from "@renderer/modules/tree/TreeRenderer"
 import { TreeStore } from "@renderer/modules/tree/TreeStore"
-import { TreeDragManager } from "@renderer/modules/tree/TreeDragManager"
+import { TreeDragState } from "@renderer/modules/tree/TreeDragState"
 
 /**
  * The elements TreeElements looks for.
@@ -70,7 +70,7 @@ export function buildTreeHarness(contextKeyService: ContextKeyService = new Cont
 
   const store = new TreeStore()
   const renderer = new TreeRenderer(elements, store)
-  const facade = new TreeFacade(store, renderer, new TreeDragManager(), contextKeyService)
+  const facade = new TreeFacade(store, renderer, new TreeDragState(), contextKeyService)
 
   return { facade, store, renderer, contextKeyService, elements, content }
 }

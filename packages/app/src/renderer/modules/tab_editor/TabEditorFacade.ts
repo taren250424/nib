@@ -10,7 +10,7 @@ import { TabEditorRenderer } from "./TabEditorRenderer"
 import { TabEditorStore } from "./TabEditorStore"
 import { TabEditorView } from "./TabEditorView"
 import type { SearchOptions } from "./search"
-import { TabDragManager } from "./TabDragManager"
+import { TabDragState } from "./TabDragState"
 import { CommandQueue, ContextKeyService } from "@renderer/core"
 import { adjustMenuPosition, assert } from "@renderer/utils"
 import { DI, DOM } from "@renderer/constants"
@@ -28,7 +28,7 @@ export class TabEditorFacade {
   constructor(
     @inject(DI.TabEditorStore) public readonly store: TabEditorStore,
     @inject(DI.TabEditorRenderer) public readonly renderer: TabEditorRenderer,
-    @inject(DI.TabDragManager) public readonly drag: TabDragManager,
+    @inject(DI.TabDragState) public readonly drag: TabDragState,
     @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService,
     @inject(DI.CommandQueue) private readonly commandQueue: CommandQueue
   ) {

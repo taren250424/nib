@@ -2,14 +2,14 @@ import { DI } from "@renderer/constants"
 import { inject, injectable } from "inversify"
 import { SideStore } from "./SideStore"
 import { SideRenderer } from "./SideRenderer"
-import { SideDragManager } from "./SideDragManager"
+import { SideDragState } from "./SideDragState"
 
 @injectable()
 export class SideFacade {
   constructor(
     @inject(DI.SideStore) public readonly store: SideStore,
     @inject(DI.SideRenderer) public readonly renderer: SideRenderer,
-    @inject(DI.SideDragManager) public readonly drag: SideDragManager
+    @inject(DI.SideDragState) public readonly drag: SideDragState
   ) {}
 
   // store
