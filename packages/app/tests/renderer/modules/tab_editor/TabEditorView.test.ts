@@ -1,9 +1,19 @@
 // @vitest-environment jsdom
+import { editorViewCtx } from "@milkdown/kit/core"
 import { describe, expect, it } from "vitest"
 
 import { MAX_PAINTED_MATCHES } from "@renderer/modules/tab_editor/search"
+import type { TabEditorView } from "@renderer/modules/tab_editor/TabEditorView"
 
 import { createEditorView } from "./editorHarness"
+
+/** Inserts text at a document position, as typing there would. */
+function insertAt(view: TabEditorView, pos: number, text: string) {
+  view.editor!.action((ctx) => {
+    const editorView = ctx.get(editorViewCtx)
+    editorView.dispatch(editorView.state.tr.insertText(text, pos))
+  })
+}
 
 const OPTIONS = { matchCase: false, wholeWord: false }
 
@@ -119,6 +129,20 @@ describe("TabEditorView find in selection", () => {
     view.replaceCurrentMatch("caterpillar", false)
 
     expect(view.findAllMatches("one", OPTIONS)).toHaveLength(1)
+    expect(view.findAllMatches("two", OPTIONS)).toHaveLength(0)
+  })
+
+  // Text typed at either edge of the stretch being searched is plainly part
+  // of it. The end already kept its insertions; the start used to lose them.
+  it("keeps text typed at the very start of the range inside it", async () => {
+    const view = await createEditorView("cat one\n\ncat two")
+    view.offerSearchRange({ from: 1, to: 8 })
+    view.toggleSearchInRange()
+    expect(view.findAllMatches("cat", OPTIONS)).toHaveLength(1)
+
+    insertAt(view, 1, "cat ")
+
+    expect(view.findAllMatches("cat", OPTIONS)).toHaveLength(2)
     expect(view.findAllMatches("two", OPTIONS)).toHaveLength(0)
   })
 

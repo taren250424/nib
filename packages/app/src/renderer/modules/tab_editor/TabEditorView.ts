@@ -44,13 +44,14 @@ type SearchPluginState = {
    * Kept here rather than on the view because it has to survive editing: the
    * plugin sees every transaction, so the range can be mapped through each one
    * and still cover the same text after a replacement inside it changed its
-   * length. `to` maps with bias 1 so text typed at the very end stays inside.
+   * length. Both ends bias toward keeping a boundary insertion inside — text
+   * typed at either edge of the stretch being searched is plainly part of it.
    */
   range: SearchRange | null
 }
 
 function mapSearchRange(range: SearchRange, mapping: Mapping): SearchRange {
-  return { from: mapping.map(range.from), to: mapping.map(range.to, 1) }
+  return { from: mapping.map(range.from, -1), to: mapping.map(range.to, 1) }
 }
 
 export class TabEditorView {
