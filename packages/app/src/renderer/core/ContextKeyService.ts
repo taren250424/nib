@@ -1,5 +1,6 @@
 import { injectable } from "inversify"
 
+import { EventBus } from "./EventBus"
 import { DEFAULT_CONTEXT_KEYS, type ContextKey, type ContextKeyMap } from "./types"
 
 type ChangeListener = (changed: ReadonlySet<ContextKey>) => void
@@ -20,7 +21,10 @@ type ChangeListener = (changed: ReadonlySet<ContextKey>) => void
 @injectable()
 export class ContextKeyService {
   private readonly values: ContextKeyMap = { ...DEFAULT_CONTEXT_KEYS }
-  private readonly listeners = new Set<ChangeListener>()
+
+  // Fan-out goes through EventBus rather than a hand-rolled Set, so its tested
+  // guarantees (a listener may unsubscribe mid-notify) hold here too.
+  private readonly bus = new EventBus<{ didChange: ReadonlySet<ContextKey> }>()
 
   // One snapshot per state, not per question: a menu repaint asks isEnabled
   // for every row and candidate, and each asked for a fresh copy of a map
@@ -47,13 +51,12 @@ export class ContextKeyService {
 
     if (changed.size === 0) return
     this.cachedSnapshot = null
-    for (const listener of this.listeners) listener(changed)
+    this.bus.emit("didChange", changed)
   }
 
   /** Subscribes to context changes. Returns the unsubscribe function. */
   onDidChange(listener: ChangeListener): () => void {
-    this.listeners.add(listener)
-    return () => this.listeners.delete(listener)
+    return this.bus.on("didChange", listener)
   }
 
   snapshot(): Readonly<ContextKeyMap> {

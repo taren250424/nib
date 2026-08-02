@@ -1,4 +1,5 @@
 import { injectable } from "inversify"
+import { EventBus } from "./EventBus"
 import { type Task, UI_ZONES_VALUES } from "./types"
 
 @injectable()
@@ -8,7 +9,9 @@ export class FocusManager {
   // getFocusedTask() derives from the DOM on every call, so nothing can tell when
   // the answer changes. Anything that renders from focus — menu enablement, the
   // tree's active/inactive selection — needs to be told instead of polling.
-  private readonly listeners = new Set<(task: Task) => void>()
+  // Fan-out goes through EventBus rather than a hand-rolled Set, so its tested
+  // guarantees (a listener may unsubscribe mid-notify) hold here too.
+  private readonly bus = new EventBus<{ focusChanged: Task }>()
   private notifiedTask: Task = "none"
 
   setFocusedTask(task: Task) {
@@ -27,8 +30,7 @@ export class FocusManager {
 
   /** Subscribes to focus changes. Returns the unsubscribe function. */
   onDidChangeFocus(listener: (task: Task) => void): () => void {
-    this.listeners.add(listener)
-    return () => this.listeners.delete(listener)
+    return this.bus.on("focusChanged", listener)
   }
 
   /**
@@ -41,6 +43,6 @@ export class FocusManager {
     if (task === this.notifiedTask) return
 
     this.notifiedTask = task
-    for (const listener of this.listeners) listener(task)
+    this.bus.emit("focusChanged", task)
   }
 }

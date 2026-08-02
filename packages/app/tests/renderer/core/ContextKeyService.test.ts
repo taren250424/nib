@@ -66,6 +66,24 @@ describe("ContextKeyService", () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
+  // The guarantee the shared EventBus brings: fan-out iterates a copy, so a
+  // listener leaving mid-notify cannot make its neighbours miss the round.
+  it("finishes the round even when a listener unsubscribes during it", () => {
+    const context = new ContextKeyService()
+    const seen: string[] = []
+
+    const unsubscribe = context.onDidChange(() => {
+      seen.push("first")
+      unsubscribe()
+    })
+    context.onDidChange(() => seen.push("second"))
+
+    context.set("treeHasSelection", true)
+    context.set("treeHasSelection", false)
+
+    expect(seen).toEqual(["first", "second", "second"])
+  })
+
   it("stops notifying once unsubscribed", () => {
     const context = new ContextKeyService()
     const listener = vi.fn()
