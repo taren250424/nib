@@ -2,7 +2,6 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "moduleResolution": "node",
     "types": ["node", "reflect-metadata", "vite/client"],
     "paths": {
       "@main/*": ["./src/main/*"],
