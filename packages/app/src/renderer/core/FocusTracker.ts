@@ -3,7 +3,7 @@ import { EventBus } from "./EventBus"
 import { type Task, UI_ZONES_VALUES } from "./types"
 
 @injectable()
-export class FocusManager {
+export class FocusTracker {
   private focusedTask: Task = "none"
 
   // getFocusedTask() derives from the DOM on every call, so nothing can tell when

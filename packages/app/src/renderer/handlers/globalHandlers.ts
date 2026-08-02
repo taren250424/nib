@@ -1,5 +1,5 @@
 import {
-  FocusManager,
+  FocusTracker,
   KeybindingService,
   MOUSE_EVENTS,
   MouseEventBus,
@@ -14,23 +14,23 @@ const state = {
 
 export function handleGlobalInput(
   mouseBus: MouseEventBus,
-  focusManager: FocusManager,
+  focusTracker: FocusTracker,
   keybindingService: KeybindingService
 ) {
-  bindDocumentMousedownEvent(focusManager, mouseBus)
-  bindDocumentFocusEvents(focusManager)
+  bindDocumentMousedownEvent(focusTracker, mouseBus)
+  bindDocumentFocusEvents(focusTracker)
 
   bindDocumentMousedownEventForDrag(mouseBus)
   bindDocumentMousemoveEventForDrag(mouseBus)
   bindDocumentMouseupEventForDrag(mouseBus)
   bindDocumentMouseleaveEventForDrag(mouseBus)
 
-  bindDocumentKeydownEvent(focusManager, keybindingService)
+  bindDocumentKeydownEvent(focusTracker, keybindingService)
 }
 
 //
 
-function bindDocumentMousedownEvent(focusManager: FocusManager, mouseBus: MouseEventBus) {
+function bindDocumentMousedownEvent(focusTracker: FocusTracker, mouseBus: MouseEventBus) {
   document.addEventListener("mousedown", (e) => {
     const target = e.target as HTMLElement
 
@@ -39,7 +39,7 @@ function bindDocumentMousedownEvent(focusManager: FocusManager, mouseBus: MouseE
       // Update focusedTask only when the clicked zone has a task.
       // For zones without a task (e.g. MENU_ITEM, WINDOW),
       // keep the previously focused task.
-      if (activeItem.task !== "") focusManager.setFocusedTask(activeItem.task)
+      if (activeItem.task !== "") focusTracker.setFocusedTask(activeItem.task)
     }
 
     UI_ZONES_VALUES.forEach((item) => {
@@ -48,15 +48,15 @@ function bindDocumentMousedownEvent(focusManager: FocusManager, mouseBus: MouseE
       }
     })
 
-    focusManager.syncFocus()
+    focusTracker.syncFocus()
   })
 }
 
 // Keyboard navigation moves focus without any mousedown, so the zone has to be
 // re-read from focus events too. focusout fires before the next element is
 // focused, hence the microtask: it lets activeElement settle before we look.
-function bindDocumentFocusEvents(focusManager: FocusManager) {
-  const sync = () => queueMicrotask(() => focusManager.syncFocus())
+function bindDocumentFocusEvents(focusTracker: FocusTracker) {
+  const sync = () => queueMicrotask(() => focusTracker.syncFocus())
 
   document.addEventListener("focusin", sync)
   document.addEventListener("focusout", sync)
@@ -108,12 +108,12 @@ function bindDocumentMouseleaveEventForDrag(mouseBus: MouseEventBus) {
 
 //
 
-function bindDocumentKeydownEvent(focusManager: FocusManager, keybindingService: KeybindingService) {
+function bindDocumentKeydownEvent(focusTracker: FocusTracker, keybindingService: KeybindingService) {
   document.addEventListener("keydown", (e) => {
     // Which binding applies is answered from the context keys, and focus events
     // publish those on a microtask. Settle it first so a key pressed right after
     // focus moved is resolved against where focus actually is.
-    focusManager.syncFocus()
+    focusTracker.syncFocus()
 
     keybindingService.handleKeyEvent(e)
   })

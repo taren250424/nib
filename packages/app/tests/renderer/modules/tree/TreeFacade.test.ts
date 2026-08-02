@@ -5,7 +5,7 @@ import { createCommandDescriptors } from "@renderer/commands"
 import { TREE_CONTEXT_MENU_BINDINGS } from "@renderer/commands/contextMenuBindings"
 import type { CommandDeps } from "@renderer/commands/definitions"
 import { DOM } from "@renderer/constants"
-import { CommandRegistry, FocusManager } from "@renderer/core"
+import { CommandRegistry, FocusTracker } from "@renderer/core"
 import { bindContextMenu, renderContextMenuState } from "@renderer/handlers/menu"
 
 import { buildDto, createTreeHarness, installWindowUtils, loadTree, rowOf, wrapperOf } from "./treeHarness"
@@ -279,7 +279,7 @@ describe("tree context menu", () => {
 describe("tree context menu enablement", () => {
   let harness: ReturnType<typeof setup>
   let registry: CommandRegistry
-  let focusManager: FocusManager
+  let focusTracker: FocusTracker
   let ran: string[]
   let menuOpenWhileRunning: boolean
 
@@ -288,10 +288,10 @@ describe("tree context menu enablement", () => {
     ran = []
     menuOpenWhileRunning = true
 
-    focusManager = new FocusManager()
+    focusTracker = new FocusTracker()
     // What contextKeyHandlers wires in the app: focus is pushed into the keys
     // the `when` conditions read.
-    focusManager.onDidChangeFocus((task) => harness.contextKeyService.set("focusedTask", task))
+    focusTracker.onDidChangeFocus((task) => harness.contextKeyService.set("focusedTask", task))
 
     const record = () =>
       new Proxy(
@@ -326,7 +326,7 @@ describe("tree context menu enablement", () => {
     const event = new MouseEvent("contextmenu", { clientX: 10, clientY: 10, bubbles: true })
     rowOf(harness, path).dispatchEvent(event)
     harness.facade.handleShowContextmenu(event)
-    renderContextMenuState(registry, focusManager, TREE_CONTEXT_MENU_BINDINGS, harness.elements)
+    renderContextMenuState(registry, focusTracker, TREE_CONTEXT_MENU_BINDINGS, harness.elements)
   }
 
   function greyed(element: "treeContextCut" | "treeContextPaste" | "treeContextDelete") {
@@ -336,7 +336,7 @@ describe("tree context menu enablement", () => {
   // The greying has to be computed after the right-click has moved the
   // selection, since that is what most of these commands apply to.
   it("enables the selection commands once the right-click has selected something", () => {
-    focusManager.setFocusedTask("tree")
+    focusTracker.setFocusedTask("tree")
 
     openMenuOn(README)
 
@@ -353,7 +353,7 @@ describe("tree context menu enablement", () => {
   // Rename opens a prompt and does not resolve until the user has finished with
   // it, so a menu closed after the command sat on top of the input it opened.
   it("closes the menu before running the command, not after", async () => {
-    focusManager.setFocusedTask("tree")
+    focusTracker.setFocusedTask("tree")
     openMenuOn(README)
 
     harness.elements.treeContextRename.click()
@@ -367,7 +367,7 @@ describe("tree context menu enablement", () => {
   // Paste reads the node the menu was opened on, which is why closing first
   // must not forget it.
   it("still knows the right-clicked node while the command runs", async () => {
-    focusManager.setFocusedTask("tree")
+    focusTracker.setFocusedTask("tree")
     harness.facade.setClipboard([A], "cut")
     openMenuOn(README)
 
@@ -379,7 +379,7 @@ describe("tree context menu enablement", () => {
   })
 
   it("does nothing but close when a greyed-out item is clicked", async () => {
-    focusManager.setFocusedTask("tree")
+    focusTracker.setFocusedTask("tree")
     openMenuOn(README)
 
     harness.elements.treeContextPaste.click()

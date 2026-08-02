@@ -1,7 +1,7 @@
 export const DI = {
   MenuElements: Symbol("MenuElements"),
 
-  FocusManager: Symbol("FocusManager"),
+  FocusTracker: Symbol("FocusTracker"),
   ContextKeyService: Symbol("ContextKeyService"),
   CommandRegistry: Symbol("CommandRegistry"),
 

@@ -14,7 +14,7 @@ import { DI, DOM } from "../constants"
 import closedFolderSvg from "../assets/icons/closed_folder.svg?raw"
 import openedFolderSvg from "../assets/icons/opened_folder.svg?raw"
 
-import { CommandQueue, ContextKeyService, FocusManager } from "../core"
+import { CommandQueue, ContextKeyService, FocusTracker } from "../core"
 // Straight from the files, not from ./index: the barrel exports this class too,
 // so importing through it would have the module depend on itself. The value form
 // is needed here rather than `import type` because emitDecoratorMetadata writes
@@ -34,7 +34,7 @@ export class CommandManager {
   private redoStack: UndoableEdit[] = []
 
   constructor(
-    @inject(DI.FocusManager) private readonly focusManager: FocusManager,
+    @inject(DI.FocusTracker) private readonly focusTracker: FocusTracker,
     @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService,
     @inject(DI.SettingsFacade) private readonly settingsFacade: SettingsFacade,
     @inject(DI.TabEditorFacade) private readonly tabEditorFacade: TabEditorFacade,
@@ -549,13 +549,13 @@ export class CommandManager {
 
   private async _openTabEditorAfterCreate(filePath: string) {
     await this._doOpenFile(filePath)
-    this.focusManager.setFocusedTask("editor")
+    this.focusTracker.setFocusedTask("editor")
   }
 
   //
 
   async performRename() {
-    const focus = this.focusManager.getFocusedTask()
+    const focus = this.focusTracker.getFocusedTask()
     if (focus !== "tree") return
 
     const targetInfo = this._resolveRenameTarget()

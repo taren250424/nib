@@ -4,7 +4,7 @@ import type { TabEditorsDto } from "@shared/dto/TabEditorDto"
 import type { TreeDto, TreePartialUpdate } from "@shared/dto/TreeDto"
 import type ClipboardMode from "@shared/types/ClipboardMode"
 
-import { CommandQueue, ContextKeyService, FocusManager } from "@renderer/core"
+import { CommandQueue, ContextKeyService, FocusTracker } from "@renderer/core"
 import { handleSync } from "@renderer/handlers/syncHandlers"
 import { CommandManager } from "@renderer/modules/CommandManager"
 import { FindReplaceController } from "@renderer/modules/tab_editor/FindReplaceController"
@@ -42,14 +42,14 @@ export function createCommandHarness() {
   const tree = buildTreeHarness(contextKeyService)
   const tabEditor = buildFacadeHarness(contextKeyService, commandQueue)
 
-  const focusManager = new FocusManager()
+  const focusTracker = new FocusTracker()
 
   const settingsFacade = new SettingsFacade(new SettingsRenderer(new SettingsElements()), new SettingsStore())
 
   const findReplaceController = new FindReplaceController(tabEditor.facade)
 
   const commandManager = new CommandManager(
-    focusManager,
+    focusTracker,
     contextKeyService,
     settingsFacade,
     tabEditor.facade,
@@ -69,7 +69,7 @@ export function createCommandHarness() {
     tabEditor,
     settingsFacade,
     contextKeyService,
-    focusManager,
+    focusTracker,
     commandQueue,
     ipc,
     fireWatchSync: watch.fire,

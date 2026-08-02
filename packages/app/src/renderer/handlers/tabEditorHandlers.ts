@@ -8,7 +8,7 @@ import {
   UI_ZONES,
   mouseDownOutside,
   type CommandRegistry,
-  type FocusManager,
+  type FocusTracker,
   type MouseEventBus,
 } from "@renderer/core"
 import { debounce } from "@renderer/utils"
@@ -19,12 +19,12 @@ export function handleTabEditor(
   run: RunCommand,
   mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
-  focusManager: FocusManager,
+  focusTracker: FocusTracker,
   tabEditorFacade: TabEditorFacade
 ) {
   bindContainerClickEvent(run, tabEditorFacade)
 
-  bindContextmenuToggleEvents(mouseBus, commandRegistry, focusManager, tabEditorFacade)
+  bindContextmenuToggleEvents(mouseBus, commandRegistry, focusTracker, tabEditorFacade)
 
   bindFindReplaceEvents(run, tabEditorFacade)
 
@@ -61,7 +61,7 @@ function bindContainerClickEvent(run: RunCommand, tabEditorFacade: TabEditorFaca
 function bindContextmenuToggleEvents(
   mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
-  focusManager: FocusManager,
+  focusTracker: FocusTracker,
   tabEditorFacade: TabEditorFacade
 ) {
   const elements = tabEditorFacade.renderer.elements
@@ -70,7 +70,7 @@ function bindContextmenuToggleEvents(
 
   elements.tabContainer.addEventListener("contextmenu", (e: MouseEvent) => {
     tabEditorFacade.handleShowContextmenu(e)
-    renderContextMenuState(commandRegistry, focusManager, TAB_CONTEXT_MENU_BINDINGS, elements)
+    renderContextMenuState(commandRegistry, focusTracker, TAB_CONTEXT_MENU_BINDINGS, elements)
   })
 
   mouseBus.on(mouseDownOutside(UI_ZONES.TAB_CONTEXT_MENU.id), () => {

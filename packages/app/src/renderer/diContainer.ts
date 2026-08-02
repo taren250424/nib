@@ -4,7 +4,7 @@ import { Container } from "inversify"
 
 import { CommandRegistry } from "./core/CommandRegistry"
 import { ContextKeyService } from "./core/ContextKeyService"
-import { FocusManager } from "./core/FocusManager"
+import { FocusTracker } from "./core/FocusTracker"
 import { KeybindingService } from "./core/KeybindingService"
 import { CommandQueue } from "./core/CommandQueue"
 import { MouseEventBus } from "./core/EventBus"
@@ -49,7 +49,7 @@ import { CommandManager } from "./modules/CommandManager"
 
 const diContainer = new Container()
 
-diContainer.bind(DI.FocusManager).to(FocusManager).inSingletonScope()
+diContainer.bind(DI.FocusTracker).to(FocusTracker).inSingletonScope()
 diContainer.bind(DI.ContextKeyService).to(ContextKeyService).inSingletonScope()
 diContainer.bind(DI.CommandRegistry).to(CommandRegistry).inSingletonScope()
 diContainer.bind(DI.KeybindingService).to(KeybindingService).inSingletonScope()

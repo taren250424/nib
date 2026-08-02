@@ -1,6 +1,6 @@
 import type { ContextMenuBinding } from "@renderer/commands/contextMenuBindings"
 import { DOM } from "@renderer/constants"
-import type { CommandRegistry, FocusManager } from "@renderer/core"
+import type { CommandRegistry, FocusTracker } from "@renderer/core"
 
 /**
  * Drives a context menu from the command registry, the way the menu bar is.
@@ -49,11 +49,11 @@ export function bindContextMenu<E extends object>(
  */
 export function renderContextMenuState<E extends object>(
   commandRegistry: CommandRegistry,
-  focusManager: FocusManager,
+  focusTracker: FocusTracker,
   bindings: readonly ContextMenuBinding<E>[],
   elements: E
 ) {
-  focusManager.syncFocus()
+  focusTracker.syncFocus()
 
   for (const binding of bindings) {
     const element = elements[binding.element] as HTMLElement

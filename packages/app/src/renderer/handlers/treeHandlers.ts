@@ -7,7 +7,7 @@ import {
   UI_ZONES,
   mouseDownOutside,
   type CommandRegistry,
-  type FocusManager,
+  type FocusTracker,
   type MouseEventBus,
 } from "@renderer/core"
 import { bindContextMenu, renderContextMenuState } from "./menu"
@@ -17,14 +17,14 @@ export function handleTree(
   run: RunCommand,
   mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
-  focusManager: FocusManager,
+  focusTracker: FocusTracker,
   treeFacade: TreeFacade
 ) {
   bindTreeTopMenuEvents(run, treeFacade)
 
   bindContainerClickEvent(run, treeFacade)
 
-  bindContextmenuToggleEvents(mouseBus, commandRegistry, focusManager, treeFacade)
+  bindContextmenuToggleEvents(mouseBus, commandRegistry, focusTracker, treeFacade)
 
   bindMousedownEventsForDrag(mouseBus, treeFacade)
   bindMousemoveEventsForDrag(mouseBus, treeFacade)
@@ -108,7 +108,7 @@ function bindContainerClickEvent(run: RunCommand, treeFacade: TreeFacade) {
 function bindContextmenuToggleEvents(
   mouseBus: MouseEventBus,
   commandRegistry: CommandRegistry,
-  focusManager: FocusManager,
+  focusTracker: FocusTracker,
   treeFacade: TreeFacade
 ) {
   const elements = treeFacade.renderer.elements
@@ -120,7 +120,7 @@ function bindContextmenuToggleEvents(
     // selection is what half of these commands apply to — so the greying is
     // computed after it, not before.
     treeFacade.handleShowContextmenu(e)
-    renderContextMenuState(commandRegistry, focusManager, TREE_CONTEXT_MENU_BINDINGS, elements)
+    renderContextMenuState(commandRegistry, focusTracker, TREE_CONTEXT_MENU_BINDINGS, elements)
   })
 
   mouseBus.on(mouseDownOutside(UI_ZONES.TREE_CONTEXT_MENU.id), () => {

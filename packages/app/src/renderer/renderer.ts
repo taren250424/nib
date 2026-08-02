@@ -12,7 +12,7 @@ import {
   CommandQueue,
   CommandRegistry,
   ContextKeyService,
-  FocusManager,
+  FocusTracker,
   KeybindingService,
   MouseEventBus,
 } from "./core"
@@ -53,7 +53,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const menuElements = diContainer.get<MenuElements>(DI.MenuElements)
 
   const commandQueue = diContainer.get<CommandQueue>(DI.CommandQueue)
-  const focusManager = diContainer.get<FocusManager>(DI.FocusManager)
+  const focusTracker = diContainer.get<FocusTracker>(DI.FocusTracker)
   const contextKeyService = diContainer.get<ContextKeyService>(DI.ContextKeyService)
   const zoomController = diContainer.get<ZoomController>(DI.ZoomController)
   const keybindingService = diContainer.get<KeybindingService>(DI.KeybindingService)
@@ -88,18 +88,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // How the remaining UI elements — buttons, the find widget, tree clicks, a
   // drop — reach a command now that the keyboard and the menus have tables.
-  const run = createCommandRunner(commandRegistry, focusManager)
+  const run = createCommandRunner(commandRegistry, focusTracker)
 
-  handleContextKeys(focusManager, contextKeyService)
-  handleGlobalInput(mouseBus, focusManager, keybindingService)
+  handleContextKeys(focusTracker, contextKeyService)
+  handleGlobalInput(mouseBus, focusTracker, keybindingService)
   handleMenuItems(mouseBus, menuElements)
   handleCommandMenus(commandRegistry, contextKeyService, menuElements)
   handleShortcutLabels(menuElements, treeFacade.renderer.elements, tabEditorFacade.renderer.elements)
 
-  handleTabEditor(run, mouseBus, commandRegistry, focusManager, tabEditorFacade)
+  handleTabEditor(run, mouseBus, commandRegistry, focusTracker, tabEditorFacade)
   handleInfo(infoFacade)
   handleWindow(windowFacade, run)
-  handleTree(run, mouseBus, commandRegistry, focusManager, treeFacade)
+  handleTree(run, mouseBus, commandRegistry, focusTracker, treeFacade)
   handleSide(mouseBus, sideFacade)
   handleSettings(run, settingsFacade)
   handleSync(commandQueue, tabEditorFacade, treeFacade, commandManager)

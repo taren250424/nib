@@ -12,7 +12,7 @@ export type { CommandContext, ICommandDescriptor } from "./types"
 
 export { CommandRegistry } from "./CommandRegistry"
 export { ContextKeyService } from "./ContextKeyService"
-export { FocusManager } from "./FocusManager"
+export { FocusTracker } from "./FocusTracker"
 export { KeybindingService } from "./KeybindingService"
 export { getKeyString, REPEATABLE_KEYS } from "./keys"
 export { CommandQueue } from "./CommandQueue"

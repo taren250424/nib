@@ -1,4 +1,4 @@
-import type { ContextKeyService, FocusManager } from "@renderer/core"
+import type { ContextKeyService, FocusTracker } from "@renderer/core"
 
 /**
  * Feeds state the context keys describe into the service from whoever owns it.
@@ -7,10 +7,10 @@ import type { ContextKeyService, FocusManager } from "@renderer/core"
  * with the commands whose `when` conditions read them, so a key never exists
  * without a producer.
  */
-export function handleContextKeys(focusManager: FocusManager, contextKeyService: ContextKeyService) {
-  contextKeyService.set("focusedTask", focusManager.getFocusedTask())
+export function handleContextKeys(focusTracker: FocusTracker, contextKeyService: ContextKeyService) {
+  contextKeyService.set("focusedTask", focusTracker.getFocusedTask())
 
-  focusManager.onDidChangeFocus((task) => {
+  focusTracker.onDidChangeFocus((task) => {
     contextKeyService.set("focusedTask", task)
   })
 }

@@ -1,5 +1,5 @@
 import type { CommandId } from "@renderer/commands/ids"
-import type { CommandRegistry, FocusManager } from "@renderer/core"
+import type { CommandRegistry, FocusTracker } from "@renderer/core"
 
 export type RunCommand = (id: CommandId, ...args: unknown[]) => Promise<void>
 
@@ -17,9 +17,9 @@ export type RunCommand = (id: CommandId, ...args: unknown[]) => Promise<void>
  * default action of the mousedown that published the current value, and a
  * command's `when` is answered from what was published.
  */
-export function createCommandRunner(commandRegistry: CommandRegistry, focusManager: FocusManager): RunCommand {
+export function createCommandRunner(commandRegistry: CommandRegistry, focusTracker: FocusTracker): RunCommand {
   return (id, ...args) => {
-    focusManager.syncFocus()
+    focusTracker.syncFocus()
     return commandRegistry.execute(id, ...args)
   }
 }
