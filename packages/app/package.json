@@ -1,11 +1,11 @@
 {
-  "name": "velin-app",
-  "productName": "Velin",
+  "name": "nib-app",
+  "productName": "Nib",
   "version": "0.1.0",
   "description": "Markdown WYSIWYG Editor",
   "main": "dist/main/main.js",
   "scripts": {
-    "start": "electron-forge start",
+    "dev": "electron-forge start",
     "test": "vitest",
     "lint": "eslint --ext .ts,.tsx .",
     "typecheck": "tsc --noEmit -p .",
@@ -21,8 +21,8 @@
   "author": "taren250424",
   "license": "MIT",
   "build": {
-    "appId": "com.velin.app",
-    "productName": "Velin",
+    "appId": "com.nib.app",
+    "productName": "Nib",
     "directories": {
       "output": "dist/installer"
     },

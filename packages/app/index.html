@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Velin</title>
+    <title>Nib</title>
   </head>
 
   <body>
@@ -39,12 +39,12 @@
               </div>
               <div id="setting-node-editor-auto-save" class="setting-node">
                 <label>Auto Save</label>
-                <velin-select>
-                  <velin-option value="off">Off</velin-option>
-                  <velin-option value="afterDelay">After Delay</velin-option>
-                  <velin-option value="onFocusChange">On Focus Change</velin-option>
-                  <velin-option value="onWindowChange">On Window Change</velin-option>
-                </velin-select>
+                <nib-select>
+                  <nib-option value="off">Off</nib-option>
+                  <nib-option value="afterDelay">After Delay</nib-option>
+                  <nib-option value="onFocusChange">On Focus Change</nib-option>
+                  <nib-option value="onWindowChange">On Window Change</nib-option>
+                </nib-select>
               </div>
             </div>
 
@@ -52,12 +52,12 @@
               <h2 class="settings-panel-title">Theme</h2>
               <div id="settings-node-theme" class="setting-node">
                 <label>Theme</label>
-                <velin-select>
-                  <velin-option value="light">Light</velin-option>
-                  <velin-option value="dark">Dark</velin-option>
-                  <velin-option value="solarized">Solarized</velin-option>
-                  <velin-option value="slate">Slate</velin-option>
-                </velin-select>
+                <nib-select>
+                  <nib-option value="light">Light</nib-option>
+                  <nib-option value="dark">Dark</nib-option>
+                  <nib-option value="solarized">Solarized</nib-option>
+                  <nib-option value="slate">Slate</nib-option>
+                </nib-select>
               </div>
             </div>
           </div>
@@ -130,7 +130,15 @@
     <div id="container">
       <div id="title" class="drag">
         <span id="logo" class="no-drag">
-          <img src="src/shared/logo/logo.png" />
+          <!-- Angular "N": three chisel-cut strokes, thin stems against a thick diagonal. -->
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <g transform="translate(-1.5 -1.556) scale(1.125)">
+              <path
+                fill="currentColor"
+                d="M7.25 3.95L7.25 20.1L5.9 20.55L5.9 4.4ZM8.92 3.09L17.82 19.59L15.18 21.01L6.28 4.51ZM18.1 3.9L18.1 19.95L16.75 20.4L16.75 4.35Z"
+              />
+            </g>
+          </svg>
         </span>
 
         <div id="menu-container" class="no-drag">

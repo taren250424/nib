@@ -1,5 +1,5 @@
 import { injectable } from "inversify"
-import type { VelinSelect } from "../../components/VelinSelect"
+import type { NibSelect } from "../../components/NibSelect"
 
 @injectable()
 export class SettingsElements {
@@ -19,10 +19,10 @@ export class SettingsElements {
   public readonly editorWidthInput: HTMLInputElement
 
   public readonly autoSaveDiv: HTMLElement
-  public readonly autoSaveSelect: VelinSelect
+  public readonly autoSaveSelect: NibSelect
 
   public readonly themeDiv: HTMLElement
-  public readonly themeSelect: VelinSelect
+  public readonly themeSelect: NibSelect
 
   constructor() {
     this.exit = document.querySelector("#settings-exit") as HTMLElement
@@ -44,9 +44,9 @@ export class SettingsElements {
     this.editorWidthInput = document.querySelector("#setting-node-editor-width input") as HTMLInputElement
 
     this.autoSaveDiv = document.querySelector("#setting-node-editor-auto-save") as HTMLElement
-    this.autoSaveSelect = document.querySelector("#setting-node-editor-auto-save velin-select") as VelinSelect
+    this.autoSaveSelect = document.querySelector("#setting-node-editor-auto-save nib-select") as NibSelect
 
     this.themeDiv = document.querySelector("#settings-node-theme") as HTMLElement
-    this.themeSelect = document.querySelector("#settings-node-theme velin-select") as VelinSelect
+    this.themeSelect = document.querySelector("#settings-node-theme nib-select") as NibSelect
   }
 }

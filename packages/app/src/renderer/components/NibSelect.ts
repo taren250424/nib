@@ -1,11 +1,11 @@
 import { assert } from "../utils"
 
-export interface VelinSelectChangeDetail {
+export interface NibSelectChangeDetail {
   value: string
   index: number
 }
 
-interface VelinSelectOption {
+interface NibSelectOption {
   value: string
   label: string
 }
@@ -15,14 +15,14 @@ const CHEVRON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
 </svg>`
 
 /**
- * Light-DOM custom select. Options are declared as <velin-option value="...">Label</velin-option>
+ * Light-DOM custom select. Options are declared as <nib-option value="...">Label</nib-option>
  * children; they act as a data source only and are hidden by CSS.
  *
  * - Setting `value` programmatically updates the UI silently.
- * - User interaction fires a bubbling "velin-select-changed" CustomEvent<VelinSelectChangeDetail>.
+ * - User interaction fires a bubbling "nib-select-changed" CustomEvent<NibSelectChangeDetail>.
  */
-export class VelinSelect extends HTMLElement {
-  private _options: VelinSelectOption[] = []
+export class NibSelect extends HTMLElement {
+  private _options: NibSelectOption[] = []
   private _selectedIndex = -1
   private _highlightIndex = -1
 
@@ -59,7 +59,7 @@ export class VelinSelect extends HTMLElement {
     const index = this._options.findIndex((option) => option.value === value)
     // The value comes from user input or a persisted session file, so
     // tolerate unknown values in production but surface them in dev.
-    assert(index !== -1, `VelinSelect: no option with value "${value}"`)
+    assert(index !== -1, `NibSelect: no option with value "${value}"`)
     if (index === -1) return
     this._selectIndex(index, { emit: false })
   }
@@ -71,36 +71,36 @@ export class VelinSelect extends HTMLElement {
   //
 
   private _readOptions() {
-    this._options = Array.from(this.querySelectorAll("velin-option")).map((el) => ({
+    this._options = Array.from(this.querySelectorAll("nib-option")).map((el) => ({
       value: el.getAttribute("value") ?? "",
       label: el.textContent?.trim() ?? "",
     }))
 
-    assert(this._options.length > 0, "VelinSelect: requires at least one <velin-option>")
+    assert(this._options.length > 0, "NibSelect: requires at least one <nib-option>")
   }
 
   private _build() {
     this._trigger = document.createElement("button")
     this._trigger.type = "button"
-    this._trigger.className = "velin-select-trigger"
+    this._trigger.className = "nib-select-trigger"
 
     this._label = document.createElement("span")
-    this._label.className = "velin-select-label"
+    this._label.className = "nib-select-label"
 
     const chevron = document.createElement("span")
-    chevron.className = "velin-select-chevron"
+    chevron.className = "nib-select-chevron"
     chevron.innerHTML = CHEVRON_SVG
 
     this._trigger.appendChild(this._label)
     this._trigger.appendChild(chevron)
 
     this._panel = document.createElement("ul")
-    this._panel.className = "velin-select-panel"
+    this._panel.className = "nib-select-panel"
     this._panel.setAttribute("role", "listbox")
 
     this._items = this._options.map((option, index) => {
       const item = document.createElement("li")
-      item.className = "velin-select-item"
+      item.className = "nib-select-item"
       item.setAttribute("role", "option")
       item.textContent = option.label
 
@@ -149,7 +149,7 @@ export class VelinSelect extends HTMLElement {
 
     if (emit) {
       this.dispatchEvent(
-        new CustomEvent<VelinSelectChangeDetail>("velin-select-changed", {
+        new CustomEvent<NibSelectChangeDetail>("nib-select-changed", {
           detail: { value: this._options[index].value, index },
           bubbles: true,
         })
@@ -198,12 +198,12 @@ export class VelinSelect extends HTMLElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "velin-select": VelinSelect
+    "nib-select": NibSelect
   }
 
   interface GlobalEventHandlersEventMap {
-    "velin-select-changed": CustomEvent<VelinSelectChangeDetail>
+    "nib-select-changed": CustomEvent<NibSelectChangeDetail>
   }
 }
 
-customElements.define("velin-select", VelinSelect)
+customElements.define("nib-select", NibSelect)

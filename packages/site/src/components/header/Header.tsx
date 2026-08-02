@@ -7,7 +7,7 @@ export const Header = () => {
       <header>
         <nav>
           <Link to="/">
-            <img src={`${import.meta.env.BASE_URL}logo/velin.png`} />
+            <img src={`${import.meta.env.BASE_URL}logo/nib.png`} />
           </Link>
           <Link to="/home">Home</Link>
           <Link to="/download">Download</Link>

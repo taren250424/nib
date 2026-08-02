@@ -60,13 +60,13 @@ export class SettingsRenderer {
   }
 
   onChangeAutoSave(callback: (autoSave: string) => void) {
-    this.elements.autoSaveSelect.addEventListener("velin-select-changed", (e) => {
+    this.elements.autoSaveSelect.addEventListener("nib-select-changed", (e) => {
       callback(e.detail.value)
     })
   }
 
   onChangeTheme(callback: (theme: string) => void) {
-    this.elements.themeSelect.addEventListener("velin-select-changed", (e) => {
+    this.elements.themeSelect.addEventListener("nib-select-changed", (e) => {
       callback(e.detail.value)
     })
   }

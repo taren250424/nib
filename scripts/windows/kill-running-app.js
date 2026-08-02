@@ -15,9 +15,9 @@ try {
 
 try {
   if (isWin) {
-    execSync("taskkill /F /IM Velin.exe", { stdio: "ignore" })
+    execSync("taskkill /F /IM Nib.exe", { stdio: "ignore" })
   } else {
-    execSync("pkill -9 Velin", { stdio: "ignore" })
+    execSync("pkill -9 Nib", { stdio: "ignore" })
   }
 } catch (e) {
   // ignore

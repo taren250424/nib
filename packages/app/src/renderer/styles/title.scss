@@ -27,11 +27,10 @@ $menu-container-horizontal-margin: 10px;
   height: dimensions.$icon-size;
 }
 
-#logo > img {
+#logo > svg {
+  display: block;
   width: 100%;
   height: 100%;
-
-  object-fit: cover;
 }
 
 #window {

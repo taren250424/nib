@@ -4,8 +4,8 @@ import "simplebar/dist/simplebar.css"
 import { DI } from "./constants"
 import diContainer from "./diContainer"
 
-// Registers the <velin-select> custom element before any module queries it.
-import "./components/VelinSelect"
+// Registers the <nib-select> custom element before any module queries it.
+import "./components/NibSelect"
 
 import {
   CommandQueue,

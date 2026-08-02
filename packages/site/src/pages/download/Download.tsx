@@ -6,7 +6,7 @@ export const Download = () => {
       <div className="download-page">
         <a
           className="download-box"
-          href="https://github.com/taren250424/velin/releases/download/v0.1.0/Velin.Setup.0.1.0.exe"
+          href="https://github.com/taren250424/nib/releases/download/v0.1.0/Nib.Setup.0.1.0.exe"
         >
           <img src={`${import.meta.env.BASE_URL}logo/windows.png`} alt="Windows" />
           <div className="text">

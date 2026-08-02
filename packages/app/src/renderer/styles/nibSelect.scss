@@ -1,11 +1,11 @@
-$velin-select-item-height: 26px;
+$nib-select-item-height: 26px;
 
 // The host is the visual box (like a native input): it carries the border so
 // container rules such as `.setting-node > *` don't stack a second box on top.
-velin-select {
+nib-select {
   position: relative;
   display: inline-block;
-  width: var(--velin-select-width, 170px);
+  width: var(--nib-select-width, 170px);
   font-size: 0.9rem;
 
   border: 1px solid var(--setting-node-border-color);
@@ -16,12 +16,12 @@ velin-select {
     border-color: var(--accent);
   }
 
-  > velin-option {
+  > nib-option {
     display: none; // data source only; rendered as panel items
   }
 }
 
-.velin-select-trigger {
+.nib-select-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,25 +43,25 @@ velin-select {
   }
 }
 
-.velin-select-label {
+.nib-select-label {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.velin-select-chevron {
+.nib-select-chevron {
   display: flex;
   align-items: center;
   flex-shrink: 0;
   color: var(--app-font-color);
   transition: transform 160ms ease;
 
-  velin-select.open & {
+  nib-select.open & {
     transform: rotate(180deg);
   }
 }
 
-.velin-select-panel {
+.nib-select-panel {
   position: absolute;
   top: calc(100% + 4px);
   left: -1px; // align with the host border edge
@@ -76,7 +76,7 @@ velin-select {
   border: 1px solid var(--dropdown-border);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 
-  max-height: calc(#{$velin-select-item-height} * 6.5 + 8px);
+  max-height: calc(#{$nib-select-item-height} * 6.5 + 8px);
   overflow-y: auto;
   scrollbar-width: thin;
 
@@ -88,18 +88,18 @@ velin-select {
     transform 140ms ease,
     visibility 140ms;
 
-  velin-select.open & {
+  nib-select.open & {
     visibility: visible;
     opacity: 1;
     transform: none;
   }
 }
 
-.velin-select-item {
+.nib-select-item {
   position: relative;
 
   display: block;
-  line-height: $velin-select-item-height;
+  line-height: $nib-select-item-height;
   padding: 0 8px 0 12px;
 
   color: var(--app-font-color);

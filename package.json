@@ -1,11 +1,11 @@
 {
-  "name": "velin-monorepo",
+  "name": "nib-monorepo",
   "private": true,
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "app:start": "npm run start --workspace=packages/app",
+    "app:dev": "npm run dev --workspace=packages/app",
     "app:test": "npm run test --workspace=packages/app",
     "app:lint": "npm run lint --workspace=packages/app",
     "app:build:renderer": "npm run build:renderer --workspace=packages/app",

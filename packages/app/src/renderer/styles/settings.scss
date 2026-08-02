@@ -286,8 +286,8 @@ $divider: color-mix(in srgb, var(--setting-node-border-color) 55%, transparent);
   width: $setting-node-input-string-width;
 }
 
-.setting-node > velin-select {
-  --velin-select-width: #{$setting-node-select-width};
+.setting-node > nib-select {
+  --nib-select-width: #{$setting-node-select-width};
   height: 32px;
   border-radius: 6px;
 }

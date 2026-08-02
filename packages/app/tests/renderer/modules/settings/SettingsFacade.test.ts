@@ -22,9 +22,9 @@ function change(input: HTMLInputElement, value: string) {
   input.dispatchEvent(new Event("change"))
 }
 
-/** What a `velin-select` tells the renderer when the user picks something. */
+/** What a `nib-select` tells the renderer when the user picks something. */
 function pick(select: Element, value: string) {
-  select.dispatchEvent(new CustomEvent("velin-select-changed", { detail: { value } }))
+  select.dispatchEvent(new CustomEvent("nib-select-changed", { detail: { value } }))
 }
 
 /**

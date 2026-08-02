@@ -2,7 +2,7 @@ import { defineConfig } from "vite"
 import path from "path"
 
 export default defineConfig({
-  base: "/velin/",
+  base: "/nib/",
   build: {
     outDir: "docs",
     emptyOutDir: true,

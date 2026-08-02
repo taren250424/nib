@@ -77,21 +77,21 @@ export const treeDto: TreeDto = {
   expanded: true,
   children: [
     {
-      path: "D:/workspace/velin/dir",
+      path: "D:/workspace/nib/dir",
       name: "dir",
       indent: 1,
       directory: true,
       expanded: true,
       children: [
         {
-          path: "D:/workspace/velin/dir/dir2",
+          path: "D:/workspace/nib/dir/dir2",
           name: "dir2",
           indent: 2,
           directory: true,
           expanded: true,
           children: [
             {
-              path: "D:/workspace/velin/dir/dir2/dir2_test.md",
+              path: "D:/workspace/nib/dir/dir2/dir2_test.md",
               name: "dir2_test.md",
               indent: 3,
               directory: false,
@@ -101,7 +101,7 @@ export const treeDto: TreeDto = {
           ],
         },
         {
-          path: "D:/workspace/velin/dir/dir_test.md",
+          path: "D:/workspace/nib/dir/dir_test.md",
           name: "dir_test.md",
           indent: 1,
           directory: false,
@@ -109,7 +109,7 @@ export const treeDto: TreeDto = {
           children: null,
         },
         {
-          path: "D:/workspace/velin/dir/dir_test-1.md",
+          path: "D:/workspace/nib/dir/dir_test-1.md",
           name: "dir_test-1.md",
           indent: 1,
           directory: false,
@@ -117,7 +117,7 @@ export const treeDto: TreeDto = {
           children: null,
         },
         {
-          path: "D:/workspace/velin/dir/dir_test-3.md",
+          path: "D:/workspace/nib/dir/dir_test-3.md",
           name: "dir_test-3.md",
           indent: 1,
           directory: false,
@@ -127,7 +127,7 @@ export const treeDto: TreeDto = {
       ],
     },
     {
-      path: "D:/workspace/velin/test.md",
+      path: "D:/workspace/nib/test.md",
       name: "test.md",
       indent: 1,
       directory: false,
@@ -135,7 +135,7 @@ export const treeDto: TreeDto = {
       children: null,
     },
     {
-      path: "D:/workspace/velin/test-1.md",
+      path: "D:/workspace/nib/test-1.md",
       name: "test-1.md",
       indent: 1,
       directory: false,
@@ -143,7 +143,7 @@ export const treeDto: TreeDto = {
       children: null,
     },
     {
-      path: "D:/workspace/velin/test-3.md",
+      path: "D:/workspace/nib/test-3.md",
       name: "test-3.md",
       indent: 1,
       directory: false,
@@ -161,21 +161,21 @@ export const treeSessionModel: TreeSessionModel = {
   expanded: true,
   children: [
     {
-      path: "D:/workspace/velin/dir",
+      path: "D:/workspace/nib/dir",
       name: "dir",
       indent: 1,
       directory: true,
       expanded: true,
       children: [
         {
-          path: "D:/workspace/velin/dir/dir2",
+          path: "D:/workspace/nib/dir/dir2",
           name: "dir2",
           indent: 2,
           directory: true,
           expanded: true,
           children: [
             {
-              path: "D:/workspace/velin/dir/dir2/dir2_test.md",
+              path: "D:/workspace/nib/dir/dir2/dir2_test.md",
               name: "dir2_test.md",
               indent: 3,
               directory: false,
@@ -185,7 +185,7 @@ export const treeSessionModel: TreeSessionModel = {
           ],
         },
         {
-          path: "D:/workspace/velin/dir/dir_test.md",
+          path: "D:/workspace/nib/dir/dir_test.md",
           name: "dir_test.md",
           indent: 1,
           directory: false,
@@ -193,7 +193,7 @@ export const treeSessionModel: TreeSessionModel = {
           children: null,
         },
         {
-          path: "D:/workspace/velin/dir/dir_test-1.md",
+          path: "D:/workspace/nib/dir/dir_test-1.md",
           name: "dir_test-1.md",
           indent: 1,
           directory: false,
@@ -201,7 +201,7 @@ export const treeSessionModel: TreeSessionModel = {
           children: null,
         },
         {
-          path: "D:/workspace/velin/dir/dir_test-3.md",
+          path: "D:/workspace/nib/dir/dir_test-3.md",
           name: "dir_test-3.md",
           indent: 1,
           directory: false,
@@ -211,7 +211,7 @@ export const treeSessionModel: TreeSessionModel = {
       ],
     },
     {
-      path: "D:/workspace/velin/test.md",
+      path: "D:/workspace/nib/test.md",
       name: "test.md",
       indent: 1,
       directory: false,
@@ -219,7 +219,7 @@ export const treeSessionModel: TreeSessionModel = {
       children: null,
     },
     {
-      path: "D:/workspace/velin/test-1.md",
+      path: "D:/workspace/nib/test-1.md",
       name: "test-1.md",
       indent: 1,
       directory: false,
@@ -227,7 +227,7 @@ export const treeSessionModel: TreeSessionModel = {
       children: null,
     },
     {
-      path: "D:/workspace/velin/test-3.md",
+      path: "D:/workspace/nib/test-3.md",
       name: "test-3.md",
       indent: 1,
       directory: false,
