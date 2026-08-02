@@ -1,9 +1,8 @@
 import { serializerCtx } from "@milkdown/core"
 import { Editor, editorViewCtx, parserCtx } from "@milkdown/kit/core"
 
-import { TextSelection, Selection } from "prosemirror-state"
+import { TextSelection, Selection, Plugin, PluginKey } from "prosemirror-state"
 import { Decoration, DecorationSet, EditorView } from "prosemirror-view"
-import { Plugin, PluginKey } from "prosemirror-state"
 import { redo, undo } from "prosemirror-history"
 import type { Node } from "prosemirror-model"
 import type { Mapping } from "prosemirror-transform"
