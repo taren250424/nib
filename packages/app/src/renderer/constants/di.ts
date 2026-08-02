@@ -5,7 +5,7 @@ export const DI = {
   ContextKeyService: Symbol("ContextKeyService"),
   CommandRegistry: Symbol("CommandRegistry"),
 
-  ZoomManager: Symbol("ZoomManager"),
+  ZoomController: Symbol("ZoomController"),
 
   KeybindingService: Symbol("KeybindingService"),
 
@@ -17,7 +17,7 @@ export const DI = {
   TabEditorRenderer: Symbol("TabEditorRenderer"),
   TabEditorElements: Symbol("TabEditorElements"),
   TabDragState: Symbol("TabDragState"),
-  FindReplaceManager: Symbol("FindReplaceManager"),
+  FindReplaceController: Symbol("FindReplaceController"),
 
   SideFacade: Symbol("SideFacade"),
   SideStore: Symbol("SideStore"),

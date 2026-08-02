@@ -303,7 +303,7 @@ describe("CommandManager find widget", () => {
     const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
     selectInEditor(view, 1, 17)
 
-    harness.findReplaceManager.toggleFindReplaceBox(false)
+    harness.findReplaceController.toggleFindReplaceBox(false)
 
     expect(selectionButton().classList.contains(DOM.CLASS_SELECTED)).toBe(true)
     expect(view.searchInRange).toBe(true)
@@ -313,7 +313,7 @@ describe("CommandManager find widget", () => {
     const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
     selectInEditor(view, 1, 4)
 
-    harness.findReplaceManager.toggleFindReplaceBox(false)
+    harness.findReplaceController.toggleFindReplaceBox(false)
 
     expect(harness.tabEditor.facade.searchQuery).toBe("cat")
     expect(harness.tabEditor.facade.findInput.value).toBe("cat")
@@ -325,14 +325,14 @@ describe("CommandManager find widget", () => {
   it("does not narrow the range when the box is already open", async () => {
     const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
     selectInEditor(view, 1, 17)
-    harness.findReplaceManager.toggleFindReplaceBox(false)
+    harness.findReplaceController.toggleFindReplaceBox(false)
 
     // Typing a query and stepping to a match is what leaves a match selected.
-    harness.findReplaceManager.performSearchQueryChanged("cat")
-    harness.findReplaceManager.performFind("down")
+    harness.findReplaceController.performSearchQueryChanged("cat")
+    harness.findReplaceController.performFind("down")
     expect(view.getSelectedText()).toBe("cat")
 
-    harness.findReplaceManager.toggleFindReplaceBox(false)
+    harness.findReplaceController.toggleFindReplaceBox(false)
 
     expect(view.findAllMatches("cat", OPTIONS)).toHaveLength(2)
   })
@@ -343,13 +343,13 @@ describe("CommandManager find widget", () => {
   // while the box shows the corrected one.
   it("replaces with the query the box shows, not the one the debounce delivered", async () => {
     const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
-    harness.findReplaceManager.toggleFindReplaceBox(true)
+    harness.findReplaceController.toggleFindReplaceBox(true)
 
-    harness.findReplaceManager.performSearchQueryChanged("cat") // what the debounce delivered
+    harness.findReplaceController.performSearchQueryChanged("cat") // what the debounce delivered
     harness.tabEditor.facade.findInput.value = "one" // what was typed since
-    harness.findReplaceManager.performReplaceQueryChanged("three")
+    harness.findReplaceController.performReplaceQueryChanged("three")
 
-    harness.findReplaceManager.performReplaceAll()
+    harness.findReplaceController.performReplaceAll()
 
     expect(harness.tabEditor.facade.searchQuery).toBe("one")
     expect(view.findAllMatches("one", OPTIONS)).toHaveLength(0)

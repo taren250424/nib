@@ -21,7 +21,7 @@ import { CommandQueue, ContextKeyService, FocusManager } from "../core"
 // these into the constructor's design:paramtypes.
 import { SettingsFacade } from "./settings/SettingsFacade"
 import { TabEditorFacade } from "./tab_editor/TabEditorFacade"
-import { FindReplaceManager } from "./tab_editor/FindReplaceManager"
+import { FindReplaceController } from "./tab_editor/FindReplaceController"
 import { TreeFacade } from "./tree/TreeFacade"
 import { CreateEdit, DeleteEdit, RenameEdit, TransferEdit } from "../edits"
 
@@ -38,7 +38,7 @@ export class CommandManager {
     @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService,
     @inject(DI.SettingsFacade) private readonly settingsFacade: SettingsFacade,
     @inject(DI.TabEditorFacade) private readonly tabEditorFacade: TabEditorFacade,
-    @inject(DI.FindReplaceManager) private readonly findReplaceManager: FindReplaceManager,
+    @inject(DI.FindReplaceController) private readonly findReplaceController: FindReplaceController,
     @inject(DI.TreeFacade) private readonly treeFacade: TreeFacade,
     @inject(DI.CommandQueue) private readonly commandQueue: CommandQueue
   ) {}
@@ -228,7 +228,7 @@ export class CommandManager {
 
     // The find widget names documents of the directory being left, like the
     // selection and the clipboard above.
-    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceManager.performCloseFindReplaceBox()
+    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceController.performCloseFindReplaceBox()
   }
 
   performCloseActiveTab() {
@@ -390,7 +390,7 @@ export class CommandManager {
     if (!dto) return
     const response: Response<void> = await window.rendererToMain.closeTab(dto)
     if (response.result) this.tabEditorFacade.removeTab(dto.id)
-    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceManager.performCloseFindReplaceBox()
+    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceController.performCloseFindReplaceBox()
   }
 
   performCloseOtherTabs() {
@@ -432,7 +432,7 @@ export class CommandManager {
 
     // Same rule as closing the last tab one by one: a find widget with no
     // document under it searches nothing and swallows Esc.
-    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceManager.performCloseFindReplaceBox()
+    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceController.performCloseFindReplaceBox()
   }
 
   //

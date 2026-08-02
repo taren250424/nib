@@ -4,13 +4,13 @@ import { exit, toggleSide } from "../actions"
 import type { CommandContext, ICommandDescriptor, Task } from "../core"
 import type {
   CommandManager,
-  FindReplaceManager,
+  FindReplaceController,
   InfoFacade,
   MenuElements,
   SideFacade,
   TabEditorFacade,
   TreeFacade,
-  ZoomManager,
+  ZoomController,
 } from "../modules"
 import type { CommandId } from "./ids"
 
@@ -22,8 +22,8 @@ type CommandDefinition = Omit<ICommandDescriptor, "id">
  */
 export type CommandDeps = {
   commandManager: CommandManager
-  findReplaceManager: FindReplaceManager
-  zoomManager: ZoomManager
+  findReplaceController: FindReplaceController
+  zoomController: ZoomController
   sideFacade: SideFacade
   infoFacade: InfoFacade
   menuElements: MenuElements
@@ -56,7 +56,7 @@ const inTreeSelection = (context: CommandContext) => context.focusedTask === "tr
  * the apply-time revalidation inside them stays necessary.
  */
 export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[] {
-  const { commandManager, findReplaceManager, zoomManager, sideFacade, infoFacade, menuElements, tabEditorFacade, treeFacade } =
+  const { commandManager, findReplaceController, zoomController, sideFacade, infoFacade, menuElements, tabEditorFacade, treeFacade } =
     deps
 
   // Record over CommandId, so a new id cannot be added without a definition.
@@ -173,42 +173,42 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     // Find paints enabled there and the click silently does nothing.
     "find.toggle": {
       when: (ctx) => ctx.hasActiveEditor && !ctx.editorIsBinary,
-      run: (replace: boolean) => findReplaceManager.toggleFindReplaceBox(replace),
+      run: (replace: boolean) => findReplaceController.toggleFindReplaceBox(replace),
     },
-    "find.queryChanged": { run: (query: string) => findReplaceManager.performSearchQueryChanged(query) },
-    "find.replaceQueryChanged": { run: (query: string) => findReplaceManager.performReplaceQueryChanged(query) },
+    "find.queryChanged": { run: (query: string) => findReplaceController.performSearchQueryChanged(query) },
+    "find.replaceQueryChanged": { run: (query: string) => findReplaceController.performReplaceQueryChanged(query) },
     "find.toggleOption": {
-      run: (option: "matchCase" | "wholeWord") => findReplaceManager.performToggleSearchOption(option),
+      run: (option: "matchCase" | "wholeWord") => findReplaceController.performToggleSearchOption(option),
     },
     // Separate from the two above because it answers a different question: those
     // decide what counts as a match, this one only how a replacement is spelled,
     // so toggling it leaves the match list and the count alone.
-    "find.togglePreserveCase": { run: () => findReplaceManager.performTogglePreserveCase() },
+    "find.togglePreserveCase": { run: () => findReplaceController.performTogglePreserveCase() },
     // Per tab rather than global like the other three: the range is a stretch of
     // one document, so it says nothing about the tab next door.
-    "find.toggleInSelection": { run: () => findReplaceManager.performToggleFindInSelection() },
+    "find.toggleInSelection": { run: () => findReplaceController.performToggleFindInSelection() },
     // Invoked from the find input's own ↑/↓ rather than the keybinding table:
     // this is navigation within one field, not a shortcut, and binding the arrows
     // for the whole zone would swallow them in the replace input next door.
     "find.history": {
-      run: (direction: "older" | "newer") => findReplaceManager.performSearchHistory(direction),
+      run: (direction: "older" | "newer") => findReplaceController.performSearchHistory(direction),
     },
     // Reachable from F3 with the box closed, so it carries the whole condition
     // for searching: a searchable document and a query to search for.
     "find.next": {
       when: (ctx) => ctx.hasActiveEditor && !ctx.editorIsBinary && ctx.hasSearchQuery,
-      run: (direction: "up" | "down") => findReplaceManager.performFind(direction),
+      run: (direction: "up" | "down") => findReplaceController.performFind(direction),
     },
-    "find.replace": { run: () => findReplaceManager.performReplace() },
+    "find.replace": { run: () => findReplaceController.performReplace() },
     // Both are reachable from a global key, so neither may act on a closed box:
     // Ctrl+Alt+Enter would rewrite the document with a stale query, and Esc
     // would consume a key the editor wants for its own purposes.
-    "find.replaceAll": { when: (ctx) => ctx.findReplaceOpen, run: () => findReplaceManager.performReplaceAll() },
+    "find.replaceAll": { when: (ctx) => ctx.findReplaceOpen, run: () => findReplaceController.performReplaceAll() },
     // Folds the replace row away without closing the box, which is what the
     // chevron is for; Ctrl+H opens the box and is a different question.
     "find.toggleReplaceRow": {
       when: (ctx) => ctx.findReplaceOpen,
-      run: () => findReplaceManager.performToggleReplaceRow(),
+      run: () => findReplaceController.performToggleReplaceRow(),
     },
     // Scoped to where closing is what Esc means: from the tree the same key
     // calls off a pending cut, and an unscoped close would win that race,
@@ -216,21 +216,21 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     // focus back to the editor, which is only right from these two zones.
     "find.close": {
       when: (ctx) => ctx.findReplaceOpen && inTask("editor", "find-replace")(ctx),
-      run: () => findReplaceManager.performCloseFindReplaceBox(),
+      run: () => findReplaceController.performCloseFindReplaceBox(),
     },
     "find.submit": {
       when: inTask("find-replace"),
-      run: () => findReplaceManager.performFindOrReplaceByActiveElement("down"),
+      run: () => findReplaceController.performFindOrReplaceByActiveElement("down"),
     },
     "find.submitBackward": {
       when: inTask("find-replace"),
-      run: () => findReplaceManager.performFindOrReplaceByActiveElement("up"),
+      run: () => findReplaceController.performFindOrReplaceByActiveElement("up"),
     },
 
     // View
-    "view.zoomIn": { run: () => zoomManager.zoomIn() },
-    "view.zoomOut": { run: () => zoomManager.zoomOut() },
-    "view.zoomReset": { run: () => zoomManager.resetZoom() },
+    "view.zoomIn": { run: () => zoomController.zoomIn() },
+    "view.zoomOut": { run: () => zoomController.zoomOut() },
+    "view.zoomReset": { run: () => zoomController.resetZoom() },
     "view.toggleSide": {
       run: () => {
         sideFacade.setSideOpenState(!sideFacade.isSideOpen())

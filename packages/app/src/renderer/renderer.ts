@@ -21,7 +21,7 @@ import { KEYBINDINGS } from "./commands/keybindings"
 
 import {
   CommandManager,
-  FindReplaceManager,
+  FindReplaceController,
   MenuElements,
   TabEditorFacade,
   TreeFacade,
@@ -29,7 +29,7 @@ import {
   SideFacade,
   InfoFacade,
   WindowFacade,
-  ZoomManager,
+  ZoomController,
 } from "./modules"
 
 import {
@@ -55,7 +55,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const commandQueue = diContainer.get<CommandQueue>(DI.CommandQueue)
   const focusManager = diContainer.get<FocusManager>(DI.FocusManager)
   const contextKeyService = diContainer.get<ContextKeyService>(DI.ContextKeyService)
-  const zoomManager = diContainer.get<ZoomManager>(DI.ZoomManager)
+  const zoomController = diContainer.get<ZoomController>(DI.ZoomController)
   const keybindingService = diContainer.get<KeybindingService>(DI.KeybindingService)
 
   const infoFacade = diContainer.get<InfoFacade>(DI.InfoFacade)
@@ -71,12 +71,12 @@ window.addEventListener("DOMContentLoaded", () => {
   // including the ones session load runs.
   const commandRegistry = diContainer.get<CommandRegistry>(DI.CommandRegistry)
   const commandManager = diContainer.get<CommandManager>(DI.CommandManager)
-  const findReplaceManager = diContainer.get<FindReplaceManager>(DI.FindReplaceManager)
+  const findReplaceController = diContainer.get<FindReplaceController>(DI.FindReplaceController)
   commandRegistry.registerAll(
     createCommandDescriptors({
       commandManager,
-      findReplaceManager,
-      zoomManager,
+      findReplaceController,
+      zoomController,
       sideFacade,
       infoFacade,
       menuElements,

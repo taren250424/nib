@@ -308,7 +308,7 @@ describe("tree context menu enablement", () => {
     registry.registerAll(
       createCommandDescriptors({
         commandManager: record(),
-        zoomManager: record(),
+        zoomController: record(),
         sideFacade: record(),
         infoFacade: record(),
         menuElements: record(),

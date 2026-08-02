@@ -14,7 +14,7 @@ import { TabEditorFacade } from "./TabEditorFacade"
  * this class is the verbs over that state.
  */
 @injectable()
-export class FindReplaceManager {
+export class FindReplaceController {
   constructor(@inject(DI.TabEditorFacade) private readonly tabEditorFacade: TabEditorFacade) {}
 
   toggleFindReplaceBox(showReplace: boolean) {

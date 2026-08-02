@@ -7,7 +7,7 @@ import type ClipboardMode from "@shared/types/ClipboardMode"
 import { CommandQueue, ContextKeyService, FocusManager } from "@renderer/core"
 import { handleSync } from "@renderer/handlers/syncHandlers"
 import { CommandManager } from "@renderer/modules/CommandManager"
-import { FindReplaceManager } from "@renderer/modules/tab_editor/FindReplaceManager"
+import { FindReplaceController } from "@renderer/modules/tab_editor/FindReplaceController"
 import { SettingsElements } from "@renderer/modules/settings/SettingsElements"
 import { SettingsFacade } from "@renderer/modules/settings/SettingsFacade"
 import { SettingsRenderer } from "@renderer/modules/settings/SettingsRenderer"
@@ -46,14 +46,14 @@ export function createCommandHarness() {
 
   const settingsFacade = new SettingsFacade(new SettingsRenderer(new SettingsElements()), new SettingsStore())
 
-  const findReplaceManager = new FindReplaceManager(tabEditor.facade)
+  const findReplaceController = new FindReplaceController(tabEditor.facade)
 
   const commandManager = new CommandManager(
     focusManager,
     contextKeyService,
     settingsFacade,
     tabEditor.facade,
-    findReplaceManager,
+    findReplaceController,
     tree.facade,
     commandQueue
   )
@@ -64,7 +64,7 @@ export function createCommandHarness() {
 
   return {
     commandManager,
-    findReplaceManager,
+    findReplaceController,
     tree,
     tabEditor,
     settingsFacade,

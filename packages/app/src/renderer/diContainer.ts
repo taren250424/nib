@@ -16,7 +16,7 @@ import { TabEditorStore } from "./modules/tab_editor/TabEditorStore"
 import { TabEditorRenderer } from "./modules/tab_editor/TabEditorRenderer"
 import { TabEditorElements } from "./modules/tab_editor/TabEditorElements"
 import { TabDragState } from "./modules/tab_editor/TabDragState"
-import { FindReplaceManager } from "./modules/tab_editor/FindReplaceManager"
+import { FindReplaceController } from "./modules/tab_editor/FindReplaceController"
 
 import { SideFacade } from "./modules/side/SideFacade"
 import { SideStore } from "./modules/side/SideStore"
@@ -43,7 +43,7 @@ import { WindowElements } from "./modules/window/WindowElements"
 import { InfoFacade } from "./modules/info/InfoFacade"
 import { InfoElements } from "./modules/info/InfoElements"
 
-import { ZoomManager } from "./modules/zoom/ZoomManager"
+import { ZoomController } from "./modules/zoom/ZoomController"
 
 import { CommandManager } from "./modules/CommandManager"
 
@@ -61,7 +61,7 @@ diContainer.bind(DI.TabEditorStore).to(TabEditorStore).inSingletonScope()
 diContainer.bind(DI.TabEditorRenderer).to(TabEditorRenderer).inSingletonScope()
 diContainer.bind(DI.TabEditorElements).to(TabEditorElements).inSingletonScope()
 diContainer.bind(DI.TabDragState).to(TabDragState).inSingletonScope()
-diContainer.bind(DI.FindReplaceManager).to(FindReplaceManager).inSingletonScope()
+diContainer.bind(DI.FindReplaceController).to(FindReplaceController).inSingletonScope()
 
 diContainer.bind(DI.SideFacade).to(SideFacade).inSingletonScope()
 diContainer.bind(DI.SideStore).to(SideStore).inSingletonScope()
@@ -88,7 +88,7 @@ diContainer.bind(DI.WindowElements).to(WindowElements).inSingletonScope()
 diContainer.bind(DI.InfoFacade).to(InfoFacade).inSingletonScope()
 diContainer.bind(DI.InfoElements).to(InfoElements).inSingletonScope()
 
-diContainer.bind(DI.ZoomManager).to(ZoomManager).inSingletonScope()
+diContainer.bind(DI.ZoomController).to(ZoomController).inSingletonScope()
 
 diContainer.bind(DI.CommandQueue).to(CommandQueue).inSingletonScope()
 diContainer.bind(DI.CommandManager).to(CommandManager).inSingletonScope()

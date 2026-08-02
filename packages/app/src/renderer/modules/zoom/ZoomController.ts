@@ -1,4 +1,4 @@
-export class ZoomManager {
+export class ZoomController {
   private zoomLevel = 1
 
   zoomIn() {

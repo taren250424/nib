@@ -9,7 +9,7 @@ function registryWithAllCommands() {
   const service = () => new Proxy({}, { get: () => () => undefined })
   const deps = {
     commandManager: service(),
-    zoomManager: service(),
+    zoomController: service(),
     sideFacade: service(),
     infoFacade: service(),
     menuElements: service(),
