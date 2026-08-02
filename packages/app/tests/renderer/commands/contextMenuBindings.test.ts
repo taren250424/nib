@@ -8,13 +8,17 @@ import { CommandRegistry, ContextKeyService } from "@renderer/core"
 function registryWithAllCommands() {
   const service = () => new Proxy({}, { get: () => () => undefined })
   const deps = {
-    commandManager: service(),
+    tabController: service(),
+    treeController: service(),
+    settingsController: service(),
+    findReplaceController: service(),
     zoomController: service(),
     sideFacade: service(),
     infoFacade: service(),
     menuElements: service(),
     tabEditorFacade: service(),
     treeFacade: service(),
+    settingsFacade: service(),
   } as unknown as CommandDeps
 
   const context = new ContextKeyService()

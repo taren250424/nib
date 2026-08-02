@@ -16,12 +16,17 @@ function recordingDeps() {
     )
 
   const deps = {
-    commandManager: service(),
+    tabController: service(),
+    treeController: service(),
+    settingsController: service(),
     findReplaceController: service(),
     zoomController: service(),
     sideFacade: service(),
     infoFacade: service(),
     menuElements: service(),
+    tabEditorFacade: service(),
+    treeFacade: service(),
+    settingsFacade: service(),
   } as unknown as CommandDeps
 
   return { deps, calls }
@@ -295,7 +300,7 @@ describe("createCommandDescriptors", () => {
     await byId.get("settings.open")!.run()
     await byId.get("help.showInformation")!.run()
 
-    expect(calls).toEqual(["zoomIn", "resetZoom", "performOpenSettings", "showInformation"])
+    expect(calls).toEqual(["zoomIn", "resetZoom", "openSettings", "showInformation"])
   })
 })
 
@@ -328,7 +333,7 @@ describe("command descriptors under a registry", () => {
   })
 })
 
-it("does not touch the command manager while merely building the descriptors", () => {
+it("does not touch any service while merely building the descriptors", () => {
   const { deps, calls } = recordingDeps()
 
   createCommandDescriptors(deps)

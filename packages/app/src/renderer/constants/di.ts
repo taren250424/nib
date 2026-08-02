@@ -17,6 +17,7 @@ export const DI = {
   TabEditorRenderer: Symbol("TabEditorRenderer"),
   TabEditorElements: Symbol("TabEditorElements"),
   TabDragState: Symbol("TabDragState"),
+  TabController: Symbol("TabController"),
   FindReplaceController: Symbol("FindReplaceController"),
 
   SideFacade: Symbol("SideFacade"),
@@ -30,7 +31,10 @@ export const DI = {
   TreeRenderer: Symbol("TreeRenderer"),
   TreeElements: Symbol("TreeElements"),
   TreeDragState: Symbol("TreeDragState"),
+  TreeHistory: Symbol("TreeHistory"),
+  TreeController: Symbol("TreeController"),
 
+  SettingsController: Symbol("SettingsController"),
   SettingsFacade: Symbol("SettingsFacade"),
   SettingsStore: Symbol("SettingsStore"),
   SettingsRenderer: Symbol("SettingsRenderer"),
@@ -41,7 +45,6 @@ export const DI = {
   WindowRenderer: Symbol("WindowRenderer"),
   WindowElements: Symbol("WindowElements"),
 
-  CommandManager: Symbol("CommandManager"),
   CommandQueue: Symbol("CommandQueue"),
   MouseEventBus: Symbol("MouseEventBus"),
 }

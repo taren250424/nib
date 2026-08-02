@@ -1,5 +1,5 @@
 import type { CommandQueue } from "@renderer/core"
-import type { CommandManager, TabEditorFacade, TreeFacade } from "@renderer/modules"
+import type { TabEditorFacade, TreeFacade, TreeHistory } from "@renderer/modules"
 import type { TabEditorsDto } from "@shared/dto/TabEditorDto"
 import type { TreeDto, TreePartialUpdate } from "@shared/dto/TreeDto"
 
@@ -7,7 +7,7 @@ export function handleSync(
   commandQueue: CommandQueue,
   tabEditorFacade: TabEditorFacade,
   treeFacade: TreeFacade,
-  commandManager: CommandManager
+  treeHistory: TreeHistory
 ) {
   window.mainToRenderer.syncFromWatch(
     (tabEditorsDto: TabEditorsDto, treeDto: TreeDto, partialUpdates?: TreePartialUpdate[]) =>
@@ -48,7 +48,7 @@ export function handleSync(
             // recreated same-named paths it never touched.
             treeFacade.clearSelection()
             treeFacade.clearClipboard()
-            commandManager.clearTreeHistory()
+            treeHistory.clear()
 
             treeFacade.render(viewModel)
             treeFacade.setRootTreeViewModel(viewModel)

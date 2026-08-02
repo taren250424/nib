@@ -3,12 +3,15 @@ import type { SettingsViewModel } from "@renderer/viewmodels/SettingsViewModel"
 import { exit, toggleSide } from "../actions"
 import type { CommandContext, ICommandDescriptor, Task } from "../core"
 import type {
-  CommandManager,
   FindReplaceController,
   InfoFacade,
   MenuElements,
+  SettingsController,
+  SettingsFacade,
   SideFacade,
+  TabController,
   TabEditorFacade,
+  TreeController,
   TreeFacade,
   ZoomController,
 } from "../modules"
@@ -17,11 +20,14 @@ import type { CommandId } from "./ids"
 type CommandDefinition = Omit<ICommandDescriptor, "id">
 
 /**
- * What the commands act on. Most reach the app through CommandManager; the rest
- * name the one service they drive, rather than growing CommandManager further.
+ * What the commands act on. Every command names the one service it drives — a
+ * controller where the verb coordinates across modules, a facade where a plain
+ * delegation is all there is.
  */
 export type CommandDeps = {
-  commandManager: CommandManager
+  tabController: TabController
+  treeController: TreeController
+  settingsController: SettingsController
   findReplaceController: FindReplaceController
   zoomController: ZoomController
   sideFacade: SideFacade
@@ -29,6 +35,7 @@ export type CommandDeps = {
   menuElements: MenuElements
   tabEditorFacade: TabEditorFacade
   treeFacade: TreeFacade
+  settingsFacade: SettingsFacade
 }
 
 /** `when` for commands that only apply while a given UI zone holds focus. */
@@ -56,8 +63,19 @@ const inTreeSelection = (context: CommandContext) => context.focusedTask === "tr
  * the apply-time revalidation inside them stays necessary.
  */
 export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[] {
-  const { commandManager, findReplaceController, zoomController, sideFacade, infoFacade, menuElements, tabEditorFacade, treeFacade } =
-    deps
+  const {
+    tabController,
+    treeController,
+    settingsController,
+    findReplaceController,
+    zoomController,
+    sideFacade,
+    infoFacade,
+    menuElements,
+    tabEditorFacade,
+    treeFacade,
+    settingsFacade,
+  } = deps
 
   // Record over CommandId, so a new id cannot be added without a definition.
   const definitions: Record<CommandId, CommandDefinition> = {
@@ -68,90 +86,90 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     // reaches for the active view without checking it exists.
     "editor.undo": {
       when: (ctx) => inTask("editor", "find-replace")(ctx) && ctx.hasActiveEditor,
-      run: () => commandManager.performUndoEditor(),
+      run: () => tabEditorFacade.undoEditor(),
     },
     "editor.redo": {
       when: (ctx) => inTask("editor", "find-replace")(ctx) && ctx.hasActiveEditor,
-      run: () => commandManager.performRedoEditor(),
+      run: () => tabEditorFacade.redoEditor(),
     },
     // The tree keeps its own undo stack, so it can say whether there is anything
     // left to undo — which the editor's history cannot be asked for as cheaply.
     "tree.undo": {
       when: (ctx) => ctx.focusedTask === "tree" && ctx.canUndoTree,
-      run: () => commandManager.performUndoTree(),
+      run: () => treeController.performUndoTree(),
     },
     "tree.redo": {
       when: (ctx) => ctx.focusedTask === "tree" && ctx.canRedoTree,
-      run: () => commandManager.performRedoTree(),
+      run: () => treeController.performRedoTree(),
     },
 
     // Files
-    "file.newTab": { run: () => commandManager.performNewTab() },
-    "file.open": { run: (path?: string) => commandManager.performOpenFile(path) },
-    "file.openDirectory": { run: () => commandManager.performOpenDirectoryByDialog() },
+    "file.newTab": { run: () => tabController.performNewTab() },
+    "file.open": { run: (path?: string) => tabController.performOpenFile(path) },
+    "file.openDirectory": { run: () => tabController.performOpenDirectoryByDialog() },
     // Save reads the active tab's dto without checking one exists, so the
     // condition lives here — it is also what greys File > Save out when there
     // is nothing to save. saveAll iterates whatever tabs there are and is
     // content with none.
-    "file.save": { when: (ctx) => ctx.hasActiveEditor, run: () => commandManager.performSave() },
-    "file.saveAs": { when: (ctx) => ctx.hasActiveEditor, run: () => commandManager.performSaveAs() },
-    "file.saveAll": { run: () => commandManager.performSaveAll() },
+    "file.save": { when: (ctx) => ctx.hasActiveEditor, run: () => tabController.performSave() },
+    "file.saveAs": { when: (ctx) => ctx.hasActiveEditor, run: () => tabController.performSaveAs() },
+    "file.saveAll": { run: () => tabController.performSaveAll() },
 
     // Tabs. Close takes its target from wherever the user pointed, so the close
     // button and the right-clicked tab are separate ids rather than one command
     // that has to work out which channel called it.
-    "tab.close": { run: (id: number) => commandManager.performCloseTab(id) },
-    "tab.closeActive": { when: (ctx) => ctx.hasActiveEditor, run: () => commandManager.performCloseActiveTab() },
-    "tab.closeFromContextMenu": { when: inTask("tab"), run: () => commandManager.performCloseContextTab() },
-    "tab.closeOthers": { when: inTask("tab"), run: () => commandManager.performCloseOtherTabs() },
-    "tab.closeToRight": { when: inTask("tab"), run: () => commandManager.performCloseTabsToRight() },
-    "tab.closeAll": { when: inTask("tab"), run: () => commandManager.performCloseAllTabs() },
+    "tab.close": { run: (id: number) => tabController.performCloseTab(id) },
+    "tab.closeActive": { when: (ctx) => ctx.hasActiveEditor, run: () => tabController.performCloseActiveTab() },
+    "tab.closeFromContextMenu": { when: inTask("tab"), run: () => tabController.performCloseContextTab() },
+    "tab.closeOthers": { when: inTask("tab"), run: () => tabController.performCloseOtherTabs() },
+    "tab.closeToRight": { when: inTask("tab"), run: () => tabController.performCloseTabsToRight() },
+    "tab.closeAll": { when: inTask("tab"), run: () => tabController.performCloseAllTabs() },
 
     // Tree items. Create is the one that works with nothing selected — it falls
     // back to the root directory; the rest need a node to act on, which is what
     // greys them out in the context menu.
-    "tree.create": { when: inTask("tree"), run: (directory: boolean) => commandManager.performCreate(directory) },
-    "tree.rename": { when: inTreeSelection, run: () => commandManager.performRename() },
-    "tree.delete": { when: inTreeSelection, run: () => commandManager.performDelete() },
+    "tree.create": { when: inTask("tree"), run: (directory: boolean) => treeController.performCreate(directory) },
+    "tree.rename": { when: inTreeSelection, run: () => treeController.performRename() },
+    "tree.delete": { when: inTreeSelection, run: () => treeController.performDelete() },
     "tree.open": {
       when: inTreeSelection,
-      run: () => commandManager.performOpenFocusedTreeNode(),
+      run: () => treeController.performOpenFocusedTreeNode(),
     },
     "tree.expandDirectory": {
-      run: (node: HTMLElement) => commandManager.performOpenDirectoryByTreeNode(node),
+      run: (node: HTMLElement) => treeController.performOpenDirectoryByTreeNode(node),
     },
     "tree.focusUp": {
       when: inTask("tree"),
-      run: (extend: boolean) => commandManager.performFocusTreeUp(extend),
+      run: (extend: boolean) => treeController.performFocusTreeUp(extend),
     },
     "tree.focusDown": {
       when: inTask("tree"),
-      run: (extend: boolean) => commandManager.performFocusTreeDown(extend),
+      run: (extend: boolean) => treeController.performFocusTreeDown(extend),
     },
     // A drop moves what was dragged, and the clipboard is no part of that. It
     // used to be spelled `tree.cut` followed by a paste, which meant a drag
     // silently threw away whatever the user had cut or copied earlier.
-    "tree.move": { when: inTreeSelection, run: () => commandManager.performMoveTreeFromDrag() },
+    "tree.move": { when: inTreeSelection, run: () => treeController.performMoveTreeFromDrag() },
 
     // Tree clipboard. Paste splits by where the target comes from: the
     // right-clicked node or the selection.
-    "tree.cut": { when: inTreeSelection, run: () => commandManager.performCutTree() },
-    "tree.copy": { when: inTreeSelection, run: () => commandManager.performCopyTree() },
+    "tree.cut": { when: inTreeSelection, run: () => treeController.performCutTree() },
+    "tree.copy": { when: inTreeSelection, run: () => treeController.performCopyTree() },
     // Esc completes the cut lifecycle: without a way to call one off, the
     // sources kept their greyed-out styling until something else replaced them.
     "tree.clearClipboard": {
       when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
-      run: () => commandManager.performClearTreeClipboard(),
+      run: () => treeController.performClearTreeClipboard(),
     },
     // Paste needs something on the clipboard, not merely a selection — cutting
     // and then clicking elsewhere still leaves something to paste.
     "tree.pasteFromContextMenu": {
       when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
-      run: () => commandManager.performPasteTreeWithContextmenu(),
+      run: () => treeController.performPasteTreeWithContextmenu(),
     },
     "tree.pasteFromShortcut": {
       when: (ctx) => ctx.focusedTask === "tree" && ctx.treeHasClipboard,
-      run: () => commandManager.performPasteTreeWithShortcut(),
+      run: () => treeController.performPasteTreeWithShortcut(),
     },
 
     // Editor clipboard. The native variants let the browser move the text and
@@ -161,11 +179,11 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     // The native pair reach for the active view without checking it exists, so
     // requiring one here is what keeps that from throwing rather than a guard
     // repeated in each of them.
-    "editor.cut": { when: inEditor, run: () => commandManager.performCutEditorManual() },
-    "editor.cut.native": { when: inEditor, run: () => commandManager.performCutEditor() },
-    "editor.copy": { when: inEditor, run: () => commandManager.performCopyEditor() },
-    "editor.paste": { when: inEditor, run: () => commandManager.performPasteEditorManual() },
-    "editor.paste.native": { when: inEditor, run: () => commandManager.performPasteEditor() },
+    "editor.cut": { when: inEditor, run: () => tabController.performCutEditorManual() },
+    "editor.cut.native": { when: inEditor, run: () => tabController.performCutEditor() },
+    "editor.copy": { when: inEditor, run: () => tabController.performCopyEditor() },
+    "editor.paste": { when: inEditor, run: () => tabController.performPasteEditorManual() },
+    "editor.paste.native": { when: inEditor, run: () => tabController.performPasteEditor() },
 
     // Find and replace. With no tab open there is nothing to search, and the key
     // should reach whatever else wants it rather than being swallowed. A binary
@@ -240,10 +258,10 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     },
 
     // Settings and help
-    "settings.open": { run: () => commandManager.performOpenSettings() },
-    "settings.apply": { run: (viewModel: SettingsViewModel) => commandManager.performApplySettings(viewModel) },
+    "settings.open": { run: () => settingsFacade.openSettings() },
+    "settings.apply": { run: (viewModel: SettingsViewModel) => settingsController.performApplySettings(viewModel) },
     "settings.applyAndSave": {
-      run: (viewModel: SettingsViewModel) => commandManager.performApplyAndSaveSettings(viewModel),
+      run: (viewModel: SettingsViewModel) => settingsController.performApplyAndSaveSettings(viewModel),
     },
     "help.showInformation": { run: () => infoFacade.showInformation() },
     "app.exit": { run: () => exit(tabEditorFacade, treeFacade) },

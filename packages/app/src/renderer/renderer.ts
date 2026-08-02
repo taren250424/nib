@@ -19,11 +19,14 @@ import { createCommandDescriptors } from "./commands"
 import { KEYBINDINGS } from "./commands/keybindings"
 
 import {
-  CommandManager,
   FindReplaceController,
   MenuElements,
+  SettingsController,
+  TabController,
   TabEditorFacade,
+  TreeController,
   TreeFacade,
+  TreeHistory,
   SettingsFacade,
   SideFacade,
   InfoFacade,
@@ -69,11 +72,16 @@ window.addEventListener("DOMContentLoaded", () => {
   // Commands and their bindings must exist before any input can reach one,
   // including the ones session load runs.
   const commandRegistry = diContainer.get<CommandRegistry>(DI.CommandRegistry)
-  const commandManager = diContainer.get<CommandManager>(DI.CommandManager)
+  const tabController = diContainer.get<TabController>(DI.TabController)
+  const treeController = diContainer.get<TreeController>(DI.TreeController)
+  const treeHistory = diContainer.get<TreeHistory>(DI.TreeHistory)
+  const settingsController = diContainer.get<SettingsController>(DI.SettingsController)
   const findReplaceController = diContainer.get<FindReplaceController>(DI.FindReplaceController)
   commandRegistry.registerAll(
     createCommandDescriptors({
-      commandManager,
+      tabController,
+      treeController,
+      settingsController,
       findReplaceController,
       zoomController,
       sideFacade,
@@ -81,6 +89,7 @@ window.addEventListener("DOMContentLoaded", () => {
       menuElements,
       tabEditorFacade,
       treeFacade,
+      settingsFacade,
     })
   )
   keybindingService.registerAll(KEYBINDINGS)
@@ -101,7 +110,7 @@ window.addEventListener("DOMContentLoaded", () => {
   handleTree(run, mouseBus, commandRegistry, focusTracker, treeFacade)
   handleSide(mouseBus, sideFacade)
   handleSettings(run, settingsFacade)
-  handleSync(commandQueue, tabEditorFacade, treeFacade, commandManager)
+  handleSync(commandQueue, tabEditorFacade, treeFacade, treeHistory)
 
   handleLoad(run, windowFacade, settingsFacade, tabEditorFacade, treeFacade, sideFacade, infoFacade, menuElements)
 

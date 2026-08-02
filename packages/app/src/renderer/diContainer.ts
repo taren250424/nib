@@ -29,7 +29,9 @@ import { TreeStore } from "./modules/tree/TreeStore"
 import { TreeRenderer } from "./modules/tree/TreeRenderer"
 import { TreeElements } from "./modules/tree/TreeElements"
 import { TreeDragState } from "./modules/tree/TreeDragState"
+import { TreeHistory } from "./modules/tree/TreeHistory"
 
+import { SettingsController } from "./modules/settings/SettingsController"
 import { SettingsFacade } from "./modules/settings/SettingsFacade"
 import { SettingsStore } from "./modules/settings/SettingsStore"
 import { SettingsRenderer } from "./modules/settings/SettingsRenderer"
@@ -45,7 +47,8 @@ import { InfoElements } from "./modules/info/InfoElements"
 
 import { ZoomController } from "./modules/zoom/ZoomController"
 
-import { CommandManager } from "./modules/CommandManager"
+import { TabController } from "./modules/TabController"
+import { TreeController } from "./modules/TreeController"
 
 const diContainer = new Container()
 
@@ -61,6 +64,7 @@ diContainer.bind(DI.TabEditorStore).to(TabEditorStore).inSingletonScope()
 diContainer.bind(DI.TabEditorRenderer).to(TabEditorRenderer).inSingletonScope()
 diContainer.bind(DI.TabEditorElements).to(TabEditorElements).inSingletonScope()
 diContainer.bind(DI.TabDragState).to(TabDragState).inSingletonScope()
+diContainer.bind(DI.TabController).to(TabController).inSingletonScope()
 diContainer.bind(DI.FindReplaceController).to(FindReplaceController).inSingletonScope()
 
 diContainer.bind(DI.SideFacade).to(SideFacade).inSingletonScope()
@@ -74,7 +78,10 @@ diContainer.bind(DI.TreeStore).to(TreeStore).inSingletonScope()
 diContainer.bind(DI.TreeRenderer).to(TreeRenderer).inSingletonScope()
 diContainer.bind(DI.TreeElements).to(TreeElements).inSingletonScope()
 diContainer.bind(DI.TreeDragState).to(TreeDragState).inSingletonScope()
+diContainer.bind(DI.TreeHistory).to(TreeHistory).inSingletonScope()
+diContainer.bind(DI.TreeController).to(TreeController).inSingletonScope()
 
+diContainer.bind(DI.SettingsController).to(SettingsController).inSingletonScope()
 diContainer.bind(DI.SettingsFacade).to(SettingsFacade).inSingletonScope()
 diContainer.bind(DI.SettingsStore).to(SettingsStore).inSingletonScope()
 diContainer.bind(DI.SettingsRenderer).to(SettingsRenderer).inSingletonScope()
@@ -91,7 +98,6 @@ diContainer.bind(DI.InfoElements).to(InfoElements).inSingletonScope()
 diContainer.bind(DI.ZoomController).to(ZoomController).inSingletonScope()
 
 diContainer.bind(DI.CommandQueue).to(CommandQueue).inSingletonScope()
-diContainer.bind(DI.CommandManager).to(CommandManager).inSingletonScope()
 diContainer.bind(DI.MouseEventBus).to(MouseEventBus).inSingletonScope()
 
 export default diContainer

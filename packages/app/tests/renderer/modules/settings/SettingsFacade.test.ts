@@ -89,7 +89,7 @@ describe("settings apply", () => {
     change(elements().fontFamilyInput, "serif")
     pick(elements().autoSaveSelect, "afterDelay")
 
-    harness.commandManager.performApplySettings(harness.settingsFacade.getChangeSet())
+    harness.settingsController.performApplySettings(harness.settingsFacade.getChangeSet())
 
     const container = harness.tabEditor.elements.editorContainer
     expect(container.style.getPropertyValue("--editor-width")).toBe("800px")
@@ -100,25 +100,25 @@ describe("settings apply", () => {
 
   it("leaves exactly one theme class on the root element", () => {
     pick(elements().themeSelect, "slate")
-    harness.commandManager.performApplySettings(harness.settingsFacade.getChangeSet())
+    harness.settingsController.performApplySettings(harness.settingsFacade.getChangeSet())
     expect(document.documentElement.className).toBe("slate")
 
     pick(elements().themeSelect, "solarized")
-    harness.commandManager.performApplySettings(harness.settingsFacade.getChangeSet())
+    harness.settingsController.performApplySettings(harness.settingsFacade.getChangeSet())
     expect(document.documentElement.className).toBe("solarized")
   })
 
   it("makes the draft current, so applying twice does not undo anything", () => {
     change(elements().fontSizeInput, "20")
 
-    harness.commandManager.performApplySettings(harness.settingsFacade.getChangeSet())
+    harness.settingsController.performApplySettings(harness.settingsFacade.getChangeSet())
 
     expect(editorOf(harness.settingsFacade.getCurrentSettings()).fontSize).toBe(20)
   })
 
   it("writes the settings session when Apply is the button that was pressed", async () => {
     handleSettings(
-      (_id, changes) => harness.commandManager.performApplyAndSaveSettings(changes as SettingsViewModel),
+      (_id, changes) => harness.settingsController.performApplyAndSaveSettings(changes as SettingsViewModel),
       harness.settingsFacade
     )
     change(elements().fontSizeInput, "20")
@@ -135,7 +135,7 @@ describe("settings dialog", () => {
   it("opens and closes the overlay", () => {
     handleSettings(async () => undefined, harness.settingsFacade)
 
-    harness.commandManager.performOpenSettings()
+    harness.settingsFacade.openSettings()
     expect(elements().overlay.style.display).toBe("flex")
 
     elements().close.click()

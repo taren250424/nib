@@ -58,7 +58,7 @@ describe("watcher sync", () => {
   })
 
   it("closes the tab of a file that is no longer listed", async () => {
-    await harness.commandManager.performOpenFile(README)
+    await harness.tabController.performOpenFile(README)
     const view = harness.tabEditor.facade.getTabEditorViewByPath(README)!
 
     await harness.fireWatchSync({ activatedId: -1, data: [] }, null, undefined)
@@ -70,7 +70,7 @@ describe("watcher sync", () => {
   // paths would land on same-named nodes of the incoming one.
   it("drops the selection and the clipboard before rendering a new tree", async () => {
     harness.tree.facade.setSelection([indexOf(README)!])
-    harness.commandManager.performCutTree()
+    harness.treeController.performCutTree()
     expect(wrapperOf(harness.tree, README)!.classList.contains(DOM.CLASS_CUT)).toBe(true)
 
     await harness.fireWatchSync(null, buildDto({ name: "root", children: [{ name: "readme.md" }] }), undefined)
@@ -85,7 +85,7 @@ describe("watcher sync", () => {
   // tree may have recreated under the same names.
   it("drops the tree history with them", async () => {
     harness.tree.facade.setSelection([indexOf(A)!])
-    await harness.commandManager.performDelete()
+    await harness.treeController.performDelete()
     expect(harness.contextKeyService.get("canUndoTree")).toBe(true)
 
     await harness.fireWatchSync(null, buildDto({ name: "root", children: [{ name: "readme.md" }] }), undefined)
@@ -108,9 +108,9 @@ describe("watcher sync", () => {
     )
 
     harness.tree.facade.setSelection([indexOf(A)!])
-    harness.commandManager.performCutTree()
+    harness.treeController.performCutTree()
     harness.tree.facade.setSelection([indexOf("root")!])
-    const paste = harness.commandManager.performPasteTreeWithShortcut()
+    const paste = harness.treeController.performPasteTreeWithShortcut()
 
     // Run the paste up to the point where it is waiting on Main. Firing before
     // this proves nothing: the command would not be on the queue yet.

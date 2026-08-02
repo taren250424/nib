@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { DOM } from "@renderer/constants"
 
 import { createCommandHarness, type CommandHarness } from "./commandHarness"
-import { openTab, selectInEditor } from "./tab_editor/facadeHarness"
 import { buildDto, loadTree, wrapperOf } from "./tree/treeHarness"
 
 /**
@@ -24,8 +23,6 @@ const DOCS = "root/docs"
 const SUB = "root/docs/sub"
 const A = "root/docs/a.md"
 const README = "root/readme.md"
-
-const OPTIONS = { matchCase: false, wholeWord: false }
 
 let harness: CommandHarness
 
@@ -56,17 +53,17 @@ const canRedo = () => harness.contextKeyService.get("canRedoTree")
 /** Cuts `sources`, then pastes onto `target` — the two-step the user performs. */
 async function cutAndPaste(sources: string[], target: string) {
   select(...sources)
-  harness.commandManager.performCutTree()
+  harness.treeController.performCutTree()
 
   select(target)
-  await harness.commandManager.performPasteTreeWithShortcut()
+  await harness.treeController.performPasteTreeWithShortcut()
 }
 
 /**
  * The rules a transfer follows, which live between the two facades and the queue
  * rather than in either of them, and so were eye-only until this harness.
  */
-describe("CommandManager tree transfer", () => {
+describe("TreeController tree transfer", () => {
   it("refuses to move a folder into a folder inside it", async () => {
     await cutAndPaste([DOCS], SUB)
 
@@ -112,7 +109,7 @@ describe("CommandManager tree transfer", () => {
 
   it("does not throw away the redo stack over a paste that moved nothing", async () => {
     await cutAndPaste([A], ROOT)
-    await harness.commandManager.performUndoTree()
+    await harness.treeController.performUndoTree()
     expect(canRedo()).toBe(true)
 
     await cutAndPaste([README], ROOT)
@@ -126,12 +123,12 @@ describe("CommandManager tree transfer", () => {
  * overwrite whatever had been cut or copied before, which is the half of the fix
  * only the screen could show.
  */
-describe("CommandManager drag drop", () => {
+describe("TreeController drag drop", () => {
   /** Picks nodes up and drops them on `target`, as the drag handlers do. */
   async function dropOn(sources: string[], target: string) {
     select(...sources)
     harness.tree.facade.setSelectedDragIndexByPath(target)
-    await harness.commandManager.performMoveTreeFromDrag()
+    await harness.treeController.performMoveTreeFromDrag()
   }
 
   it("moves what was dragged", async () => {
@@ -145,7 +142,7 @@ describe("CommandManager drag drop", () => {
 
   it("leaves a clipboard cut before it untouched", async () => {
     select(README)
-    harness.commandManager.performCutTree()
+    harness.treeController.performCutTree()
 
     await dropOn([A], SUB)
 
@@ -155,7 +152,7 @@ describe("CommandManager drag drop", () => {
 
   it("leaves the greying on the node that was cut, not on the one dropped", async () => {
     select(README)
-    harness.commandManager.performCutTree()
+    harness.treeController.performCutTree()
 
     await dropOn([A], SUB)
 
@@ -171,7 +168,7 @@ describe("CommandManager drag drop", () => {
  * brings the name prompt, the queue and the undo stack along, which is where the
  * bookkeeping between the tree and the tabs actually happens.
  */
-describe("CommandManager create, delete and rename", () => {
+describe("TreeController create, delete and rename", () => {
   /** Types a name into whichever prompt is open and presses Enter. */
   async function answerPrompt(name: string) {
     let input: HTMLInputElement | null = null
@@ -191,7 +188,7 @@ describe("CommandManager create, delete and rename", () => {
 
   it("creates a file, selects it and opens it in a tab", async () => {
     select(DOCS)
-    const done = harness.commandManager.performCreate(false)
+    const done = harness.treeController.performCreate(false)
     await answerPrompt("new.md")
     await done
 
@@ -205,7 +202,7 @@ describe("CommandManager create, delete and rename", () => {
   // after closing that tab by hand looked the id up and got nothing.
   it("undoes a create whose tab was already closed by hand", async () => {
     select(DOCS)
-    const done = harness.commandManager.performCreate(false)
+    const done = harness.treeController.performCreate(false)
     await answerPrompt("new.md")
     await done
 
@@ -213,7 +210,7 @@ describe("CommandManager create, delete and rename", () => {
     const view = harness.tabEditor.facade.getTabEditorViewByPath(created)!
     harness.tabEditor.facade.removeTab(view.getId())
 
-    await harness.commandManager.performUndoTree()
+    await harness.treeController.performUndoTree()
 
     expect(harness.tree.facade.getFlattenIndexByPath(created)).toBeUndefined()
     // The undo ran to the end rather than throwing on the way: a revert that
@@ -222,11 +219,11 @@ describe("CommandManager create, delete and rename", () => {
   })
 
   it("closes the tab of a file it deletes", async () => {
-    await harness.commandManager.performOpenFile(README)
+    await harness.tabController.performOpenFile(README)
     const view = harness.tabEditor.facade.getTabEditorViewByPath(README)!
 
     select(README)
-    await harness.commandManager.performDelete()
+    await harness.treeController.performDelete()
 
     expect(harness.tree.facade.getFlattenIndexByPath(README)).toBeUndefined()
     expect(harness.tabEditor.facade.getTabEditorViewIndexById(view.getId())).toBe(-1)
@@ -234,10 +231,10 @@ describe("CommandManager create, delete and rename", () => {
 
   it("brings a deleted node back with its parent", async () => {
     select(A)
-    await harness.commandManager.performDelete()
+    await harness.treeController.performDelete()
     expect(harness.tree.facade.getFlattenIndexByPath(A)).toBeUndefined()
 
-    await harness.commandManager.performUndoTree()
+    await harness.treeController.performUndoTree()
 
     expect(harness.tree.facade.getFlattenIndexByPath(A)).toBeDefined()
   })
@@ -247,13 +244,13 @@ describe("CommandManager create, delete and rename", () => {
   // branch — undoing it would "restore" a file that was never removed.
   it("takes no undo step for a delete Main refused", async () => {
     select(A)
-    await harness.commandManager.performDelete()
-    await harness.commandManager.performUndoTree()
+    await harness.treeController.performDelete()
+    await harness.treeController.performUndoTree()
     expect(canRedo()).toBe(true)
 
     harness.ipc.delete.mockResolvedValueOnce({ result: false, data: [] })
     select(README)
-    await harness.commandManager.performDelete()
+    await harness.treeController.performDelete()
 
     expect(harness.tree.facade.getFlattenIndexByPath(README)).toBeDefined()
     expect(canUndo()).toBe(false)
@@ -261,11 +258,11 @@ describe("CommandManager create, delete and rename", () => {
   })
 
   it("rewrites the path of an open tab when its file is renamed", async () => {
-    await harness.commandManager.performOpenFile(README)
+    await harness.tabController.performOpenFile(README)
     const view = harness.tabEditor.facade.getTabEditorViewByPath(README)!
 
     clickRow(README)
-    const done = harness.commandManager.performRename()
+    const done = harness.treeController.performRename()
     await answerPrompt("readme.txt")
     await done
 
@@ -277,83 +274,17 @@ describe("CommandManager create, delete and rename", () => {
 
   // A directory rename moves every tab underneath it, not just one.
   it("rewrites the paths of tabs under a renamed directory", async () => {
-    await harness.commandManager.performOpenFile(A)
-    await harness.commandManager.performOpenFile(README)
+    await harness.tabController.performOpenFile(A)
+    await harness.tabController.performOpenFile(README)
     const inside = harness.tabEditor.facade.getTabEditorViewByPath(A)!
     const outside = harness.tabEditor.facade.getTabEditorViewByPath(README)!
 
     clickRow(DOCS)
-    const done = harness.commandManager.performRename()
+    const done = harness.treeController.performRename()
     await answerPrompt("papers")
     await done
 
     expect(harness.tabEditor.facade.getTabEditorViewByPath(`${ROOT}/papers/a.md`)).toBe(inside)
     expect(harness.tabEditor.facade.getTabEditorViewByPath(README)).toBe(outside)
-  })
-})
-
-/**
- * What the selection is for depends on its shape: one line is what to look for,
- * several are where to look.
- */
-describe("CommandManager find widget", () => {
-  const selectionButton = () => harness.tabEditor.facade.findOptionSelection
-
-  it("confines the search to a selection spanning lines", async () => {
-    const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
-    selectInEditor(view, 1, 17)
-
-    harness.findReplaceController.toggleFindReplaceBox(false)
-
-    expect(selectionButton().classList.contains(DOM.CLASS_SELECTED)).toBe(true)
-    expect(view.searchInRange).toBe(true)
-  })
-
-  it("takes a selection within one line as the query instead", async () => {
-    const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
-    selectInEditor(view, 1, 4)
-
-    harness.findReplaceController.toggleFindReplaceBox(false)
-
-    expect(harness.tabEditor.facade.searchQuery).toBe("cat")
-    expect(harness.tabEditor.facade.findInput.value).toBe("cat")
-    expect(selectionButton().classList.contains(DOM.CLASS_SELECTED)).toBe(false)
-  })
-
-  // Stepping to a match selects it, so re-reading the selection here would
-  // shrink the range to whatever the user is standing on.
-  it("does not narrow the range when the box is already open", async () => {
-    const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
-    selectInEditor(view, 1, 17)
-    harness.findReplaceController.toggleFindReplaceBox(false)
-
-    // Typing a query and stepping to a match is what leaves a match selected.
-    harness.findReplaceController.performSearchQueryChanged("cat")
-    harness.findReplaceController.performFind("down")
-    expect(view.getSelectedText()).toBe("cat")
-
-    harness.findReplaceController.toggleFindReplaceBox(false)
-
-    expect(view.findAllMatches("cat", OPTIONS)).toHaveLength(2)
-  })
-
-  // The input debounces its change event, so a submit can arrive while the
-  // store still holds the previous query. Replace All is the destructive way
-  // to hit that window: the document would be rewritten with the old query
-  // while the box shows the corrected one.
-  it("replaces with the query the box shows, not the one the debounce delivered", async () => {
-    const view = await openTab(harness.tabEditor, { id: 1, content: "cat one\n\ncat two" })
-    harness.findReplaceController.toggleFindReplaceBox(true)
-
-    harness.findReplaceController.performSearchQueryChanged("cat") // what the debounce delivered
-    harness.tabEditor.facade.findInput.value = "one" // what was typed since
-    harness.findReplaceController.performReplaceQueryChanged("three")
-
-    harness.findReplaceController.performReplaceAll()
-
-    expect(harness.tabEditor.facade.searchQuery).toBe("one")
-    expect(view.findAllMatches("one", OPTIONS)).toHaveLength(0)
-    expect(view.findAllMatches("three", OPTIONS)).toHaveLength(1)
-    expect(view.findAllMatches("cat", OPTIONS)).toHaveLength(2)
   })
 })

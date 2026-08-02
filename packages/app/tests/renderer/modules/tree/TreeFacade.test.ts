@@ -307,13 +307,17 @@ describe("tree context menu enablement", () => {
     registry = new CommandRegistry(harness.contextKeyService)
     registry.registerAll(
       createCommandDescriptors({
-        commandManager: record(),
+        tabController: record(),
+        treeController: record(),
+        settingsController: record(),
+        findReplaceController: record(),
         zoomController: record(),
         sideFacade: record(),
         infoFacade: record(),
         menuElements: record(),
         tabEditorFacade: record(),
         treeFacade: record(),
+        settingsFacade: record(),
       } as unknown as CommandDeps)
     )
 

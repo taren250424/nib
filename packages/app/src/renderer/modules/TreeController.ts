@@ -4,42 +4,46 @@ import type ClipboardMode from "@shared/types/ClipboardMode"
 import type Response from "@shared/types/Response"
 import type { TreeDto } from "@shared/dto/TreeDto"
 import type { TreeViewModel } from "../viewmodels/TreeViewModel"
-import type { TabEditorDto, TabEditorsDto } from "@shared/dto/TabEditorDto"
 
 import type { UndoableEdit } from "../edits"
-import type { SettingsViewModel } from "../viewmodels/SettingsViewModel"
 
 import { DI, DOM } from "../constants"
 
 import closedFolderSvg from "../assets/icons/closed_folder.svg?raw"
 import openedFolderSvg from "../assets/icons/opened_folder.svg?raw"
 
-import { CommandQueue, ContextKeyService, FocusTracker } from "../core"
+import { CommandQueue, FocusTracker } from "../core"
 // Straight from the files, not from ./index: the barrel exports this class too,
 // so importing through it would have the module depend on itself. The value form
 // is needed here rather than `import type` because emitDecoratorMetadata writes
 // these into the constructor's design:paramtypes.
-import { SettingsFacade } from "./settings/SettingsFacade"
 import { TabEditorFacade } from "./tab_editor/TabEditorFacade"
-import { FindReplaceController } from "./tab_editor/FindReplaceController"
+import { TabController } from "./TabController"
 import { TreeFacade } from "./tree/TreeFacade"
+import { TreeHistory } from "./tree/TreeHistory"
 import { CreateEdit, DeleteEdit, RenameEdit, TransferEdit } from "../edits"
 
 import { isPathInside } from "../utils/paths"
 import { sleep } from "../utils/sleep"
 
+/**
+ * Tree commands: file operations (create, rename, delete, paste, drop), their
+ * undo/redo through TreeHistory, and keyboard navigation — the destination of
+ * the `tree.*` ids.
+ *
+ * The only place that runs an edit, which is why the watcher mute lives here;
+ * TabEditorFacade is a normal dependency of that (a delete closes the tabs of
+ * the files it removes), and TabController is here because opening a row's file
+ * happens inside the same queued task as the tree work around it.
+ */
 @injectable()
-export class CommandManager {
-  private undoStack: UndoableEdit[] = []
-  private redoStack: UndoableEdit[] = []
-
+export class TreeController {
   constructor(
     @inject(DI.FocusTracker) private readonly focusTracker: FocusTracker,
-    @inject(DI.ContextKeyService) private readonly contextKeyService: ContextKeyService,
-    @inject(DI.SettingsFacade) private readonly settingsFacade: SettingsFacade,
     @inject(DI.TabEditorFacade) private readonly tabEditorFacade: TabEditorFacade,
-    @inject(DI.FindReplaceController) private readonly findReplaceController: FindReplaceController,
+    @inject(DI.TabController) private readonly tabController: TabController,
     @inject(DI.TreeFacade) private readonly treeFacade: TreeFacade,
+    @inject(DI.TreeHistory) private readonly treeHistory: TreeHistory,
     @inject(DI.CommandQueue) private readonly commandQueue: CommandQueue
   ) {}
 
@@ -81,166 +85,12 @@ export class CommandManager {
 
   //
 
-  performUndoEditor() {
-    this.tabEditorFacade.undoEditor()
-  }
-
   performUndoTree() {
-    return this.commandQueue.enqueue(() => this._doUndoTree())
-  }
-
-  private async _doUndoTree() {
-    const edit = this.undoStack.pop()
-    if (!edit) return
-
-    try {
-      await this._revertEdit(edit)
-      this.redoStack.push(edit)
-    } catch (err) {
-      // Undo failed (e.g., parent copied into child, or src/dest no longer exists).
-      // OS/File system may have ignored the operation; we just skip it to avoid breaking the stack.
-      console.error("[CommandManager] undo(tree) failed:", err)
-    }
-
-    // The pop already happened, so the context has moved whether or not the
-    // undo itself succeeded.
-    this._publishHistoryContext()
-  }
-
-  performRedoEditor() {
-    this.tabEditorFacade.redoEditor()
+    return this.commandQueue.enqueue(() => this.treeHistory.undo((edit) => this._revertEdit(edit)))
   }
 
   performRedoTree() {
-    return this.commandQueue.enqueue(() => this._doRedoTree())
-  }
-
-  private async _doRedoTree() {
-    const edit = this.redoStack.pop()
-    if (!edit) return
-
-    try {
-      await this._applyEdit(edit)
-      this.undoStack.push(edit)
-    } catch (err) {
-      console.error("[CommandManager] redo(tree) failed:", err)
-    }
-
-    this._publishHistoryContext()
-  }
-
-  /**
-   * Records an edit that can be undone. A new edit invalidates the redo branch,
-   * exactly as every other editor does.
-   */
-  private _pushUndoable(edit: UndoableEdit) {
-    this.undoStack.push(edit)
-    this.redoStack.length = 0
-    this._publishHistoryContext()
-  }
-
-  private _publishHistoryContext() {
-    this.contextKeyService.update({
-      canUndoTree: this.undoStack.length > 0,
-      canRedoTree: this.redoStack.length > 0,
-    })
-  }
-
-  /**
-   * Drops both tree history stacks. For when the tree they describe is gone:
-   * the edits hold absolute paths into the outgoing root, so replaying one
-   * would mutate a directory the tree no longer shows. Safe inside a queued
-   * task — it never enqueues — which is how the watcher's full resync calls it.
-   */
-  clearTreeHistory() {
-    this.undoStack.length = 0
-    this.redoStack.length = 0
-    this._publishHistoryContext()
-  }
-
-  //
-
-  performNewTab() {
-    return this.commandQueue.enqueue(() => this._doNewTab())
-  }
-
-  private async _doNewTab() {
-    const response: Response<number> = await window.rendererToMain.newTab()
-    if (response.result) await this.tabEditorFacade.addTab(response.data)
-  }
-
-  performOpenFile(filePath?: string) {
-    return this.commandQueue.enqueue(() => this._doOpenFile(filePath))
-  }
-
-  private async _doOpenFile(filePath?: string) {
-    if (filePath) {
-      const tabEditorView = this.tabEditorFacade.getTabEditorViewByPath(filePath)
-      if (tabEditorView) {
-        this.tabEditorFacade.activateTabEditorById(tabEditorView.getId())
-        return
-      }
-
-      // A path always refers to a tree file. Re-validate at apply time:
-      // the file may have been deleted while this task waited in the queue.
-      if (!this.treeFacade.getTreeViewModelByPath(filePath)) return
-    }
-
-    try {
-      const response: Response<TabEditorDto> = await window.rendererToMain.openFile(filePath)
-      if (response.result && response.data) {
-        const data = response.data
-        await this.tabEditorFacade.addTab(data.id, data.filePath, data.fileName, data.content, data.isBinary)
-      }
-    } catch (error) {
-      // e.g. the file vanished between our tree check and Main's read (external delete).
-      console.error("[CommandManager] openFile failed:", error)
-    }
-  }
-
-  performOpenDirectoryByDialog() {
-    return this.commandQueue.enqueue(() => this._doOpenDirectoryByDialog())
-  }
-
-  private async _doOpenDirectoryByDialog() {
-    const openDirectoryResponse: Response<TreeDto> = await window.rendererToMain.openDirectory()
-    if (!openDirectoryResponse.data) return
-
-    const responseViewModel = this.treeFacade.toTreeViewModel(openDirectoryResponse.data)
-
-    // Everything below names the tree that is being replaced, so it has to be
-    // dropped before the render: a selection or clipboard still holding paths
-    // from the old directory would paint marks onto same-named nodes of the new
-    // one. (The wrapper map is cleared by the full render itself.) The history
-    // stacks go too — an undo kept alive across the switch would edit the old
-    // directory on disk while the new tree shows none of it.
-    this.treeFacade.clearSelection()
-    this.treeFacade.clearClipboard()
-    this.clearTreeHistory()
-
-    this.treeFacade.render(responseViewModel)
-    this.treeFacade.setRootTreeViewModel(responseViewModel)
-
-    // Cleanup previous tabs.
-    const tabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
-    const closeAllTabsResponse = await window.rendererToMain.closeAllTabs(tabEditorsDto)
-    if (closeAllTabsResponse.result) this.tabEditorFacade.removeAllTabs(closeAllTabsResponse.data)
-
-    // The find widget names documents of the directory being left, like the
-    // selection and the clipboard above.
-    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceController.performCloseFindReplaceBox()
-  }
-
-  performCloseActiveTab() {
-    return this.performCloseTab(this.tabEditorFacade.activeTabId)
-  }
-
-  performCloseContextTab() {
-    return this.performCloseTab(this.tabEditorFacade.contextTabId)
-  }
-
-  performOpenSettings() {
-    this.settingsFacade.openSettings()
+    return this.commandQueue.enqueue(() => this.treeHistory.redo((edit) => this._applyEdit(edit)))
   }
 
   //
@@ -324,115 +174,11 @@ export class CommandManager {
       const treeNode = this.treeFacade.getTreeNodeByIndex(idx)
       await this._doOpenDirectoryByTreeNode(treeNode)
     } else {
-      await this._doOpenFile(viewModel.path)
+      await this.tabController.openFileInsideQueue(viewModel.path)
     }
 
     // Reclaim the focus the editor took during the open.
     this.treeFacade.focusIndex(idx)
-  }
-
-  //
-
-  // Saving is capture -> await -> apply over the same tabs the queue
-  // serializes everything else for; run outside it, a close or watcher sync
-  // landing during the IPC wait would apply the result to different tabs
-  // than were captured.
-
-  performSave() {
-    return this.commandQueue.enqueue(() => this._doSave())
-  }
-
-  private async _doSave() {
-    const dto = this.tabEditorFacade.getActiveTabEditorDto()
-    if (!dto.isModified) return
-    const response: Response<TabEditorDto> = await window.rendererToMain.save(dto)
-    if (response.result && !response.data.isModified) this.tabEditorFacade.applySaveResult(response.data)
-  }
-
-  performSaveAs() {
-    return this.commandQueue.enqueue(() => this._doSaveAs())
-  }
-
-  private async _doSaveAs() {
-    const dto: TabEditorDto = this.tabEditorFacade.getActiveTabEditorDto()
-    const response: Response<TabEditorDto> = await window.rendererToMain.saveAs(dto)
-    if (response.result && response.data) {
-      this.tabEditorFacade.applySaveResult(response.data)
-      await this.tabEditorFacade.addTab(
-        response.data.id,
-        response.data.filePath,
-        response.data.fileName,
-        response.data.content,
-        response.data.isBinary,
-        true
-      )
-    }
-  }
-
-  performSaveAll() {
-    return this.commandQueue.enqueue(() => this._doSaveAll())
-  }
-
-  private async _doSaveAll() {
-    const tabEditorsDto: TabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
-    const response: Response<TabEditorsDto> = await window.rendererToMain.saveAll(tabEditorsDto)
-    if (response.result) this.tabEditorFacade.applySaveAllResults(response.data)
-  }
-
-  //
-
-  performCloseTab(id: number) {
-    return this.commandQueue.enqueue(() => this._doCloseTab(id))
-  }
-
-  private async _doCloseTab(id: number) {
-    const dto = this.tabEditorFacade.getTabEditorDtoById(id)
-    if (!dto) return
-    const response: Response<void> = await window.rendererToMain.closeTab(dto)
-    if (response.result) this.tabEditorFacade.removeTab(dto.id)
-    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceController.performCloseFindReplaceBox()
-  }
-
-  performCloseOtherTabs() {
-    return this.commandQueue.enqueue(() => this._doCloseOtherTabs())
-  }
-
-  private async _doCloseOtherTabs() {
-    const tabEditorDtoToExclude = this.tabEditorFacade.getTabEditorDtoById(this.tabEditorFacade.contextTabId)
-    const tabEditorsDto: TabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
-    const response: Response<boolean[]> = await window.rendererToMain.closeOtherTabs(
-      tabEditorDtoToExclude,
-      tabEditorsDto
-    )
-    if (response.result) this.tabEditorFacade.removeTabsExcept(response.data)
-  }
-
-  performCloseTabsToRight() {
-    return this.commandQueue.enqueue(() => this._doCloseTabsToRight())
-  }
-
-  private async _doCloseTabsToRight() {
-    const tabEditorDtoAsReference = this.tabEditorFacade.getTabEditorDtoById(this.tabEditorFacade.contextTabId)
-    const tabEditorsDto: TabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
-    const response: Response<boolean[]> = await window.rendererToMain.closeTabsToRight(
-      tabEditorDtoAsReference,
-      tabEditorsDto
-    )
-    if (response.result) this.tabEditorFacade.removeTabsToRight(response.data)
-  }
-
-  performCloseAllTabs() {
-    return this.commandQueue.enqueue(() => this._doCloseAllTabs())
-  }
-
-  private async _doCloseAllTabs() {
-    const tabEditorsDto: TabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
-    const response: Response<boolean[]> = await window.rendererToMain.closeAllTabs(tabEditorsDto)
-    if (response.result) this.tabEditorFacade.removeAllTabs(response.data)
-
-    // Same rule as closing the last tab one by one: a find widget with no
-    // document under it searches nothing and swallows Esc.
-    if (this.tabEditorFacade.activeTabId === -1) this.findReplaceController.performCloseFindReplaceBox()
   }
 
   //
@@ -531,9 +277,9 @@ export class CommandManager {
       // Main can refuse a create without throwing. A refusal recorded on the
       // stack would spend an undo step — and wipe the redo branch — on an edit
       // whose revert has nothing to remove.
-      if (edit.didCreate) this._pushUndoable(edit)
+      if (edit.didCreate) this.treeHistory.record(edit)
     } catch (error) {
-      console.error("[CommandManager] create failed:", error)
+      console.error("[TreeController] create failed:", error)
     }
 
     return edit.getCreatedPath()
@@ -548,7 +294,7 @@ export class CommandManager {
   }
 
   private async _openTabEditorAfterCreate(filePath: string) {
-    await this._doOpenFile(filePath)
+    await this.tabController.openFileInsideQueue(filePath)
     this.focusTracker.setFocusedTask("editor")
   }
 
@@ -648,9 +394,9 @@ export class CommandManager {
 
     try {
       await this._applyEdit(edit)
-      this._pushUndoable(edit)
+      this.treeHistory.record(edit)
     } catch (error) {
-      console.error("[CommandManager] rename failed:", error)
+      console.error("[TreeController] rename failed:", error)
       this._restoreTreeSpan(prePath)
     }
   }
@@ -683,29 +429,13 @@ export class CommandManager {
 
       // Same rule as a transfer that moved nothing: a delete that removed
       // nothing (paths already gone, or Main refused) takes no undo step.
-      if (edit.didDelete) this._pushUndoable(edit)
+      if (edit.didDelete) this.treeHistory.record(edit)
     } catch (error) {
-      console.error("[CommandManager] delete failed:", error)
+      console.error("[TreeController] delete failed:", error)
     }
   }
 
   //
-
-  performCutEditor() {
-    const view = this.tabEditorFacade.getActiveTabEditorView()
-    view.markAsModified()
-  }
-
-  async performCutEditorManual() {
-    const sel = window.getSelection()
-    const selectedText = sel?.toString()
-    if (!sel || !selectedText) return
-
-    await window.rendererToMain.cutEditor(selectedText)
-    sel.deleteFromDocument()
-
-    this.performCutEditor()
-  }
 
   // The clipboard holds selection roots only. Main's paste copies a directory
   // recursively, so listing a descendant here would paste it a second time as a
@@ -720,44 +450,9 @@ export class CommandManager {
     this.treeFacade.clearClipboard()
   }
 
-  async performCopyEditor() {
-    const sel = window.getSelection()
-    const selectedText = window.getSelection()?.toString()
-    if (!sel || !selectedText) return
-
-    await window.rendererToMain.copyEditor(selectedText)
-  }
-
   /** Roots only, for the same reason as {@link performCutTree}. */
   performCopyTree() {
     this.treeFacade.setClipboard(this.treeFacade.getSelectedPaths(), "copy")
-  }
-
-  performPasteEditor() {
-    const view = this.tabEditorFacade.getActiveTabEditorView()
-    view.markAsModified()
-  }
-
-  async performPasteEditorManual() {
-    const editable = document.querySelector('#editor-container [contenteditable="true"]') as HTMLElement
-    if (!editable) return
-    editable.focus()
-
-    const sel = window.getSelection()
-    if (!sel || !sel.rangeCount) return
-    sel.deleteFromDocument()
-
-    const text = await window.rendererToMain.pasteEditor()
-    const textNode = document.createTextNode(text)
-    const range = sel.getRangeAt(0)
-    range.insertNode(textNode)
-    range.setStartAfter(textNode)
-    // Defensive code to ensure cursor positioning
-    range.collapse(true)
-    sel.removeAllRanges()
-    sel.addRange(range)
-
-    this.performPasteEditor()
   }
 
   async performPasteTreeWithContextmenu() {
@@ -901,10 +596,10 @@ export class CommandManager {
       // redo stack — would make undo answer for something the user never did.
       if (!edit.didTransfer) return false
 
-      this._pushUndoable(edit)
+      this.treeHistory.record(edit)
       return true
     } catch (error) {
-      console.error("[CommandManager] tree transfer failed:", error)
+      console.error("[TreeController] tree transfer failed:", error)
       return false
     }
   }
@@ -916,31 +611,5 @@ export class CommandManager {
     await window.rendererToMain.showWarning(
       `Cannot ${verb} ${names} into "${target.name}" — a folder cannot go inside itself.`
     )
-  }
-
-  //
-
-  performApplySettings(viewModel: SettingsViewModel) {
-    const editor = viewModel.settingEditorViewModel
-    const theme = viewModel.settingThemeViewModel.theme
-
-    editor.width && this.tabEditorFacade.changeEditorWidth(editor.width)
-    editor.fontSize && this.tabEditorFacade.changeFontSize(editor.fontSize)
-    editor.fontFamily && this.tabEditorFacade.changeFontFamily(editor.fontFamily)
-    editor.autoSave && this.tabEditorFacade.setAutoSaveMode(editor.autoSave)
-
-    if (theme) {
-      const html = document.documentElement
-      html.classList.remove("light", "solarized", "slate")
-      html.classList.add(theme)
-    }
-
-    this.settingsFacade.applyChangeSet()
-  }
-
-  async performApplyAndSaveSettings(viewModel: SettingsViewModel) {
-    this.performApplySettings(viewModel)
-    const settingsDto = this.settingsFacade.toSettingsDto(this.settingsFacade.getDraftSettings())
-    await window.rendererToMain.syncSettingsSessionFromRenderer(settingsDto)
   }
 }

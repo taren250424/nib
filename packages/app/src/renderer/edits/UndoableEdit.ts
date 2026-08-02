@@ -9,7 +9,7 @@
  *
  * An edit is created inside the run() that needs it, applied once, and kept only
  * so it can be reverted. Both directions run under the watcher skip, which is
- * `CommandManager`'s to hold — see `_applyEdit` / `_revertEdit`.
+ * `TreeController`'s to hold — see `_applyEdit` / `_revertEdit`.
  *
  * Both directions re-resolve what they act on rather than trusting what they
  * captured: an edit waits its turn in the command queue, and the tree can move

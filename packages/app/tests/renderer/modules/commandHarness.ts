@@ -6,8 +6,11 @@ import type ClipboardMode from "@shared/types/ClipboardMode"
 
 import { CommandQueue, ContextKeyService, FocusTracker } from "@renderer/core"
 import { handleSync } from "@renderer/handlers/syncHandlers"
-import { CommandManager } from "@renderer/modules/CommandManager"
+import { TabController } from "@renderer/modules/TabController"
+import { TreeController } from "@renderer/modules/TreeController"
+import { TreeHistory } from "@renderer/modules/tree/TreeHistory"
 import { FindReplaceController } from "@renderer/modules/tab_editor/FindReplaceController"
+import { SettingsController } from "@renderer/modules/settings/SettingsController"
 import { SettingsElements } from "@renderer/modules/settings/SettingsElements"
 import { SettingsFacade } from "@renderer/modules/settings/SettingsFacade"
 import { SettingsRenderer } from "@renderer/modules/settings/SettingsRenderer"
@@ -20,9 +23,9 @@ import { buildTreeHarness, installWindowUtils, TREE_MARKUP } from "./tree/treeHa
 export type CommandHarness = ReturnType<typeof createCommandHarness>
 
 /**
- * The real CommandManager over a real tree and real tabs, minus the DI container.
+ * The real controllers over a real tree and real tabs, minus the DI container.
  *
- * Its rules about what a transfer may do — a folder not going inside itself, a
+ * Their rules about what a transfer may do — a folder not going inside itself, a
  * paste that moved nothing not taking an undo step, a drop leaving the clipboard
  * where it was — could only be checked by hand until now, because they live
  * between two facades and the queue rather than inside any one of them.
@@ -34,7 +37,7 @@ export function createCommandHarness() {
   const ipc = installTreeIpcStub()
   const watch = installWatchStub()
 
-  // One service for both facades and the manager, as the container gives them.
+  // One service for both facades and the controllers, as the container gives them.
   // The queue too: auto save enqueues from inside the facade, and handing it a
   // queue of its own would unwind exactly the serialization being tested.
   const contextKeyService = new ContextKeyService()
@@ -47,23 +50,28 @@ export function createCommandHarness() {
   const settingsFacade = new SettingsFacade(new SettingsRenderer(new SettingsElements()), new SettingsStore())
 
   const findReplaceController = new FindReplaceController(tabEditor.facade)
+  const settingsController = new SettingsController(settingsFacade, tabEditor.facade)
 
-  const commandManager = new CommandManager(
+  const treeHistory = new TreeHistory(contextKeyService)
+  const tabController = new TabController(tabEditor.facade, findReplaceController, tree.facade, treeHistory, commandQueue)
+  const treeController = new TreeController(
     focusTracker,
-    contextKeyService,
-    settingsFacade,
     tabEditor.facade,
-    findReplaceController,
+    tabController,
     tree.facade,
+    treeHistory,
     commandQueue
   )
 
   // The watcher shares the queue with every command, which is the whole point
   // of it, so the real wiring is registered rather than imitated.
-  handleSync(commandQueue, tabEditor.facade, tree.facade, commandManager)
+  handleSync(commandQueue, tabEditor.facade, tree.facade, treeHistory)
 
   return {
-    commandManager,
+    treeController,
+    tabController,
+    settingsController,
+    treeHistory,
     findReplaceController,
     tree,
     tabEditor,
