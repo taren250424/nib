@@ -69,6 +69,23 @@ export function paintedMatchRange(count: number, currentIndex: number, cap = MAX
 const WORD_CHARACTER = /[\p{L}\p{N}_]/u
 
 /**
+ * The full character ending at unit index `index`, one or two units long.
+ * Strings index by UTF-16 unit, and half of a surrogate pair matches no
+ * character class — so walking by unit split words at exactly the astral
+ * letters WORD_CHARACTER was widened to include.
+ */
+function charEndingAt(text: string, index: number): string {
+  const pair = text.codePointAt(index - 2)
+  if (index >= 2 && pair !== undefined && pair > 0xffff) return text.slice(index - 2, index)
+  return text[index - 1]
+}
+
+/** The full character starting at unit index `index`. */
+function charStartingAt(text: string, index: number): string {
+  return String.fromCodePoint(text.codePointAt(index)!)
+}
+
+/**
  * The word `offset` sits in or immediately after, or "" if it sits in neither.
  *
  * What Ctrl+F seeds the query with when nothing is selected. Sitting just past
@@ -79,8 +96,16 @@ export function wordAt(text: string, offset: number): string {
   let start = Math.max(0, Math.min(offset, text.length))
   let end = start
 
-  while (start > 0 && WORD_CHARACTER.test(text[start - 1])) start--
-  while (end < text.length && WORD_CHARACTER.test(text[end])) end++
+  while (start > 0) {
+    const ch = charEndingAt(text, start)
+    if (!WORD_CHARACTER.test(ch)) break
+    start -= ch.length
+  }
+  while (end < text.length) {
+    const ch = charStartingAt(text, end)
+    if (!WORD_CHARACTER.test(ch)) break
+    end += ch.length
+  }
 
   return text.slice(start, end)
 }
@@ -126,8 +151,13 @@ export function preserveCaseOf(matched: string, replacement: string): string {
   if (!cased.some(isUpper)) return replacement.toLowerCase()
 
   // Capitalised. The rest of the replacement keeps the case it was typed in:
-  // someone who wrote `myVar` there meant the capital in the middle.
-  if (isUpper(cased[0])) return replacement[0].toUpperCase() + replacement.slice(1)
+  // someone who wrote `myVar` there meant the capital in the middle. The first
+  // character is taken as a code point — a cased astral letter (Deseret and
+  // friends) is two units, and upper-casing half of it changes nothing.
+  if (isUpper(cased[0])) {
+    const first = charStartingAt(replacement, 0)
+    return first.toUpperCase() + replacement.slice(first.length)
+  }
 
   return replacement
 }

@@ -88,6 +88,14 @@ describe("wordAt", () => {
     expect(wordAt("word", 99)).toBe("word")
     expect(wordAt("word", -1)).toBe("word")
   })
+
+  // An astral letter is two UTF-16 units; testing half of a surrogate pair
+  // matches no character class, so walking by unit split the word there.
+  it("keeps a word containing an astral letter whole", () => {
+    expect(wordAt("a 𝕏axis b", 4)).toBe("𝕏axis")
+    expect(wordAt("a 𝕏axis b", 2)).toBe("𝕏axis")
+    expect(wordAt("ax𝕏", 2)).toBe("ax𝕏")
+  })
 })
 
 describe("preserveCaseOf", () => {
@@ -130,6 +138,12 @@ describe("preserveCaseOf", () => {
 
   it("treats a lone capital as upper case, as VSCode does", () => {
     expect(preserveCaseOf("A", "beta")).toBe("BETA")
+  })
+
+  // Deseret is a cased astral script: its letters are two units each, and
+  // upper-casing half of a surrogate pair changes nothing.
+  it("capitalises a replacement that starts with a cased astral letter", () => {
+    expect(preserveCaseOf("Word", "\u{10428}og")).toBe("\u{10400}og")
   })
 
   it("has nothing to recase when the replacement is empty", () => {
