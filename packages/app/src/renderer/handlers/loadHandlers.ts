@@ -6,7 +6,7 @@ import type { SideDto } from "@shared/dto/SideDto"
 
 import { DOM } from "@renderer/constants"
 
-import { toggleSide } from "@renderer/actions"
+import { toggleSide, toggleWordCount } from "@renderer/actions"
 import type { RunCommand } from "./runCommand"
 
 import {
@@ -45,7 +45,7 @@ export function handleLoad(
       processTreeSession(treeFacade, treeDto)
 
       initSettings(run, settingsFacade)
-      initSide(sideFacade, menuElements)
+      initSide(sideFacade, menuElements, tabEditorFacade)
       initInfo(infoFacade, version)
       initWindow(windowFacade)
 
@@ -73,6 +73,8 @@ function processSideSession(facade: SideFacade, dto: SideDto) {
   if (dto) {
     facade.setSideOpenState(dto.open)
     facade.setSideWidth(dto.width)
+    // Sessions from before the word count existed carry no opinion on it.
+    facade.setWordCountVisibleState(dto.wordCountVisible ?? true)
   }
 }
 
@@ -105,8 +107,9 @@ async function initSettings(run: RunCommand, settingsFacade: SettingsFacade) {
   await run("settings.apply", viewModel)
 }
 
-function initSide(sideFacade: SideFacade, menuElements: MenuElements) {
+function initSide(sideFacade: SideFacade, menuElements: MenuElements, tabEditorFacade: TabEditorFacade) {
   toggleSide(menuElements, sideFacade)
+  toggleWordCount(menuElements, sideFacade, tabEditorFacade)
 }
 
 function initInfo(infoFacade: InfoFacade, version: string) {

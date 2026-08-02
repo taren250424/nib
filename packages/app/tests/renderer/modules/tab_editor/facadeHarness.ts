@@ -52,6 +52,7 @@ export const TAB_EDITOR_MARKUP = `
         <span id="replace-info"></span>
       </div>
     </div>
+    <div id="word-count"></div>
   </div>
 `
 

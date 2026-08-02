@@ -1,0 +1,22 @@
+// Warm dark — ink on a dark desk rather than pure black, so the paper
+// metaphor survives the flip. The accent is the light theme's red lifted
+// for dark grounds.
+$palette: (
+  bg-frame: #1a1b1e,
+  bg-subtle: #292b30,
+  bg-surface: #1e2023,
+  bg-highlight: #242629,
+  ref: #7a766e,
+  deactive: #515459,
+  accent: #e08a80,
+  accent-contrast: #1e2023,
+  warning-color: #e06055,
+  font-color: #e6e4df,
+  close-btn-color: #b3b0aa,
+  tooltip-bg: #3c3f45,
+  tooltip-font: #e9e7e2,
+  search-highlight: #66531c,
+  search-highlight-current: #967b26,
+  hover-foreground-color: white,
+  disabled-bg: #3c3f44,
+);

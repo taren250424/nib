@@ -1,8 +1,10 @@
 @use "../colors.scss" as colors;
 
+// Frame and hover pulled toward the document's sepia so the chrome no longer
+// bands; the rest of the classic solarized-light palette stays put.
 $palette: (
-  bg-frame: #ebdbb2,
-  bg-subtle: #eee8d5,
+  bg-frame: #f0e8cd,
+  bg-subtle: #e8dfc2,
   bg-surface: #f5efdc,
   bg-highlight: #fdf6e3,
   ref: #928374,

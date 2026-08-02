@@ -56,6 +56,7 @@ export const MENU_BINDINGS: readonly MenuBinding[] = [
 
   // View
   { element: "fileTree", commands: ["view.toggleSide"] },
+  { element: "wordCount", commands: ["view.toggleWordCount"] },
   { element: "zoomIn", commands: ["view.zoomIn"] },
   { element: "zoomOut", commands: ["view.zoomOut"] },
   { element: "zoomReset", commands: ["view.zoomReset"] },

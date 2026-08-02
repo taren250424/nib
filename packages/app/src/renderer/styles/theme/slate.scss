@@ -1,21 +1,21 @@
-@use "../colors.scss" as colors;
-
+// Cool grey with a blue accent. Steps converged like the light theme's, so
+// the chrome stays quiet around the document.
 $palette: (
-  bg-frame: #c7c7c8,
-  bg-subtle: #d6d6d7,
-  bg-surface: #e5e5e6,
-  bg-highlight: #f0f0f1,
-  ref: #abb2bf,
-  deactive: #9ca3af,
+  bg-frame: #e2e2e5,
+  bg-subtle: #d6d6da,
+  bg-surface: #ececef,
+  bg-highlight: #f6f6f8,
+  ref: #9ba0ab,
+  deactive: #b3b8c2,
   accent: #4078f2,
   accent-contrast: white,
   warning-color: #e45649,
   font-color: #383a42,
-  close-btn-color: #383a42,
-  tooltip-bg: colors.$grey-6,
-  tooltip-font: white,
-  search-highlight: colors.$yellow-1,
-  search-highlight-current: colors.$yellow-3,
+  close-btn-color: #5c5e66,
+  tooltip-bg: #4b4d55,
+  tooltip-font: #f6f6f8,
+  search-highlight: #fef9c3,
+  search-highlight-current: #fcd34d,
   hover-foreground-color: white,
-  disabled-bg: #abb2bf,
+  disabled-bg: #b3b8c2,
 );

@@ -2,19 +2,31 @@
 @use "./light.scss";
 @use "./slate.scss";
 @use "./solarized.scss";
+@use "./dark.scss";
 
+// color-scheme keeps native widgets (inputs, native scrollbars) on the same
+// side of the flip as the palette.
 :root {
   @include base.define-theme-from-palette(light.$palette);
+  color-scheme: light;
 }
 
 html.light {
   @include base.define-theme-from-palette(light.$palette);
+  color-scheme: light;
 }
 
 html.solarized {
   @include base.define-theme-from-palette(solarized.$palette);
+  color-scheme: light;
 }
 
 html.slate {
   @include base.define-theme-from-palette(slate.$palette);
+  color-scheme: light;
+}
+
+html.dark {
+  @include base.define-theme-from-palette(dark.$palette);
+  color-scheme: dark;
 }

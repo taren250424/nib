@@ -32,7 +32,12 @@ export class TabEditorFacade {
     @inject(DI.CommandQueue) private readonly commandQueue: CommandQueue
   ) {
     this.renderer.setAutoSaveNotifier((kind) => this._handleAutoSaveEvent(kind))
-    this.renderer.setEditNotifier((view) => this._refreshSearchAfterEdit(view))
+    this.renderer.setEditNotifier((view) => {
+      this._refreshSearchAfterEdit(view)
+      // A background tab can be edited too — a watched file reloading its
+      // content — and the badge describes only the document on display.
+      if (view.getId() === this.activeTabId) this._paintWordCount(view)
+    })
   }
 
   //
@@ -62,6 +67,14 @@ export class TabEditorFacade {
       hasActiveEditor: id !== -1,
       editorIsBinary: view?.isBinary ?? false,
     })
+
+    // The single mutation point for "which tab", so the word count follows from here.
+    this._paintWordCount(view)
+  }
+
+  /** Repaints the word count badge; a missing or binary view empties it. */
+  private _paintWordCount(view: TabEditorView | undefined) {
+    this.renderer.updateWordCount(view && !view.isBinary ? view.getWordCount() : null)
   }
 
   get activeTabIndex() {

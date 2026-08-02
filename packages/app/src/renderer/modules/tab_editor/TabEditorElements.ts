@@ -11,6 +11,7 @@ export class TabEditorElements {
 
   public readonly tabContainer: HTMLElement
   public readonly editorContainer: HTMLElement
+  public readonly wordCount: HTMLElement
 
   public readonly findAndReplaceContainer: HTMLElement
   public readonly findBox: HTMLElement
@@ -40,6 +41,7 @@ export class TabEditorElements {
 
     this.tabContainer = document.querySelector("#tab-container") as HTMLElement
     this.editorContainer = document.querySelector("#editor-container") as HTMLElement
+    this.wordCount = document.querySelector("#word-count") as HTMLElement
 
     this.findAndReplaceContainer = document.querySelector("#find-replace-container") as HTMLElement
     this.findBox = document.querySelector("#find") as HTMLElement

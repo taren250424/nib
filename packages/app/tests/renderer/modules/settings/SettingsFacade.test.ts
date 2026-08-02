@@ -39,7 +39,7 @@ describe("SettingsFacade draft and current", () => {
     change(elements().fontSizeInput, "20")
 
     expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(20)
-    expect(editorOf(harness.settingsFacade.getCurrentSettings()).fontSize).toBe(12)
+    expect(editorOf(harness.settingsFacade.getCurrentSettings()).fontSize).toBe(16)
   })
 
   it("reports the edited fields and the untouched ones alike", () => {
@@ -48,8 +48,8 @@ describe("SettingsFacade draft and current", () => {
     const changes = harness.settingsFacade.getChangeSet()
     expect(editorOf(changes).width).toBe(800)
     // Not a diff: an untouched field comes back as what it already is, so the
-    // change set can be applied whole.
-    expect(editorOf(changes).fontFamily).toBe("sans-serif")
+    // change set can be applied whole. Empty means the app's own font stack.
+    expect(editorOf(changes).fontFamily).toBe("")
   })
 
   it("takes what a select reports", () => {
@@ -94,7 +94,9 @@ describe("settings apply", () => {
     const container = harness.tabEditor.elements.editorContainer
     expect(container.style.getPropertyValue("--editor-width")).toBe("800px")
     expect(container.style.getPropertyValue("--text-base")).toBe("20px")
-    expect(container.style.fontFamily).toBe("serif")
+    // The family lands as the --font-content override, not as an inline
+    // font-family — see TabEditorRenderer.changeFontFamily.
+    expect(container.style.getPropertyValue("--font-content")).toBe("serif")
     expect(harness.tabEditor.store.autoSaveMode).toBe("afterDelay")
   })
 
@@ -157,18 +159,18 @@ describe("settings dialog", () => {
 
     elements().close.click()
 
-    expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(12)
+    expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(16)
   })
 
   // The field has to go back with the draft. Showing 20 over a draft that says
-  // 12 would be worse than not reverting at all.
+  // 16 would be worse than not reverting at all.
   it("puts the field back to what is in force", () => {
     handleSettings(async () => undefined, harness.settingsFacade)
     change(elements().fontSizeInput, "20")
 
     elements().close.click()
 
-    expect(elements().fontSizeInput.value).toBe("12")
+    expect(elements().fontSizeInput.value).toBe("16")
   })
 
   it("gives it up through the X as well as the Close button", () => {
@@ -177,7 +179,7 @@ describe("settings dialog", () => {
 
     elements().exit.click()
 
-    expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(12)
+    expect(editorOf(harness.settingsFacade.getDraftSettings()).fontSize).toBe(16)
   })
 
   // What the abandoned draft actually cost: the change set is not a diff, so
@@ -191,6 +193,6 @@ describe("settings dialog", () => {
     const changes = harness.settingsFacade.getChangeSet()
 
     expect(changes.settingThemeViewModel.theme).toBe("slate")
-    expect(editorOf(changes).fontSize).toBe(12)
+    expect(editorOf(changes).fontSize).toBe(16)
   })
 })

@@ -1,0 +1,23 @@
+// Font stacks for the whole app. Nothing here loads a webfont — these pick the
+// best faces already on the machine, Korean included.
+:root {
+  // UI chrome: title bar, menus, tabs, dialogs, tree.
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo",
+    system-ui, sans-serif;
+
+  // Document body. The Font Family setting overrides this per editor container
+  // (see TabEditorRenderer.changeFontFamily).
+  --font-content: var(--font-ui);
+
+  // The Milkdown Nord stylesheet resolves code/blockquote faces from the
+  // Tailwind names below, so they are defined here once, on top of ours.
+  // Blockquotes deliberately follow the body face instead of dropping into a
+  // serif that matches nothing else on the page.
+  --font-mono: "Cascadia Mono", "Consolas", "D2Coding", ui-monospace, monospace;
+  --font-sans: var(--font-content);
+  --font-serif: var(--font-content);
+}
+
+body {
+  font-family: var(--font-ui);
+}

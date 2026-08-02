@@ -26,6 +26,7 @@ export class MenuElements {
   public readonly zoomOut: HTMLElement
   public readonly zoomReset: HTMLElement
   public readonly fileTree: HTMLElement
+  public readonly wordCount: HTMLElement
 
   public readonly information: HTMLElement
 
@@ -54,6 +55,7 @@ export class MenuElements {
     this.zoomOut = document.querySelector("#view-menu-zoom-out") as HTMLElement
     this.zoomReset = document.querySelector("#view-menu-zoom-reset") as HTMLElement
     this.fileTree = document.querySelector("#view-menu-file-tree") as HTMLElement
+    this.wordCount = document.querySelector("#view-menu-word-count") as HTMLElement
 
     this.information = document.querySelector("#help-information") as HTMLElement
   }

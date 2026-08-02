@@ -33,7 +33,7 @@ export class SettingsController {
 
     if (theme) {
       const html = document.documentElement
-      html.classList.remove("light", "solarized", "slate")
+      html.classList.remove("light", "solarized", "slate", "dark")
       html.classList.add(theme)
     }
 

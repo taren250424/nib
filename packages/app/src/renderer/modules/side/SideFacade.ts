@@ -30,6 +30,14 @@ export class SideFacade {
     this.store.setSideWidth(width)
   }
 
+  isWordCountVisible(): boolean {
+    return this.store.isWordCountVisible()
+  }
+
+  setWordCountVisibleState(state: boolean) {
+    this.store.setWordCountVisibleState(state)
+  }
+
   // renderer
 
   updateSideWidth(width: number) {
@@ -84,6 +92,7 @@ export class SideFacade {
     await window.rendererToMain.syncSideSessionFromRenderer({
       open: this.isSideOpen(),
       width: this.getSideWidth(),
+      wordCountVisible: this.isWordCountVisible(),
     })
   }
 }

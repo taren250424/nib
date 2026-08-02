@@ -1,21 +1,24 @@
 @use "../colors.scss" as colors;
 
+// Warm paper neutrals. The four bg steps sit close together on purpose:
+// title bar, tab strip and document should read as one sheet, not as
+// stacked grey bands.
 $palette: (
-  bg-frame: colors.$grey-3,
-  bg-subtle: colors.$grey-2,
-  bg-surface: colors.$grey-1,
-  bg-highlight: #fafafa,
-  ref: colors.$grey-5,
-  deactive: colors.$grey-6,
-  accent: colors.$red-2,
-  accent-contrast: black,
-  warning-color: colors.$red-3,
-  font-color: black,
-  close-btn-color: colors.$grey-7,
-  tooltip-bg: colors.$grey-6,
-  tooltip-font: white,
+  bg-frame: #f0eeea,
+  bg-subtle: #e6e2db,
+  bg-surface: #f7f5f1,
+  bg-highlight: #fcfbf8,
+  ref: #a19d94,
+  deactive: #bcb8af,
+  accent: #c2483f,
+  accent-contrast: white,
+  warning-color: #d64541,
+  font-color: #24272c,
+  close-btn-color: #6b6862,
+  tooltip-bg: #4a4843,
+  tooltip-font: #f7f5f1,
   search-highlight: colors.$yellow-1,
   search-highlight-current: colors.$yellow-3,
   hover-foreground-color: white,
-  disabled-bg: colors.$grey-5,
+  disabled-bg: #c9c5bd,
 );

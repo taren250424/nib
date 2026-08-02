@@ -57,13 +57,25 @@ $offset: $mark-size + $mark-gap;
   }
 }
 
+.milkdown {
+  font-family: var(--font-content);
+}
+
+// The Nord stylesheet pins this to its own blue; the id outranks it so the
+// quote border follows the theme's accent like every other accent mark.
+#editor-container .milkdown blockquote {
+  border-color: var(--accent);
+}
+
 .milkdown > .editor {
-  width: var(--editor-width, 500px);
+  width: var(--editor-width, 720px);
   min-width: 100px;
   max-width: calc(100% - 60px);
   min-height: calc(100% - 80px);
   white-space: pre-wrap;
-  word-break: break-all;
+  // Not break-all: that broke Latin words at any letter. This only breaks
+  // inside a word when the alternative is overflowing the column.
+  overflow-wrap: break-word;
   margin: 40px 0;
 
   position: relative;
@@ -77,7 +89,8 @@ $offset: $mark-size + $mark-gap;
     bottom: -$offset;
     pointer-events: none;
     z-index: 10;
-    opacity: 0.5;
+    // Quiet enough to read as a signature, not a border.
+    opacity: 0.22;
 
     background:
 			/* Top Left */
@@ -100,4 +113,24 @@ $offset: $mark-size + $mark-gap;
       $mark-size $mark-thickness,
       $mark-thickness $mark-size;
   }
+}
+
+// Word count for the active document, floating over the paper like a colophon.
+// Emptied (not hidden) when no countable document is active; the View menu
+// toggles its visibility separately.
+#word-count {
+  position: absolute;
+  right: 16px;
+  bottom: 10px;
+  z-index: 20;
+
+  font-size: 0.78rem;
+  color: var(--status-font);
+
+  user-select: none;
+  pointer-events: none;
+}
+
+#word-count:empty {
+  display: none;
 }

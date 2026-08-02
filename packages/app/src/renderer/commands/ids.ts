@@ -68,6 +68,7 @@ export type CommandId =
   | "view.zoomOut"
   | "view.zoomReset"
   | "view.toggleSide"
+  | "view.toggleWordCount"
   //
   | "settings.open"
   | "settings.apply"

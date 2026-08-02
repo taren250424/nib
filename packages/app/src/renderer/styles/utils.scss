@@ -55,6 +55,24 @@ $tooltip-border-radius: 4px;
   margin-right: 12px;
 }
 
+// Ticks any toggleable dropdown item (View > File Tree, Word Count, …) that
+// carries the selected state.
+.dropdown-item.selected > .checkbox {
+  position: relative;
+}
+
+.dropdown-item.selected > .checkbox::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 6px;
+  height: 10px;
+  border-right: 2px solid var(--app-font-color);
+  border-bottom: 2px solid var(--app-font-color);
+  transform: rotate(45deg);
+}
+
 .dropdown-item > .text {
   flex: 1;
 

@@ -54,6 +54,7 @@
                 <label>Theme</label>
                 <velin-select>
                   <velin-option value="light">Light</velin-option>
+                  <velin-option value="dark">Dark</velin-option>
                   <velin-option value="solarized">Solarized</velin-option>
                   <velin-option value="slate">Slate</velin-option>
                 </velin-select>
@@ -228,6 +229,10 @@
                 <span class="checkbox"></span>
                 <div class="text">File Tree<span class="shortcut"></span></div>
               </div>
+              <div id="view-menu-word-count" class="dropdown-item">
+                <span class="checkbox"></span>
+                <div class="text">Word Count<span class="shortcut"></span></div>
+              </div>
             </div>
           </div>
 
@@ -245,7 +250,7 @@
         <div id="window" class="no-drag">
           <button id="minimizeWindow">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <line x1="5" y1="12" x2="19" y2="12" stroke="black" stroke-width="2" stroke-linecap="round" />
+              <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </button>
           <button id="maximizeWindow">
@@ -255,7 +260,7 @@
                 y="5"
                 width="14"
                 height="14"
-                stroke="black"
+                stroke="currentColor"
                 stroke-width="2"
                 fill="none"
                 stroke-linecap="round"
@@ -265,7 +270,7 @@
           </button>
           <button id="title-exit">
             <svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
-              <path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
+              <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </button>
         </div>
@@ -279,11 +284,11 @@
               <div id="tree-top-icons">
                 <button id="tree-top-add-file" class="tooltip-btn">
                   <svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 5 L65 5 L85 25 L85 105 L5 105 Z" fill="white" stroke="black" stroke-width="2" />
-                    <path d="M65 5 L65 25 L85 25" fill="none" stroke="black" stroke-width="2" />
-                    <line x1="20" y1="45" x2="70" y2="45" stroke="black" stroke-width="1.5" />
-                    <line x1="20" y1="60" x2="70" y2="60" stroke="black" stroke-width="1.5" />
-                    <line x1="20" y1="75" x2="55" y2="75" stroke="black" stroke-width="1.5" />
+                    <path d="M5 5 L65 5 L85 25 L85 105 L5 105 Z" fill="none" stroke="currentColor" stroke-width="2" />
+                    <path d="M65 5 L65 25 L85 25" fill="none" stroke="currentColor" stroke-width="2" />
+                    <line x1="20" y1="45" x2="70" y2="45" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="20" y1="60" x2="70" y2="60" stroke="currentColor" stroke-width="1.5" />
+                    <line x1="20" y1="75" x2="55" y2="75" stroke="currentColor" stroke-width="1.5" />
                   </svg>
                   <span class="tooltip tooltip-bottom-left">Add File</span>
                 </button>
@@ -291,8 +296,8 @@
                   <svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M5 15 L5 5 L40 5 L50 15 L85 15 L85 105 L5 105 Z"
-                      fill="white"
-                      stroke="black"
+                      fill="none"
+                      stroke="currentColor"
                       stroke-width="2"
                     />
                   </svg>
@@ -344,7 +349,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
                     <path
                       d="M12 19V5M5 12L12 5L19 12"
-                      stroke="black"
+                      stroke="currentColor"
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -357,7 +362,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
                     <path
                       d="M12 5V19M5 12L12 19L19 12"
-                      stroke="black"
+                      stroke="currentColor"
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -368,7 +373,7 @@
                 </button>
                 <button id="close-find-replace">
                   <svg xmlns="http://www.w3.org/2000/svg" class="svg-close" viewBox="0 0 24 24" width="16" height="16">
-                    <path d="M6 6L18 18M18 6L6 18" stroke="black" stroke-width="2" stroke-linecap="round" />
+                    <path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
                   </svg>
                 </button>
 
@@ -387,7 +392,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
                     <path
                       d="M7 19V5H13C15.2091 5 17 6.79086 17 9C17 11.2091 15.2091 13 13 13H7M13 13L17 19"
-                      stroke="black"
+                      stroke="currentColor"
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -400,7 +405,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
                     <path
                       d="M5 19L12 5L19 19M7 14H17"
-                      stroke="black"
+                      stroke="currentColor"
                       stroke-width="2"
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -413,6 +418,8 @@
                 <span id="replace-info"></span>
               </div>
             </div>
+
+            <div id="word-count"></div>
           </div>
         </div>
       </div>

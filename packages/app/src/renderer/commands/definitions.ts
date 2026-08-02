@@ -1,6 +1,6 @@
 import type { SettingsViewModel } from "@renderer/viewmodels/SettingsViewModel"
 
-import { exit, toggleSide } from "../actions"
+import { exit, toggleSide, toggleWordCount } from "../actions"
 import type { CommandContext, ICommandDescriptor, Task } from "../core"
 import type {
   FindReplaceController,
@@ -254,6 +254,13 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
         sideFacade.setSideOpenState(!sideFacade.isSideOpen())
         sideFacade.syncSession()
         toggleSide(menuElements, sideFacade)
+      },
+    },
+    "view.toggleWordCount": {
+      run: () => {
+        sideFacade.setWordCountVisibleState(!sideFacade.isWordCountVisible())
+        sideFacade.syncSession()
+        toggleWordCount(menuElements, sideFacade, tabEditorFacade)
       },
     },
 

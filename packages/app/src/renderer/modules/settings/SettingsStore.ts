@@ -15,9 +15,10 @@ export class SettingsStore {
   constructor() {
     this._currentSettings = {
       settingEditorViewModel: {
-        width: 500,
-        fontSize: 12,
-        fontFamily: "sans-serif",
+        width: 720,
+        fontSize: 16,
+        // Empty means the app's --font-content stack; any value here overrides it.
+        fontFamily: "",
         autoSave: "off",
       },
 
@@ -34,9 +35,9 @@ export class SettingsStore {
   toSettingsViewModel(dto: SettingsDto): SettingsViewModel {
     return {
       settingEditorViewModel: {
-        width: dto.settingEditorDto?.width ?? 500,
-        fontSize: dto.settingEditorDto?.fontSize ?? 12,
-        fontFamily: dto.settingEditorDto?.fontFamily ?? "sans-serif",
+        width: dto.settingEditorDto?.width ?? 720,
+        fontSize: dto.settingEditorDto?.fontSize ?? 16,
+        fontFamily: dto.settingEditorDto?.fontFamily ?? "",
         autoSave: dto.settingEditorDto?.autoSave ?? "off",
       },
       settingThemeViewModel: dto.settingThemeDto as SettingThemeViewModel,

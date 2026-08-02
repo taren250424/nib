@@ -314,12 +314,13 @@ export class TabEditorRenderer {
     setVar("--text-2xl", `${baseSize * scale.xl_2}px`)
     setVar("--text-3xl", `${baseSize * scale.xl_3}px`)
 
-    // Line heights
-    setVar("--text-sm-line-height", (1.25 / 0.875).toString())
-    setVar("--text-base-line-height", "1.5")
-    setVar("--text-xl-line-height", (1.75 / 1.25).toString())
-    setVar("--text-2xl-line-height", (2 / 1.5).toString())
-    setVar("--text-3xl-line-height", (2.25 / 0.875).toString())
+    // Line heights. Double-dashed, matching the Tailwind names the Nord
+    // stylesheet actually reads — single-dashed variants set nothing.
+    setVar("--text-sm--line-height", (1.25 / 0.875).toString())
+    setVar("--text-base--line-height", "1.75")
+    setVar("--text-xl--line-height", (1.75 / 1.25).toString())
+    setVar("--text-2xl--line-height", (2 / 1.5).toString())
+    setVar("--text-3xl--line-height", (2.25 / 1.875).toString())
 
     // Etc
     setVar("--spacing", `${baseSize * scale.spacing}px`)
@@ -327,11 +328,20 @@ export class TabEditorRenderer {
   }
 
   changeFontFamily(family: string) {
-    this.elements.editorContainer.style.fontFamily = family
+    // Overrides the --font-content stack rather than setting font-family
+    // directly: the .milkdown rule that applies the stack to the document
+    // would win over an inherited inline style.
+    this.elements.editorContainer.style.setProperty("--font-content", family)
   }
 
   changeEditorWidth(width: number) {
     this.elements.editorContainer.style.setProperty("--editor-width", `${width}px`)
+  }
+
+  /** Null when there is nothing to count — the badge empties and CSS hides it. */
+  updateWordCount(count: number | null) {
+    this.elements.wordCount.textContent =
+      count === null ? "" : `${count.toLocaleString()} ${count === 1 ? "word" : "words"}`
   }
 
   //

@@ -168,6 +168,14 @@ export class TabEditorView {
     })
   }
 
+  /** Whitespace-separated words in the document, counted from its text, not its markdown. */
+  getWordCount(): number {
+    const view = this._editor!.ctx.get(editorViewCtx)
+    const doc = view.state.doc
+    const text = doc.textBetween(0, doc.content.size, "\n", " ")
+    return text.match(/\S+/g)?.length ?? 0
+  }
+
   setContent(content: string): void {
     this._editor!.action((ctx) => {
       const view = ctx.get(editorViewCtx)
