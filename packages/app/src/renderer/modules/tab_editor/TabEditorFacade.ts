@@ -4,7 +4,7 @@ import type { TabEditorViewModel } from "../../viewmodels/TabEditorViewModel"
 
 import { inject, injectable } from "inversify"
 
-import { DATASET_ATTR_TAB_ID, EXIT_TEXT } from "../../constants/dom"
+import { DATASET_ATTR_TAB_ID } from "../../constants/dom"
 import { TabEditorRenderer } from "./TabEditorRenderer"
 import { TabEditorStore } from "./TabEditorStore"
 import { TabEditorView } from "./TabEditorView"
@@ -14,7 +14,7 @@ import { CommandQueue, ContextKeyService } from "@renderer/core"
 import { adjustMenuPosition, assert } from "@renderer/utils"
 import { DI, DOM } from "@renderer/constants"
 
-import { BINARY_FILE_WARNING } from "./messages"
+import { BINARY_FILE_WARNING, saveFailedMessage } from "./messages"
 
 export { BINARY_FILE_WARNING }
 
@@ -591,6 +591,7 @@ export class TabEditorFacade {
       filePath: filePath,
       fileName: fileName,
       initialContent: content,
+      saveFailed: false,
     }
 
     this.store.setTabEditorViewModelById(id, vm)
@@ -631,12 +632,16 @@ export class TabEditorFacade {
         tv.setSuppressInputEvent(false)
 
         tv.setTabSpanTextContent(dto.fileName)
-        tv.setTabButtonTextContent(EXIT_TEXT)
-        tv.tabBox.classList.remove(DOM.CLASS_IS_MODIFIED)
 
         vm.isModified = false
         vm.filePath = dto.filePath
         vm.fileName = dto.fileName
+        // The one place a refused save is forgiven: a write has just landed, so
+        // whatever was in the way of the last one no longer is.
+        vm.saveFailed = false
+
+        // After the view model, never before: the badge is painted from it.
+        this.renderer.paintModifiedBadge(tv, vm)
       }
     }
   }
@@ -651,7 +656,14 @@ export class TabEditorFacade {
 
   setAutoSaveMode(mode: string) {
     this.store.autoSaveMode = mode
-    if (mode !== "afterDelay") this._clearAutoSaveTimer()
+
+    // The pending save has to land rather than be dropped. afterDelay hides the
+    // modified dot, so throwing the timer away would leave a tab looking clean
+    // over a file on disk that is a keystroke behind.
+    if (mode !== "afterDelay" && this._autoSaveTimer !== null) {
+      this._clearAutoSaveTimer()
+      this._runAutoSave()
+    }
   }
 
   notifyWindowBlurForAutoSave() {
@@ -698,8 +710,40 @@ export class TabEditorFacade {
       if (!dto.isModified || !dto.filePath || dto.isBinary) continue
 
       const response: Response<TabEditorDto> = await window.rendererToMain.save(dto)
-      if (response.result && !response.data.isModified) this.applySaveResult(response.data)
+
+      if (!response.result) {
+        // Nothing is skipped or remembered: the next keystroke tries this tab
+        // again, so a lock that lifts on its own heals without being asked to.
+        // Said out loud once per run of failures, though — auto save fires
+        // while the user types, and a dialog per keystroke is worse than the
+        // failure it reports.
+        if (this.markSaveFailed(dto.id)) {
+          await window.rendererToMain.showWarning(saveFailedMessage(dto.fileName, response.error))
+        }
+        continue
+      }
+
+      if (!response.data.isModified) this.applySaveResult(response.data)
     }
+  }
+
+  /**
+   * Records that a tab's save came back refused, and repaints its dot.
+   *
+   * Answers whether this is the first refusal in a run, which is what a caller
+   * the user did not ask for needs in order to decide whether to speak.
+   */
+  markSaveFailed(id: number): boolean {
+    const vm = this.getTabEditorViewModelById(id)
+    if (!vm) return false
+
+    const firstFailure = !vm.saveFailed
+    vm.saveFailed = true
+
+    const index = this.renderer.getTabEditorViewIndexById(id)
+    if (index !== -1) this.renderer.paintModifiedBadge(this.renderer.getTabEditorViewByIndex(index), vm)
+
+    return firstFailure
   }
 
   private _removeTabAt(index: number) {

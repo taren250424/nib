@@ -10,6 +10,7 @@ import { TabEditorView } from "./TabEditorView"
 import { BINARY_FILE_WARNING } from "./messages"
 import { DI, DOM } from "@renderer/constants"
 import type { TabEditorElements } from "./TabEditorElements"
+import { TabEditorStore } from "./TabEditorStore"
 import { throttle } from "../../utils/throttle"
 
 @injectable()
@@ -26,17 +27,28 @@ export class TabEditorRenderer {
     /* no-op until the facade registers its notifier */
   }
   private _throttledTempSave = throttle(async (view: TabEditorView, vm: TabEditorViewModel) => {
-    await window.rendererToMain.tempSave({
-      id: vm.id,
-      isModified: vm.isModified,
-      filePath: vm.filePath,
-      fileName: vm.fileName,
-      content: view.getContent(),
-      isBinary: vm.isBinary,
-    })
+    // Nobody holds this promise — the throttle drops it and the caller was a
+    // keystroke — so a rejection would surface as an unhandled one. The copy
+    // this writes is only read after a crash, which is not a thing to interrupt
+    // typing over; the log is where it goes.
+    try {
+      await window.rendererToMain.tempSave({
+        id: vm.id,
+        isModified: vm.isModified,
+        filePath: vm.filePath,
+        fileName: vm.fileName,
+        content: view.getContent(),
+        isBinary: vm.isBinary,
+      })
+    } catch (e) {
+      console.error("[TabEditorRenderer] the crash-recovery copy could not be written:", e)
+    }
   }, 1500)
 
-  constructor(@inject(DI.TabEditorElements) readonly elements: TabEditorElements) {}
+  constructor(
+    @inject(DI.TabEditorElements) readonly elements: TabEditorElements,
+    @inject(DI.TabEditorStore) private readonly store: TabEditorStore
+  ) {}
 
   setAutoSaveNotifier(notifier: (kind: "input" | "blur") => void) {
     this._autoSaveNotifier = notifier
@@ -109,6 +121,30 @@ export class TabEditorRenderer {
     return { editorBox, editor }
   }
 
+  /**
+   * The one place the modified dot is painted, so the policy behind it is
+   * stated once.
+   *
+   * Under `afterDelay` auto save a tab that has a path is dirty for about a
+   * second at a time — nothing the user can act on — so the dot stays off. An
+   * untitled tab keeps it: saving one opens a dialog, so `_doRunAutoSave`
+   * skips it and its unsaved state is real and lasting.
+   *
+   * A refused save brings the dot back in every mode. The premise for hiding it
+   * is that something else is taking care of the file, and a save that came
+   * back refused is exactly the case where nothing is.
+   */
+  paintModifiedBadge(view: TabEditorView, vm: TabEditorViewModel) {
+    const autoSaved = this.store.autoSaveMode === "afterDelay" && Boolean(vm.filePath)
+    const show = vm.isModified && (!autoSaved || vm.saveFailed)
+
+    view.setTabButtonTextContent(show ? DOM.MODIFIED_TEXT : DOM.EXIT_TEXT)
+    // The class goes with the text rather than with vm.isModified: the hover
+    // handlers repaint the button from it, so leaving it on would bring the dot
+    // back the moment the pointer left the tab.
+    view.tabBox.classList.toggle(DOM.CLASS_IS_MODIFIED, show)
+  }
+
   private _handleEditorInput(view: TabEditorView, vm: TabEditorViewModel) {
     const current = view.getContent()
     const isModified = current !== vm.initialContent
@@ -117,16 +153,13 @@ export class TabEditorRenderer {
       this._throttledTempSave(view, vm)
     }
 
-    if (isModified && !vm.isModified) {
-      vm.isModified = true
-      view.setTabButtonTextContent(DOM.MODIFIED_TEXT)
-      view.tabBox.classList.add(DOM.CLASS_IS_MODIFIED)
-    } else if (!isModified && vm.isModified) {
-      vm.isModified = false
-      view.setTabButtonTextContent(DOM.EXIT_TEXT)
-      view.tabBox.classList.remove(DOM.CLASS_IS_MODIFIED)
+    if (isModified !== vm.isModified) {
+      vm.isModified = isModified
+      this.paintModifiedBadge(view, vm)
 
-      this._throttledTempSave(view, vm)
+      // The edit that undoes the last change still has to reach the temp file,
+      // or a crash would restore the version the tab has just left behind.
+      if (!isModified) this._throttledTempSave(view, vm)
     }
 
     this._editNotifier(view)
@@ -143,15 +176,10 @@ export class TabEditorRenderer {
   }
 
   async createTabAndEditor(viewModel: TabEditorViewModel) {
-    const { id, isModified, isBinary, filePath, fileName, initialContent } = viewModel
+    const { id, isBinary, filePath, fileName, initialContent } = viewModel
 
     const { tabBox, tabSpan, tabButton } = this._createTabEl(String(id), filePath, fileName)
     const { editorBox, editor } = await this._createEditorEl(isBinary, initialContent)
-
-    if (isModified) {
-      tabButton.textContent = DOM.MODIFIED_TEXT
-      tabBox.classList.add(DOM.CLASS_IS_MODIFIED)
-    }
 
     this.elements.tabContainer.appendChild(tabBox)
     this.elements.editorContainer.appendChild(editorBox)
@@ -166,6 +194,8 @@ export class TabEditorRenderer {
       (view) => this._handleEditorInput(view, viewModel),
       (view) => this._handleEditorBlur(view, viewModel)
     )
+
+    this.paintModifiedBadge(tabEditorView, viewModel)
 
     this._tabEditorViews.push(tabEditorView)
     this.setTabEditorViewByPath(filePath, tabEditorView)

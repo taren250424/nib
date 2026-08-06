@@ -320,8 +320,20 @@ export default class FileService {
         continue
       }
 
-      const result = await this.save(tab, mainWindow, false)
-      sessionArr.push({ id: result.id, filePath: result.filePath, isModified: false })
+      let result: TabEditorDto
+
+      try {
+        result = await this.save(tab, mainWindow, false)
+      } catch (e) {
+        // One unwritable file must not cost the other tabs their save.
+        console.error(`[FileService] ${filePath} could not be written:`, e)
+        result = { id, isModified: true, filePath, fileName, content, isBinary }
+      }
+
+      // Whatever came back rather than a flat false: a tab that was not written,
+      // because the write failed or its Save As was dismissed, still holds an
+      // edit, and the session is where the next start learns to look for it.
+      sessionArr.push({ id: result.id, filePath: result.filePath, isModified: result.isModified })
       responseArr.push(result)
     }
 

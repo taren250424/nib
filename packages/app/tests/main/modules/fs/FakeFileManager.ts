@@ -7,6 +7,7 @@ export default class FakeFileManager implements IFileManager {
   savedFiles: Record<string, string> = {}
   private trashFiles: Record<string, string> = {}
   private osTrashFiles: Record<string, string> = {}
+  private unwritablePaths = new Set<string>()
   private trashId = 0
 
   setPathExistence(path: string, exists: boolean) {
@@ -15,6 +16,12 @@ export default class FakeFileManager implements IFileManager {
 
   setFilecontent(path: string, data: string) {
     this.savedFiles[path] = data
+  }
+
+  /** Makes a path refuse writes, the way a read-only or locked file does. */
+  setWriteFailure(path: string, fails = true) {
+    if (fails) this.unwritablePaths.add(path)
+    else this.unwritablePaths.delete(path)
   }
 
   async exists(path: string): Promise<boolean> {
@@ -59,6 +66,10 @@ export default class FakeFileManager implements IFileManager {
   }
 
   async write(path: string, data: string, _encoding: BufferEncoding = "utf8"): Promise<void> {
+    if (this.unwritablePaths.has(path)) {
+      throw new Error(`EACCES: permission denied, open '${path}'`)
+    }
+
     this.savedFiles[path] = data
     this.pathExists[path] = true
   }

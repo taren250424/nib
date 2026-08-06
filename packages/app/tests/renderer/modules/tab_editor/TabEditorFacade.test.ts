@@ -2,8 +2,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DOM } from "@renderer/constants"
+import type { TabEditorView } from "@renderer/modules/tab_editor/TabEditorView"
 
-import { blurEditor, createFacadeHarness, openTab, typeInEditor, type FacadeHarness } from "./facadeHarness"
+import {
+  blurEditor,
+  createFacadeHarness,
+  openTab,
+  refuseSaves,
+  typeInEditor,
+  warningsShown,
+  type FacadeHarness,
+} from "./facadeHarness"
 
 const FIRST = 1
 const ROOT_DIR = "root"
@@ -373,10 +382,23 @@ describe("TabEditorFacade auto save", () => {
     expect(savedDtos()).toHaveLength(1)
   })
 
-  it("drops a pending save when the mode changes under it", async () => {
+  /**
+   * The delay mode hides the modified dot, so a dropped save would leave the
+   * tab looking clean over a stale file. The pending one lands instead, and
+   * only once — the cleared timer must not fire on top of it.
+   */
+  it("lands a pending save when the mode changes under it", async () => {
     harness.facade.setAutoSaveMode("afterDelay")
     await openModifiedTab()
 
+    harness.facade.setAutoSaveMode("off")
+    await vi.advanceTimersByTimeAsync(5000)
+
+    expect(savedDtos().map((dto) => dto.filePath)).toEqual([`${ROOT_DIR}/note.md`])
+  })
+
+  it("leaves the mode alone when no save is pending", async () => {
+    vi.useFakeTimers()
     harness.facade.setAutoSaveMode("off")
     await vi.advanceTimersByTimeAsync(5000)
 
@@ -423,5 +445,149 @@ describe("TabEditorFacade auto save", () => {
     await vi.advanceTimersByTimeAsync(1000)
 
     expect(savedDtos()).toHaveLength(0)
+  })
+})
+
+/**
+ * The modified dot, which is worth showing only where the user is the one who
+ * has to act on it. Under the delay mode a tab with a file is dirty for a
+ * second at a time and the dot would do nothing but blink.
+ */
+describe("TabEditorFacade modified badge", () => {
+  const badge = (view: TabEditorView) => ({
+    text: view.tabButton.textContent,
+    marked: view.tabBox.classList.contains(DOM.CLASS_IS_MODIFIED),
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  async function openAndType(path = `${ROOT_DIR}/note.md`) {
+    const view = await openTab(harness, { id: FIRST, content: "cat", path })
+    vi.useFakeTimers()
+    typeInEditor(view, " dog")
+    return view
+  }
+
+  it("keeps the dot off while the delay mode is saving on the user's behalf", async () => {
+    harness.facade.setAutoSaveMode("afterDelay")
+    const view = await openAndType()
+
+    expect(badge(view)).toEqual({ text: DOM.EXIT_TEXT, marked: false })
+  })
+
+  it("shows the dot on an untitled tab, which the delay mode leaves alone", async () => {
+    harness.facade.setAutoSaveMode("afterDelay")
+    const view = await openAndType("")
+
+    expect(badge(view)).toEqual({ text: DOM.MODIFIED_TEXT, marked: true })
+  })
+
+  it("shows the dot while auto save is off", async () => {
+    const view = await openAndType()
+
+    expect(badge(view)).toEqual({ text: DOM.MODIFIED_TEXT, marked: true })
+  })
+
+  // Here the dirty stretch lasts until the editor is left, which is long enough
+  // to be worth saying.
+  it("shows the dot in the focus-change mode", async () => {
+    harness.facade.setAutoSaveMode("onFocusChange")
+    const view = await openAndType()
+
+    expect(badge(view)).toEqual({ text: DOM.MODIFIED_TEXT, marked: true })
+  })
+
+  it("brings the dot back when the delay mode's save is refused", async () => {
+    harness.facade.setAutoSaveMode("afterDelay")
+    const view = await openAndType()
+    refuseSaves()
+
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(badge(view)).toEqual({ text: DOM.MODIFIED_TEXT, marked: true })
+  })
+
+  it("takes the dot off once the save lands", async () => {
+    harness.facade.setAutoSaveMode("onFocusChange")
+    const view = await openAndType()
+
+    harness.facade.applySaveResult({
+      id: FIRST,
+      isModified: false,
+      isBinary: false,
+      filePath: `${ROOT_DIR}/note.md`,
+      fileName: "note.md",
+      content: "cat dog",
+    })
+
+    expect(badge(view)).toEqual({ text: DOM.EXIT_TEXT, marked: false })
+  })
+})
+
+/**
+ * A refused write, which nothing used to notice: the loop ended where it stood
+ * and the rejection went out as an unhandled one, so the tabs behind it stayed
+ * unsaved and the user was told none of it.
+ */
+describe("TabEditorFacade auto save refusals", () => {
+  const refuseOnce = () =>
+    vi
+      .mocked(window.rendererToMain.save)
+      .mockResolvedValueOnce({ result: false, data: null as never, error: "EACCES: permission denied" })
+
+  const savedPaths = () => vi.mocked(window.rendererToMain.save).mock.calls.map(([dto]) => dto.filePath)
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  async function openModifiedTab(path = `${ROOT_DIR}/note.md`) {
+    const view = await openTab(harness, { id: FIRST, content: "cat", path })
+    harness.facade.setAutoSaveMode("afterDelay")
+    vi.useFakeTimers()
+    typeInEditor(view, " dog")
+    return view
+  }
+
+  it("goes on to the tabs behind the one that was refused", async () => {
+    const first = await openTab(harness, { id: FIRST, content: "cat", path: `${ROOT_DIR}/first.md` })
+    const second = await openTab(harness, { id: SECOND, content: "dog", path: `${ROOT_DIR}/second.md` })
+    harness.facade.setAutoSaveMode("afterDelay")
+    vi.useFakeTimers()
+    typeInEditor(first, "!")
+    typeInEditor(second, "!")
+
+    refuseOnce()
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(savedPaths()).toEqual([`${ROOT_DIR}/first.md`, `${ROOT_DIR}/second.md`])
+  })
+
+  it("names the file, once, however long the refusals go on", async () => {
+    const view = await openModifiedTab()
+    refuseSaves()
+
+    await vi.advanceTimersByTimeAsync(1000)
+    typeInEditor(view, "!")
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(savedPaths()).toHaveLength(2)
+    expect(warningsShown()).toHaveLength(1)
+    expect(warningsShown()[0]).toContain("note.md")
+  })
+
+  it("forgives the tab as soon as a save lands", async () => {
+    const view = await openModifiedTab()
+
+    refuseOnce()
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(view.tabButton.textContent).toBe(DOM.MODIFIED_TEXT)
+
+    typeInEditor(view, "!")
+    await vi.advanceTimersByTimeAsync(1000)
+
+    expect(view.tabButton.textContent).toBe(DOM.EXIT_TEXT)
   })
 })

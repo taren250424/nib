@@ -17,8 +17,21 @@ export default async function exit(
   tabSessionData: TabEditorsDto,
   treeSessionData: TreeDto
 ) {
-  await syncTab(mainWindow, fileManager, dialogManager, tabRepository, tabSessionData)
-  await syncTree(treeRepository, treeSessionData as TreeSessionModel)
+  // Quitting is what the user asked for, and a session that cannot be written
+  // must not trap them in the app. Neither half is allowed to escape and leave
+  // the window standing open with nothing said.
+  try {
+    await syncTab(mainWindow, fileManager, dialogManager, tabRepository, tabSessionData)
+  } catch (e) {
+    console.error("[exit] the tab session could not be written:", e)
+  }
+
+  try {
+    await syncTree(treeRepository, treeSessionData as TreeSessionModel)
+  } catch (e) {
+    console.error("[exit] the tree session could not be written:", e)
+  }
+
   mainWindow.close()
 }
 
@@ -30,6 +43,7 @@ async function syncTab(
   tabSessionData: TabEditorsDto
 ) {
   const data: TabSessionData[] = []
+  const unsaved: string[] = []
 
   for (const tab of tabSessionData.data) {
     const { id, isModified, filePath, fileName, content } = tab
@@ -45,20 +59,39 @@ async function syncTab(
       continue
     }
 
-    if (!filePath) {
+    let targetPath = filePath
+
+    if (!targetPath) {
       const result = await dialogManager.showSaveDialog(mainWindow, fileName)
 
       if (result.canceled || !result.filePath) {
         data.push({ id: id, filePath: filePath, isModified: false })
-      } else {
-        await fileManager.write(result.filePath, content)
-
-        data.push({ id: id, filePath: result.filePath, isModified: false })
+        continue
       }
-    } else if (filePath) {
-      await fileManager.write(filePath, content)
-      data.push({ id: id, filePath: filePath, isModified: false })
+
+      targetPath = result.filePath
     }
+
+    try {
+      await fileManager.write(targetPath, content)
+      data.push({ id: id, filePath: targetPath, isModified: false })
+    } catch (e) {
+      console.error(`[exit] ${targetPath} could not be written:`, e)
+      unsaved.push(fileName || targetPath)
+
+      // Recorded as modified and on the path it came in on: that is the shape
+      // the temp file is keyed to, so a tab that already had one is read back
+      // from it at the next start rather than losing the edit outright.
+      data.push({ id: id, filePath: filePath, isModified: true })
+    }
+  }
+
+  // Once, at the end. A dialog for each unwritable tab would be one more thing
+  // to click through on the way out.
+  if (unsaved.length > 0) {
+    await dialogManager.showWarningDialog(
+      `Could not save ${unsaved.join(", ")}. Nib is closing and those files are unchanged on disk.`
+    )
   }
 
   await tabRepository.writeTabSession({

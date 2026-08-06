@@ -42,6 +42,9 @@ export class TabEditorStore {
       fileName: dto.fileName,
       isBinary: dto.isBinary,
       initialContent: this._idToTabEditorViewModel.get(dto.id)!.initialContent,
+      // Carried over rather than reset: this rebuilds a tab that is already
+      // open, and a refused save is still refused until one succeeds.
+      saveFailed: this._idToTabEditorViewModel.get(dto.id)!.saveFailed,
     }
   }
 

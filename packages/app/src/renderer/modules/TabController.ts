@@ -12,6 +12,7 @@ import { CommandQueue } from "../core"
 // is needed here rather than `import type` because emitDecoratorMetadata writes
 // these into the constructor's design:paramtypes.
 import { TabEditorFacade } from "./tab_editor/TabEditorFacade"
+import { saveFailedMessage } from "./tab_editor/messages"
 import { FindReplaceController } from "./tab_editor/FindReplaceController"
 import { TreeFacade } from "./tree/TreeFacade"
 import { TreeHistory } from "./tree/TreeHistory"
@@ -134,7 +135,16 @@ export class TabController {
     const dto = this.tabEditorFacade.getActiveTabEditorDto()
     if (!dto.isModified) return
     const response: Response<TabEditorDto> = await window.rendererToMain.save(dto)
-    if (response.result && !response.data.isModified) this.tabEditorFacade.applySaveResult(response.data)
+
+    // Every time, unlike auto save: the user pressed Save a moment ago and is
+    // waiting to hear whether it took.
+    if (!response.result) {
+      this.tabEditorFacade.markSaveFailed(dto.id)
+      await window.rendererToMain.showWarning(saveFailedMessage(dto.fileName, response.error))
+      return
+    }
+
+    if (!response.data.isModified) this.tabEditorFacade.applySaveResult(response.data)
   }
 
   performSaveAs() {
@@ -144,7 +154,15 @@ export class TabController {
   private async _doSaveAs() {
     const dto: TabEditorDto = this.tabEditorFacade.getActiveTabEditorDto()
     const response: Response<TabEditorDto> = await window.rendererToMain.saveAs(dto)
-    if (response.result && response.data) {
+
+    // The tab itself is not marked: what was refused is a write to the path the
+    // user just picked, which says nothing about the one the tab already has.
+    if (!response.result) {
+      await window.rendererToMain.showWarning(saveFailedMessage(dto.fileName, response.error))
+      return
+    }
+
+    if (response.data) {
       this.tabEditorFacade.applySaveResult(response.data)
       await this.tabEditorFacade.addTab(
         response.data.id,
@@ -164,7 +182,22 @@ export class TabController {
   private async _doSaveAll() {
     const tabEditorsDto: TabEditorsDto = this.tabEditorFacade.getTabEditorsDto()
     const response: Response<TabEditorsDto> = await window.rendererToMain.saveAll(tabEditorsDto)
-    if (response.result) this.tabEditorFacade.applySaveAllResults(response.data)
+
+    if (!response.result) {
+      await window.rendererToMain.showWarning(saveFailedMessage("the open files", response.error))
+      return
+    }
+
+    this.tabEditorFacade.applySaveAllResults(response.data)
+
+    // A tab that went in with a path and came back still modified was refused.
+    // There is no dialog anywhere in that route for the user to have dismissed,
+    // so nothing else can account for it.
+    const refused = response.data.data.filter((d) => d.filePath && d.isModified)
+    if (refused.length === 0) return
+
+    refused.forEach((d) => this.tabEditorFacade.markSaveFailed(d.id))
+    await window.rendererToMain.showWarning(saveFailedMessage(refused.map((d) => d.fileName).join(", ")))
   }
 
   //

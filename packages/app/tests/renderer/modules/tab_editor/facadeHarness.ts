@@ -9,6 +9,7 @@ import { TabEditorFacade } from "@renderer/modules/tab_editor/TabEditorFacade"
 import { TabEditorRenderer } from "@renderer/modules/tab_editor/TabEditorRenderer"
 import { TabEditorStore } from "@renderer/modules/tab_editor/TabEditorStore"
 import type { TabEditorView } from "@renderer/modules/tab_editor/TabEditorView"
+import type { TabEditorDto } from "@shared/dto/TabEditorDto"
 
 import { installLayoutShim } from "./editorHarness"
 
@@ -88,7 +89,7 @@ export function buildFacadeHarness(
 
   const store = new TabEditorStore()
   const elements = new TabEditorElements()
-  const renderer = new TabEditorRenderer(elements)
+  const renderer = new TabEditorRenderer(elements, store)
   const facade = new TabEditorFacade(store, renderer, new TabDragState(), contextKeyService, commandQueue)
 
   return { facade, store, renderer, elements, contextKeyService, commandQueue }
@@ -105,9 +106,32 @@ function installIpcStub() {
   window.rendererToMain = {
     ...window.rendererToMain,
     tempSave: vi.fn().mockResolvedValue({ result: true }),
-    save: vi.fn().mockResolvedValue({ result: false }),
+    // Shaped like the handler it stands in for: a write that lands gives the tab
+    // back unmodified, which is what tells the renderer to drop its dot.
+    save: vi.fn(async (dto: TabEditorDto) => ({ result: true, data: { ...dto, isModified: false } })),
     syncTabSessionFromRenderer: vi.fn().mockResolvedValue(true),
   } as unknown as typeof window.rendererToMain
+
+  // Only if nobody has one yet. The tree harness stubs this channel too and its
+  // tests assert on the spy it kept a handle to, so replacing it here would take
+  // that spy out from under them whenever the two are built in one document.
+  if (!window.rendererToMain.showWarning) {
+    window.rendererToMain.showWarning = vi.fn().mockResolvedValue(undefined)
+  }
+
+  // Kept, but not with the last test's calls still on it: a spy that outlives
+  // the harness has to start each one empty the way a fresh one would.
+  vi.mocked(window.rendererToMain.showWarning).mockClear()
+}
+
+/** Makes every save from here on come back refused, the way a locked file does. */
+export function refuseSaves(error = "EACCES: permission denied") {
+  vi.mocked(window.rendererToMain.save).mockResolvedValue({ result: false, data: null as never, error })
+}
+
+/** What the user was told, across every warning raised so far. */
+export function warningsShown() {
+  return vi.mocked(window.rendererToMain.showWarning).mock.calls.map(([message]) => message)
 }
 
 /**

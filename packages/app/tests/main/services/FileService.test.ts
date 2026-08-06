@@ -439,4 +439,35 @@ describe("FileService.saveAll", () => {
     expect(session!.data[3].filePath).toBe("")
     expect(spy).toHaveBeenCalledTimes(2)
   })
+
+  // One unwritable file used to end the loop where it stood, taking the save of
+  // every tab behind it with no word to anyone.
+  test("should save the other tabs when one of them refuses the write", async () => {
+    // Given.
+    const copiedDto = { ...tabEidtorsDto }
+    fakeFileManager.setPathExistence(tabSessionPath, true)
+    setFakeSaveDialogResult({
+      canceled: false,
+      filePath: newFilePath,
+    })
+    await fakeTabRepository.setTabSession({
+      activatedId: copiedDto.activatedId,
+      data: copiedDto.data.map(({ id, filePath }) => ({ id, filePath, isModified: false })),
+    })
+    fakeFileManager.setWriteFailure(copiedDto.data[2].filePath)
+
+    // When.
+    const response = await fileService.saveAll(copiedDto, fakeMainWindow as any)
+
+    // Then.
+    expect(response.data[2].isModified).toBe(true)
+    const session = await fakeTabRepository.readTabSession()
+    // Still modified in the session, which is where the next start learns to
+    // read the tab back from its temp copy rather than from the stale file.
+    expect(session!.data[2].isModified).toBe(true)
+
+    const file_3 = await fakeFileManager.read(newFilePath)
+    expect(file_3).toBe(copiedDto.data[3].content)
+    expect(response.data[3].isModified).toBe(false)
+  })
 })
