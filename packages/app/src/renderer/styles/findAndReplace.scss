@@ -27,6 +27,7 @@ $info-horizontal-padding: 4px;
   padding: $container-padding;
 
   background-color: var(--find-replace-container-bg);
+  color: var(--frame-font);
 }
 
 #find-replace-container * {
@@ -44,11 +45,16 @@ $info-horizontal-padding: 4px;
   width: $input-width;
   padding: 0 $input-horizontal-padding;
   background: var(--find-replace-input);
+  // The inputs sit on a document-side surface inside the frame-coloured
+  // container, so they must not inherit its text colour.
+  color: var(--app-font-color);
 }
 
 #find > button,
 #replace > button {
   margin: 0 $button-horizontal-margin;
+  // Buttons don't inherit the container's frame colour on their own.
+  color: var(--frame-font);
 }
 
 #find button:hover,

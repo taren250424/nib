@@ -43,7 +43,7 @@ $divider: color-mix(in srgb, var(--setting-node-border-color) 55%, transparent);
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--app-font-color);
+  color: var(--frame-font);
 }
 
 #settings-exit {

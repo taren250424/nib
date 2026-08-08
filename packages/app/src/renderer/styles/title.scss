@@ -17,6 +17,7 @@ $menu-container-horizontal-margin: 10px;
   flex-shrink: 0;
 
   background-color: var(--title-bg);
+  color: var(--frame-font);
 }
 
 #logo {
@@ -41,6 +42,9 @@ $menu-container-horizontal-margin: 10px;
 #window button {
   width: dimensions.$title-button-width;
   height: dimensions.$title-button-height;
+  // Buttons don't inherit, and the UA colour follows color-scheme, which the
+  // black-frame-on-light-page themes contradict.
+  color: var(--frame-font);
 }
 
 // should be of equal width and height

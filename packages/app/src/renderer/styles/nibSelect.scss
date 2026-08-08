@@ -111,7 +111,7 @@ nib-select {
 
   &:hover,
   &.highlight {
-    background-color: var(--menu-item-hover);
+    background-color: var(--dropdown-item-hover);
   }
 
   &.selected::before {

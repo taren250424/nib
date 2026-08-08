@@ -22,6 +22,13 @@
   $hover-foreground-color: map.get($p, hover-foreground-color);
   $disabled-bg: map.get($p, disabled-bg);
 
+  // Optional split between chrome and document: a palette whose frame surfaces
+  // sit on the other side of the light/dark line (mono's black title bar over
+  // a white page) supplies its own text/hover colours for those surfaces.
+  // Everyone else falls back to the document colours, same as before.
+  $frame-font: map.get($p, frame-font) or $font-color;
+  $frame-hover: map.get($p, frame-hover) or $bg-subtle;
+
   // CSS Variable Mapping
   --app-bg: #{$bg-surface};
   --app-font-color: #{$font-color};
@@ -37,13 +44,14 @@
   --title-bg: #{$bg-frame};
   --side-menu-bg: #{$bg-frame};
   --side-resizer: #{$accent};
+  --frame-font: #{$frame-font};
 
-  --menu-item-hover: #{$bg-subtle};
-  --window-icon-hover: #{$bg-subtle};
+  --menu-item-hover: #{$frame-hover};
+  --window-icon-hover: #{$frame-hover};
 
   --find-replace-container-bg: #{$bg-frame};
   --find-replace-input: #{$bg-highlight};
-  --find-replace-button-hover: #{$bg-subtle};
+  --find-replace-button-hover: #{$frame-hover};
 
   --tooltip-bg: #{$tooltip-bg};
   --tooltip-font: #{$tooltip-font};
@@ -56,6 +64,9 @@
   --dropdown-bg: #{$bg-surface};
   --dropdown-border: #{$bg-frame};
   --dropdown-divider: #{$bg-subtle};
+  // Dropdown panels stay on the document side of the split, so their item
+  // hover keeps the document hover colour even when the frame hover darkens.
+  --dropdown-item-hover: #{$bg-subtle};
 
   --search-highlight: #{$search-highlight};
   --search-highlight-current: #{$search-highlight-current};
@@ -68,7 +79,7 @@
   --tab-selected: #{$bg-highlight};
   --tab-btn-bg: transparent;
   --tab-btn-hover-bg: #{$bg-frame};
-  --tab-btn-hover-font: #{$font-color};
+  --tab-btn-hover-font: #{$frame-font};
   --tab-indicator: #{$accent};
 
   --tree-node-cut: #{$ref};

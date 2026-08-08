@@ -2,6 +2,7 @@
 @use "./light.scss";
 @use "./slate.scss";
 @use "./solarized.scss";
+@use "./mono.scss";
 @use "./dark.scss";
 
 // color-scheme keeps native widgets (inputs, native scrollbars) on the same
@@ -23,6 +24,11 @@ html.solarized {
 
 html.slate {
   @include base.define-theme-from-palette(slate.$palette);
+  color-scheme: light;
+}
+
+html.mono {
+  @include base.define-theme-from-palette(mono.$palette);
   color-scheme: light;
 }
 

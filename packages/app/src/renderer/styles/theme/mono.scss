@@ -1,0 +1,30 @@
+@use "../colors.scss" as colors;
+
+// Black and white. The chrome (title bar, find bar, overlay frames) drops to
+// dark charcoal while the document stays paper white, so this is the one
+// palette that splits frame-font/frame-hover away from the document colours.
+// The accent is a mid grey — the one value that reads against both the white
+// page and the charcoal frame, so the tab indicator never merges into the
+// chrome the way a black accent did. Warning red and the search-highlight
+// yellows stay functional on purpose.
+$palette: (
+  bg-frame: #303030,
+  bg-subtle: #e8e8e8,
+  bg-surface: #f8f8f8,
+  bg-highlight: #ffffff,
+  ref: #8a8a8a,
+  deactive: #b8b8b8,
+  accent: #8c8c8c,
+  accent-contrast: white,
+  warning-color: #d64541,
+  font-color: #1c1c1c,
+  close-btn-color: #c7c7c7,
+  tooltip-bg: #1c1c1c,
+  tooltip-font: #f2f2f2,
+  search-highlight: colors.$yellow-1,
+  search-highlight-current: colors.$yellow-3,
+  hover-foreground-color: white,
+  disabled-bg: #c4c4c4,
+  frame-font: #f0f0f0,
+  frame-hover: #474747,
+);

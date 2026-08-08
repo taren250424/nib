@@ -27,6 +27,9 @@ $tooltip-border-radius: 4px;
   min-width: $dropdown-min-width;
   z-index: 96;
   padding: $dropdown-padding;
+  // Dropdowns hang off the title bar but sit on a document-side surface, so
+  // they must not inherit the frame's text colour.
+  color: var(--app-font-color);
 }
 
 .dropdown-item {
