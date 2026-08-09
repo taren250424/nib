@@ -6,4 +6,5 @@ export default interface IDialogManager {
   showOpenFileDialog(): Promise<Electron.OpenDialogReturnValue>
   showOpenDirectoryDialog(): Promise<Electron.OpenDialogReturnValue>
   showSaveDialog(mainWindow: BrowserWindow, fileName?: string): Promise<Electron.SaveDialogReturnValue>
+  showExportPdfDialog(mainWindow: BrowserWindow, fileName?: string): Promise<Electron.SaveDialogReturnValue>
 }

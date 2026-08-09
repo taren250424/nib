@@ -65,12 +65,12 @@ export default class FakeFileManager implements IFileManager {
     return Array.from(immediateEntries)
   }
 
-  async write(path: string, data: string, _encoding: BufferEncoding = "utf8"): Promise<void> {
+  async write(path: string, data: string | Buffer, _encoding: BufferEncoding = "utf8"): Promise<void> {
     if (this.unwritablePaths.has(path)) {
       throw new Error(`EACCES: permission denied, open '${path}'`)
     }
 
-    this.savedFiles[path] = data
+    this.savedFiles[path] = typeof data === "string" ? data : data.toString("utf8")
     this.pathExists[path] = true
   }
 

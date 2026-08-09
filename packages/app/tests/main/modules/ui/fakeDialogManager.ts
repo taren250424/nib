@@ -17,6 +17,14 @@ export function setFakeSaveDialogResult(result: Electron.SaveDialogReturnValue) 
   fakeSaveDialogResult = result
 }
 
+let fakeExportPdfDialogResult: Electron.SaveDialogReturnValue = {
+  canceled: false,
+  filePath: undefined as any,
+}
+export function setFakeExportPdfDialogResult(result: Electron.SaveDialogReturnValue) {
+  fakeExportPdfDialogResult = result
+}
+
 let fakeOpenFileDialogResult: Electron.OpenDialogReturnValue = {
   canceled: false,
   filePaths: [],
@@ -52,6 +60,10 @@ const fakeDialogManager: IDialogManager = {
 
   async showSaveDialog(_mainWindow: BrowserWindow, _fileName = ""): Promise<Electron.SaveDialogReturnValue> {
     return fakeSaveDialogResult
+  },
+
+  async showExportPdfDialog(_mainWindow: BrowserWindow, _fileName = ""): Promise<Electron.SaveDialogReturnValue> {
+    return fakeExportPdfDialogResult
   },
 }
 

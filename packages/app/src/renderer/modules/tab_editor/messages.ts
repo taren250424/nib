@@ -18,3 +18,9 @@ export function saveFailedMessage(fileName: string, error?: string) {
   const named = fileName || "the file"
   return error ? `Could not save ${named}.\n\n${error}` : `Could not save ${named}.`
 }
+
+/** Same shape for an export: the OS's words carry the reason. */
+export function exportPdfFailedMessage(fileName: string, error?: string) {
+  const named = fileName || "the document"
+  return error ? `Could not export ${named} as PDF.\n\n${error}` : `Could not export ${named} as PDF.`
+}

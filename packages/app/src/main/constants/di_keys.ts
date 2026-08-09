@@ -1,6 +1,7 @@
 const DI_KEYS = {
   FileManager: Symbol("FileManager"),
   FileWatcher: Symbol("FileWatcher"),
+  PdfExporter: Symbol("PdfExporter"),
 
   dialogManager: Symbol("dialogManager"),
 

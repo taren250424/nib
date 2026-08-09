@@ -46,6 +46,14 @@ const dialogManager: IDialogManager = {
       filters: [{ name: "Markdown", extensions: ["md", "markdown"] }],
     })
   },
+
+  async showExportPdfDialog(mainWindow: BrowserWindow, fileName = ""): Promise<Electron.SaveDialogReturnValue> {
+    return await dialog.showSaveDialog(mainWindow, {
+      title: "Export PDF",
+      defaultPath: fileName,
+      filters: [{ name: "PDF", extensions: ["pdf"] }],
+    })
+  },
 }
 
 export default dialogManager

@@ -47,6 +47,9 @@ const rendererToMain: RendererToMainAPI = {
   saveAll: (data: TabEditorsDto) => {
     return ipcRenderer.invoke(electronAPI.events.rendererToMain.saveAll, data)
   },
+  exportPdf: (data: TabEditorDto) => {
+    return ipcRenderer.invoke(electronAPI.events.rendererToMain.exportPdf, data)
+  },
 
   closeTab: (data: TabEditorDto) => {
     return ipcRenderer.invoke(electronAPI.events.rendererToMain.closeTab, data)

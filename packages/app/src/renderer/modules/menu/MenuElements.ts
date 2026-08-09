@@ -11,6 +11,7 @@ export class MenuElements {
   public readonly save: HTMLElement
   public readonly saveAs: HTMLElement
   public readonly saveAll: HTMLElement
+  public readonly exportPdf: HTMLElement
   public readonly settings: HTMLElement
   public readonly exit: HTMLElement
 
@@ -40,6 +41,7 @@ export class MenuElements {
     this.save = document.querySelector("#file-menu-save") as HTMLElement
     this.saveAs = document.querySelector("#file-menu-save-as") as HTMLElement
     this.saveAll = document.querySelector("#file-menu-save-all") as HTMLElement
+    this.exportPdf = document.querySelector("#file-menu-export-pdf") as HTMLElement
     this.settings = document.querySelector("#file-menu-settings") as HTMLElement
     this.exit = document.querySelector("#file-menu-exit") as HTMLElement
 

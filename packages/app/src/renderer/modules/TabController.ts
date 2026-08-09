@@ -12,7 +12,7 @@ import { CommandQueue } from "../core"
 // is needed here rather than `import type` because emitDecoratorMetadata writes
 // these into the constructor's design:paramtypes.
 import { TabEditorFacade } from "./tab_editor/TabEditorFacade"
-import { saveFailedMessage } from "./tab_editor/messages"
+import { exportPdfFailedMessage, saveFailedMessage } from "./tab_editor/messages"
 import { FindReplaceController } from "./tab_editor/FindReplaceController"
 import { TreeFacade } from "./tree/TreeFacade"
 import { TreeHistory } from "./tree/TreeHistory"
@@ -172,6 +172,20 @@ export class TabController {
         response.data.isBinary,
         true
       )
+    }
+  }
+
+  performExportPdf() {
+    return this.commandQueue.enqueue(() => this._doExportPdf())
+  }
+
+  private async _doExportPdf() {
+    const dto: TabEditorDto = this.tabEditorFacade.getActiveTabEditorDto()
+    const response: Response<void> = await window.rendererToMain.exportPdf(dto)
+
+    // Nothing to apply on success: an export leaves the tab as it was.
+    if (!response.result) {
+      await window.rendererToMain.showWarning(exportPdfFailedMessage(dto.fileName, response.error))
     }
   }
 

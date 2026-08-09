@@ -7,7 +7,9 @@ import fakeDialogManager, {
   setFakeOpenFileDialogResult,
   setFakeOpenDirectoryDialogResult,
   setFakeSaveDialogResult,
+  setFakeExportPdfDialogResult,
 } from "../modules/ui/fakeDialogManager"
+import FakePdfExporter from "../modules/pdf/FakePdfExporter"
 import FakeTabRepository from "../modules/tab/FakeTabRepository"
 import FakeTreeRepository from "../modules/tree/FakeTreeRepository"
 import FakeTreeUtils from "../modules/tree/FakeTreeUtils"
@@ -28,6 +30,7 @@ let fakeTabRepository: FakeTabRepository
 let fakeTreeUtils: FakeTreeUtils
 let fakeTreeRepository: FakeTreeRepository
 let fakeFileWatcher: FakeFileWatcher
+let fakePdfExporter: FakePdfExporter
 let fileService: FileService
 const fakeMainWindow = new FakeMainWindow()
 
@@ -38,13 +41,15 @@ describe("FileService.newTab", () => {
     fakeTabRepository = new FakeTabRepository(tabSessionPath, fakeFileManager)
     fakeTreeUtils = new FakeTreeUtils()
     fakeFileWatcher = new FakeFileWatcher()
+    fakePdfExporter = new FakePdfExporter()
     fileService = new FileService(
       fakeFileManager,
       fakeTabRepository,
       fakeDialogManager,
       fakeTreeRepository,
       fakeTreeUtils,
-      fakeFileWatcher
+      fakeFileWatcher,
+      fakePdfExporter
     )
   })
 
@@ -74,13 +79,15 @@ describe("FileService.openFile", () => {
     fakeTabRepository = new FakeTabRepository(tabSessionPath, fakeFileManager)
     fakeTreeUtils = new FakeTreeUtils()
     fakeFileWatcher = new FakeFileWatcher()
+    fakePdfExporter = new FakePdfExporter()
     fileService = new FileService(
       fakeFileManager,
       fakeTabRepository,
       fakeDialogManager,
       fakeTreeRepository,
       fakeTreeUtils,
-      fakeFileWatcher
+      fakeFileWatcher,
+      fakePdfExporter
     )
   })
 
@@ -150,13 +157,15 @@ describe("FileService.openDirectory", () => {
     fakeTreeUtils = new FakeTreeUtils()
     fakeTreeRepository = new FakeTreeRepository(treeSessionPath, fakeFileManager)
     fakeFileWatcher = new FakeFileWatcher()
+    fakePdfExporter = new FakePdfExporter()
     fileService = new FileService(
       fakeFileManager,
       fakeTabRepository,
       fakeDialogManager,
       fakeTreeRepository,
       fakeTreeUtils,
-      fakeFileWatcher
+      fakeFileWatcher,
+      fakePdfExporter
     )
   })
 
@@ -235,13 +244,15 @@ describe("FileService.save", () => {
     fakeTabRepository = new FakeTabRepository(tabSessionPath, fakeFileManager)
     fakeTreeUtils = new FakeTreeUtils()
     fakeFileWatcher = new FakeFileWatcher()
+    fakePdfExporter = new FakePdfExporter()
     fileService = new FileService(
       fakeFileManager,
       fakeTabRepository,
       fakeDialogManager,
       fakeTreeRepository,
       fakeTreeUtils,
-      fakeFileWatcher
+      fakeFileWatcher,
+      fakePdfExporter
     )
   })
 
@@ -312,13 +323,15 @@ describe("FileService.saveAs", () => {
     fakeTabRepository = new FakeTabRepository(tabSessionPath, fakeFileManager)
     fakeTreeUtils = new FakeTreeUtils()
     fakeFileWatcher = new FakeFileWatcher()
+    fakePdfExporter = new FakePdfExporter()
     fileService = new FileService(
       fakeFileManager,
       fakeTabRepository,
       fakeDialogManager,
       fakeTreeRepository,
       fakeTreeUtils,
-      fakeFileWatcher
+      fakeFileWatcher,
+      fakePdfExporter
     )
   })
 
@@ -363,6 +376,94 @@ describe("FileService.saveAs", () => {
   })
 })
 
+describe("FileService.exportPdf", () => {
+  beforeEach(() => {
+    fakeFileManager = new FakeFileManager()
+    fakeTabRepository = new FakeTabRepository(tabSessionPath, fakeFileManager)
+    fakeTreeUtils = new FakeTreeUtils()
+    fakeFileWatcher = new FakeFileWatcher()
+    fakePdfExporter = new FakePdfExporter()
+    fileService = new FileService(
+      fakeFileManager,
+      fakeTabRepository,
+      fakeDialogManager,
+      fakeTreeRepository,
+      fakeTreeUtils,
+      fakeFileWatcher,
+      fakePdfExporter
+    )
+  })
+
+  test("should render nothing if export dialog is canceled", async () => {
+    // Given.
+    const data = { ...defaultTabEditorDto }
+    setFakeExportPdfDialogResult({
+      canceled: true,
+      filePath: "",
+    })
+
+    // When.
+    await fileService.exportPdf(data, fakeMainWindow as any)
+
+    // Then.
+    expect(fakePdfExporter.renderCalls.length).toBe(0)
+  })
+
+  test("should write the rendered pdf to the chosen path", async () => {
+    // Given.
+    const data = { ...defaultTabEditorDto }
+    setFakeExportPdfDialogResult({
+      canceled: false,
+      filePath: "exported.pdf",
+    })
+
+    // When.
+    await fileService.exportPdf(data, fakeMainWindow as any)
+
+    // Then.
+    expect(fakePdfExporter.renderCalls.length).toBe(1)
+    expect(fakePdfExporter.renderCalls[0].markdown).toBe(data.content)
+    const written = await fakeFileManager.read("exported.pdf")
+    expect(written).toBe(`PDF:${data.content}`)
+  })
+
+  test("should leave the tab session untouched", async () => {
+    // Given.
+    const data = { ...defaultTabEditorDto }
+    setFakeExportPdfDialogResult({
+      canceled: false,
+      filePath: "exported.pdf",
+    })
+    fakeFileManager.setPathExistence(tabSessionPath, true)
+    await fakeTabRepository.setTabSession({
+      activatedId: data.id,
+      data: [{ id: data.id, filePath: data.filePath, isModified: true }],
+    })
+
+    // When.
+    await fileService.exportPdf(data, fakeMainWindow as any)
+
+    // Then.
+    const session = await fakeTabRepository.readTabSession()
+    expect(session!.data.length).toBe(1)
+    expect(session!.data[0].isModified).toBe(true)
+  })
+
+  test("should propagate a render failure to the caller", async () => {
+    // Given.
+    const data = { ...defaultTabEditorDto }
+    setFakeExportPdfDialogResult({
+      canceled: false,
+      filePath: "exported.pdf",
+    })
+    fakePdfExporter.setRenderFailure(new Error("print process crashed"))
+
+    // When & Then.
+    await expect(fileService.exportPdf(data, fakeMainWindow as any)).rejects.toThrow("print process crashed")
+    expect(await fakeFileManager.exists("exported.pdf")).toBe(false)
+  })
+})
+
 describe("FileService.saveAll", () => {
   beforeEach(() => {
     fakeFileManager = new FakeFileManager()
@@ -370,13 +471,15 @@ describe("FileService.saveAll", () => {
     fakeTabRepository = new FakeTabRepository(tabSessionPath, fakeFileManager)
     fakeTreeUtils = new FakeTreeUtils()
     fakeFileWatcher = new FakeFileWatcher()
+    fakePdfExporter = new FakePdfExporter()
     fileService = new FileService(
       fakeFileManager,
       fakeTabRepository,
       fakeDialogManager,
       fakeTreeRepository,
       fakeTreeUtils,
-      fakeFileWatcher
+      fakeFileWatcher,
+      fakePdfExporter
     )
   })
 

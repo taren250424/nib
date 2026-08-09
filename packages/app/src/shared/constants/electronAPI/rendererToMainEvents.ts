@@ -13,6 +13,7 @@ export const rendererToMainEvents = {
   tempSave: "tempSave",
   saveAs: "saveAs",
   saveAll: "saveAll",
+  exportPdf: "exportPdf",
 
   closeTab: "closeTab",
   closeOtherTabs: "closeOtherTabs",

@@ -91,6 +91,22 @@ export default function registerFileHandlers(mainWindow: BrowserWindow, fileServ
     }
   })
 
+  ipcMain.handle(electronAPI.events.rendererToMain.exportPdf, async (_e, data: TabEditorDto) => {
+    try {
+      await fileService.exportPdf(data, mainWindow)
+      return {
+        result: true,
+        data: null,
+      }
+    } catch (e) {
+      return {
+        result: false,
+        data: null,
+        error: toErrorMessage(e),
+      }
+    }
+  })
+
   ipcMain.handle(electronAPI.events.rendererToMain.saveAll, async (_e, data: TabEditorsDto) => {
     try {
       const tabEditorsData: TabEditorsDto = await fileService.saveAll(data, mainWindow)

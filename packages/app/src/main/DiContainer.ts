@@ -15,6 +15,7 @@ import type IWindowRepository from "./modules/contracts/IWindowRepository"
 import type IWindowUtils from "./modules/contracts/IWindowUtils"
 import type ISettingsRepository from "./modules/contracts/ISettingsRepository"
 import type ISettingsUtils from "./modules/contracts/ISettingsUtils"
+import type IPdfExporter from "./modules/contracts/IPdfExporter"
 
 import {
   TAB_SESSION_PATH,
@@ -29,6 +30,7 @@ import DI_KEYS from "./constants/di_keys"
 import FileManager from "./modules/fs/FileManager"
 import FileWatcher from "./modules/fs/FileWatcher"
 import dialogManager from "./modules/ui/dialogManager"
+import PdfExporter from "./modules/pdf/PdfExporter"
 
 import TabRepository from "./modules/tab/TabRepository"
 import TreeRepository from "./modules/tree/TreeRepository"
@@ -67,6 +69,7 @@ export default class DIContainer {
 
       container.bind<IFileManager>(DI_KEYS.FileManager).to(FileManager).inSingletonScope()
       container.bind<IDialogManager>(DI_KEYS.dialogManager).toConstantValue(dialogManager)
+      container.bind<IPdfExporter>(DI_KEYS.PdfExporter).to(PdfExporter).inSingletonScope()
       container.bind<ITreeUtils>(DI_KEYS.TreeUtils).to(TreeUtils).inSingletonScope()
       container.bind<ITabUtils>(DI_KEYS.TabUtils).to(TabUtils).inSingletonScope()
       container.bind<IWindowUtils>(DI_KEYS.WindowUtils).to(WindowUtils).inSingletonScope()

@@ -41,6 +41,7 @@ export const MENU_BINDINGS: readonly MenuBinding[] = [
   { element: "save", commands: ["file.save"] },
   { element: "saveAs", commands: ["file.saveAs"] },
   { element: "saveAll", commands: ["file.saveAll"] },
+  { element: "exportPdf", commands: ["file.exportPdf"] },
   { element: "settings", commands: ["settings.open"] },
   // The window manager closes the window; nothing here handles Alt+F4.
   { element: "exit", commands: ["app.exit"], keyLabel: "Alt+F4" },

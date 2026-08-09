@@ -21,6 +21,7 @@ export default interface RendererToMainAPI {
   tempSave: (data: TabEditorDto) => Promise<Response<void>>
   saveAs: (data: TabEditorDto) => Promise<Response<TabEditorDto>>
   saveAll: (data: TabEditorsDto) => Promise<Response<TabEditorsDto>>
+  exportPdf: (data: TabEditorDto) => Promise<Response<void>>
 
   closeTab: (data: TabEditorDto) => Promise<Response<void>>
   closeOtherTabs: (tabEditorDtoToExclude: TabEditorDto, tabEditorsDto: TabEditorsDto) => Promise<Response<boolean[]>>

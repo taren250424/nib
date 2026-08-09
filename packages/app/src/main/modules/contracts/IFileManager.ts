@@ -7,7 +7,7 @@ export default interface IFileManager {
   toStringFromBuffer(buffer: Buffer, encoding?: BufferEncoding): string
   read(path: string, encoding?: BufferEncoding): Promise<string>
   readDir(dirPath: string): Promise<string[]>
-  write(path: string, data: string, encoding?: BufferEncoding): Promise<void>
+  write(path: string, data: string | Buffer, encoding?: BufferEncoding): Promise<void>
   rename(oldPath: string, newPath: string): Promise<void>
   copy(src: string, dest: string): Promise<void>
   moveToTrash(paths: string[]): Promise<TrashMap[] | null>

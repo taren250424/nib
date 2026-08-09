@@ -79,6 +79,7 @@
     "chokidar": "^4.0.3",
     "electron-squirrel-startup": "^1.0.1",
     "inversify": "^7.5.2",
+    "marked": "^18.0.9",
     "reflect-metadata": "^0.2.2",
     "simplebar": "^6.3.3"
   }

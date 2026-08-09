@@ -114,6 +114,11 @@ export function createCommandDescriptors(deps: CommandDeps): ICommandDescriptor[
     "file.save": { when: (ctx) => ctx.hasActiveEditor, run: () => tabController.performSave() },
     "file.saveAs": { when: (ctx) => ctx.hasActiveEditor, run: () => tabController.performSaveAs() },
     "file.saveAll": { run: () => tabController.performSaveAll() },
+    // A binary tab has no markdown to lay out on a page.
+    "file.exportPdf": {
+      when: (ctx) => ctx.hasActiveEditor && !ctx.editorIsBinary,
+      run: () => tabController.performExportPdf(),
+    },
 
     // Tabs. Close takes its target from wherever the user pointed, so the close
     // button and the right-clicked tab are separate ids rather than one command

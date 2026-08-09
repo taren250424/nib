@@ -2,6 +2,7 @@ import type IFileManager from "../modules/contracts/IFileManager"
 import type IFileWatcher from "@main/modules/contracts/IFileWatcher"
 import type ITreeUtils from "@main/modules/contracts/ITreeUtils"
 import type IDialogManager from "../modules/contracts/IDialogManager"
+import type IPdfExporter from "../modules/contracts/IPdfExporter"
 import type ITreeRepository from "@main/modules/contracts/ITreeRepository"
 import type ITabRepository from "../modules/contracts/ITabRepository"
 import type TreeSessionModel from "@main/models/TreeSessionModel"
@@ -20,7 +21,8 @@ export default class FileService {
     @inject(DI_KEYS.dialogManager) private readonly dialogManager: IDialogManager,
     @inject(DI_KEYS.TreeRepository) private readonly treeRepository: ITreeRepository,
     @inject(DI_KEYS.TreeUtils) private readonly treeUtils: ITreeUtils,
-    @inject(DI_KEYS.FileWatcher) private readonly fileWatcher: IFileWatcher
+    @inject(DI_KEYS.FileWatcher) private readonly fileWatcher: IFileWatcher,
+    @inject(DI_KEYS.PdfExporter) private readonly pdfExporter: IPdfExporter
   ) {}
 
   async newTab() {
@@ -298,6 +300,22 @@ export default class FileService {
         isBinary: data.isBinary,
       }
     }
+  }
+
+  /**
+   * Writes the tab's markdown out as a PDF wherever the user points the dialog.
+   * The tab itself is untouched: an export leaves no mark on the session, the
+   * path or the modified state.
+   */
+  async exportPdf(data: TabEditorDto, mainWindow: BrowserWindow): Promise<void> {
+    const pdfName = data.fileName ? data.fileName.replace(/\.(md|markdown)$/i, "") + ".pdf" : "Untitled.pdf"
+    const result = await this.dialogManager.showExportPdfDialog(mainWindow, pdfName)
+
+    if (result.canceled || !result.filePath) return
+
+    const baseDir = data.filePath ? path.dirname(data.filePath) : undefined
+    const pdf = await this.pdfExporter.render(data.content, baseDir)
+    await this.fileManager.write(result.filePath, pdf)
   }
 
   async saveAll(dto: TabEditorsDto, mainWindow: BrowserWindow) {

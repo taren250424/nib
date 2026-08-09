@@ -20,6 +20,7 @@ export type CommandId =
   | "file.save"
   | "file.saveAs"
   | "file.saveAll"
+  | "file.exportPdf"
   //
   | "tab.close"
   | "tab.closeActive"
