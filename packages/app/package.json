@@ -1,7 +1,7 @@
 {
   "name": "nib-app",
   "productName": "Nib",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Markdown WYSIWYG Editor",
   "main": "dist/main/main.js",
   "scripts": {
