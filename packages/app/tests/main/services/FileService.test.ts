@@ -147,6 +147,18 @@ describe("FileService.openFile", () => {
     expect(session!.activatedId).toBe(2)
     expect(session!.data[2].filePath).toBe("testPath")
   })
+
+  test("should hand an image over as a data URL the tab can show, and as binary so nothing edits it", async () => {
+    // Given.
+    fakeFileManager.setFilecontent("photo.PNG", "bytes")
+
+    // When.
+    const response = await fileService.openFile("photo.PNG")
+
+    // Then.
+    expect(response!.isBinary).toBe(true)
+    expect(response!.content).toBe(`data:image/png;base64,${Buffer.from("bytes").toString("base64")}`)
+  })
 })
 
 describe("FileService.openDirectory", () => {

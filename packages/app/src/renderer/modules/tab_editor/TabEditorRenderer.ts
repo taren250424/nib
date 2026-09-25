@@ -8,6 +8,7 @@ import { nord } from "@milkdown/theme-nord"
 import "@milkdown/theme-nord/style.css"
 import { TabEditorView } from "./TabEditorView"
 import { BINARY_FILE_WARNING } from "./messages"
+import { isImageDataUrl } from "@shared/utils/image"
 import { DI, DOM } from "@renderer/constants"
 import type { TabEditorElements } from "./TabEditorElements"
 import { TabEditorStore } from "./TabEditorStore"
@@ -94,7 +95,15 @@ export class TabEditorRenderer {
 
     let editor = null
 
-    if (isBinary) {
+    if (isBinary && isImageDataUrl(initialContent)) {
+      // Main packed the file as a data URL, so the picture needs no file
+      // access from here — the renderer page is not allowed any.
+      const img = document.createElement("img")
+      img.src = initialContent
+      img.draggable = false
+      editorBox.appendChild(img)
+      editorBox.classList.add(DOM.CLASS_IMAGE)
+    } else if (isBinary) {
       editorBox.innerText = BINARY_FILE_WARNING
       editorBox.classList.add(DOM.CLASS_BINARY)
     } else {

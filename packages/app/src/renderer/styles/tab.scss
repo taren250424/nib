@@ -9,6 +9,7 @@ $tab-button-radius: 5px;
 $indicator-size: 3px;
 
 $padding-top-binary-warning: 40px;
+$padding-image: 20px;
 
 #tab-container {
   display: flex;
@@ -126,6 +127,24 @@ $padding-top-binary-warning: 40px;
   color: var(--warning-color);
   padding-top: $padding-top-binary-warning;
   cursor: default;
+}
+
+// A picture sits centred and shrunk to fit; a small one keeps its real size.
+.editor-box.image.selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: $padding-image;
+  box-sizing: border-box;
+  cursor: default;
+  user-select: none;
+
+  img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
 }
 
 .tab-indicator {

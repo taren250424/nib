@@ -5,6 +5,7 @@ import type { TabEditorDto, TabEditorsDto } from "@shared/dto/TabEditorDto"
 import type ITabRepository from "../contracts/ITabRepository"
 import { inject, injectable } from "inversify"
 import DI_KEYS from "../../constants/di_keys"
+import { tabContentOf } from "./tabContent"
 import path from "path"
 
 @injectable()
@@ -73,8 +74,9 @@ export default class TabUtils implements ITabUtils {
         if (!isModified && data.filePath) {
           try {
             const buffer = await this.fileManager.getBuffer(data.filePath)
-            isBinary = this.fileManager.isBinaryContent(buffer)
-            content = this.fileManager.toStringFromBuffer(buffer)
+            const packed = tabContentOf(data.filePath, buffer, this.fileManager)
+            content = packed.content
+            isBinary = packed.isBinary
           } catch {
             content = ""
           }

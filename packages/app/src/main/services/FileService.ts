@@ -12,6 +12,7 @@ import type { TreeDto } from "@shared/dto/TreeDto"
 import { BrowserWindow } from "electron"
 import { inject } from "inversify"
 import DI_KEYS from "../constants/di_keys"
+import { tabContentOf } from "../modules/tab/tabContent"
 import path from "path"
 
 export default class FileService {
@@ -49,8 +50,7 @@ export default class FileService {
 
     const fileName = this.fileManager.getBasename(filePath)
     const buffer = await this.fileManager.getBuffer(filePath)
-    const isBinary = this.fileManager.isBinaryContent(buffer)
-    const content = this.fileManager.toStringFromBuffer(buffer)
+    const { content, isBinary } = tabContentOf(filePath, buffer, this.fileManager)
 
     const model = (await this.tabRepository.readTabSession()) ?? {
       activatedId: -1,

@@ -8,6 +8,8 @@ export const CLASS_TREE_DRAG_OVERLAY = "tree-drag-overlay"
 /** On the tree container while the tree is the zone commands act on. */
 export const CLASS_TREE_ACTIVE = "tree-active"
 export const CLASS_BINARY = "binary"
+/** On an editor box that shows a picture instead of a document. */
+export const CLASS_IMAGE = "image"
 export const CLASS_DEACTIVE = "deactive"
 export const CLASS_CUT = "cut"
 
