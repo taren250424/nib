@@ -6,12 +6,12 @@ export const Download = () => {
       <div className="download-page">
         <a
           className="download-box"
-          href="https://github.com/taren250424/nib/releases/download/v1.1.0/Nib.Setup.1.1.0.exe"
+          href="https://github.com/taren250424/nib/releases/download/v1.2.0/Nib.Setup.1.2.0.exe"
         >
           <img src={`${import.meta.env.BASE_URL}logo/windows.png`} alt="Windows" />
           <div className="text">
             <span className="platform">Windows 64-bit</span>
-            <small className="version">v1.1.0</small>
+            <small className="version">v1.2.0</small>
           </div>
         </a>
         <div className="download-note">
