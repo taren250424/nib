@@ -39,7 +39,9 @@ export default class TabUtils implements ITabUtils {
     }
   }
 
-  async toTabEditorsDto(session: TabSessionModel): Promise<TabEditorsDto> {
+  async toTabEditorsDto(session: TabSessionModel, options?: { readContent?: boolean }): Promise<TabEditorsDto> {
+    const readContent = options?.readContent ?? true
+
     const data = await Promise.all(
       session.data.map(async (data) => {
         let fileName = ""
@@ -55,7 +57,7 @@ export default class TabUtils implements ITabUtils {
         let isBinary = false
         let isModified = data.isModified ?? false
 
-        if (isModified) {
+        if (readContent && isModified) {
           try {
             const tempFilePath = path.join(
               path.dirname(this.tabRepository.getTabSessionPath()),
@@ -71,7 +73,7 @@ export default class TabUtils implements ITabUtils {
           }
         }
 
-        if (!isModified && data.filePath) {
+        if (readContent && !isModified && data.filePath) {
           try {
             const buffer = await this.fileManager.getBuffer(data.filePath)
             const packed = tabContentOf(data.filePath, buffer, this.fileManager)

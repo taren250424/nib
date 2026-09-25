@@ -35,20 +35,22 @@ export default class FakeTabUtils implements ITabUtils {
     }
   }
 
-  async toTabEditorsDto(session: TabSessionModel): Promise<TabEditorsDto> {
+  async toTabEditorsDto(session: TabSessionModel, options?: { readContent?: boolean }): Promise<TabEditorsDto> {
+    const readContent = options?.readContent ?? true
+
     const data = await Promise.all(
       session.data.map(async (data) => {
         const fileName = data.filePath ? this.fakeFileManager.getBasename(data.filePath) : ""
 
         let content = ""
-        if (data.isModified) {
+        if (readContent && data.isModified) {
           const tempFilePath = path.join(path.dirname(this.tabRepository.getTabSessionPath()), "temp", `${data.id}.txt`)
           if (await this.fakeFileManager.exists(tempFilePath)) {
             content = await this.fakeFileManager.read(tempFilePath)
           }
         }
 
-        if (!content && data.filePath) {
+        if (readContent && !content && data.filePath) {
           content = await this.fakeFileManager.read(data.filePath)
         }
 
