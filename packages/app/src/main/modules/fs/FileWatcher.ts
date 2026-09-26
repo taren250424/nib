@@ -10,6 +10,20 @@ import { watch } from "chokidar"
 import { injectable } from "inversify"
 import { electronAPI } from "@shared/constants/electronAPI/electronAPI"
 
+/**
+ * Names the watcher never reports, whatever directory they sit in.
+ *
+ * The tree scan shows every entry it finds, dotfiles included, so the watcher
+ * has to report them too or the tree only catches up on the next open. Only
+ * VCS internals and OS clutter are left out: they churn constantly and nobody
+ * opens them in an editor. This is the same short list VS Code and Zed use.
+ */
+const WATCH_IGNORED_NAMES = new Set([".git", ".svn", ".hg", ".DS_Store", "desktop.ini", "Thumbs.db"])
+
+export function isWatchIgnored(filePath: string) {
+  return WATCH_IGNORED_NAMES.has(path.basename(filePath))
+}
+
 @injectable()
 export default class FileWatcher {
   private watcher: FSWatcher | null = null
@@ -88,10 +102,7 @@ export default class FileWatcher {
         stabilityThreshold: 200,
         pollInterval: 100,
       },
-      ignored: (filePath: string) => {
-        const base = path.basename(filePath)
-        return base.startsWith(".") || base === "desktop.ini" || base === "Thumbs.db"
-      },
+      ignored: isWatchIgnored,
     })
 
     this.watcher.on("add", (changedPath) => this._process(changedPath, "add", false))

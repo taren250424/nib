@@ -1,6 +1,6 @@
 import "../../mocks/screen"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import FileWatcher from "@main/modules/fs/FileWatcher"
+import FileWatcher, { isWatchIgnored } from "@main/modules/fs/FileWatcher"
 import FakeFileManager from "./FakeFileManager"
 import FakeTabRepository from "../tab/FakeTabRepository"
 import FakeTabUtils from "../tab/FakeTabUtils"
@@ -129,5 +129,24 @@ describe("FileWatcher skip hold", () => {
     expect(tabs.data[0].filePath).toBe("root/readme.md")
     expect(tabs.data[0].fileName).toBe("readme.md")
     expect(tabs.data[0].content).toBe("")
+  })
+})
+
+// The tree scan shows dotfiles, so the watcher must report them too: a
+// `.claude` folder that appears while the app is open has to show up without
+// a restart. Only VCS internals and OS clutter stay out.
+describe("FileWatcher ignore list", () => {
+  it("reports dotfiles and dot-directories", () => {
+    expect(isWatchIgnored("root/.claude")).toBe(false)
+    expect(isWatchIgnored("root/.claude/settings.json")).toBe(false)
+    expect(isWatchIgnored("root/.env")).toBe(false)
+    expect(isWatchIgnored("root/CLAUDE.md")).toBe(false)
+  })
+
+  it("still leaves out VCS internals and OS clutter", () => {
+    expect(isWatchIgnored("root/.git")).toBe(true)
+    expect(isWatchIgnored("root/.DS_Store")).toBe(true)
+    expect(isWatchIgnored("root/notes/desktop.ini")).toBe(true)
+    expect(isWatchIgnored("root/Thumbs.db")).toBe(true)
   })
 })
