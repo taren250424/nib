@@ -1,10 +1,18 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import { DOM } from "@renderer/constants"
 
 import { createCommandHarness, type CommandHarness } from "./commandHarness"
 import { buildDto, loadTree, wrapperOf } from "./tree/treeHarness"
+
+// Every tree edit releases the watcher skip 300ms later, from a timer nobody
+// holds. The last edit in this file used to leave that timer to fire after
+// jsdom was torn down, where `window` no longer exists, and vitest reported
+// the ReferenceError as an unhandled rejection whenever the timing landed
+// that way. The delay is not what these tests are about, so it is dropped:
+// the release then runs on the microtask queue, inside the test that made it.
+vi.mock("@renderer/utils/sleep", () => ({ sleep: () => Promise.resolve() }))
 
 /**
  * root
@@ -196,6 +204,18 @@ describe("TreeController create, delete and rename", () => {
     expect(harness.tree.facade.getFlattenIndexByPath(created)).toBeDefined()
     expect(pathsInTree()).toEqual([created])
     expect(harness.tabEditor.facade.getTabEditorViewByPath(created)).toBeTruthy()
+  })
+
+  // The watcher would otherwise report the app's own edit back to it. Both
+  // halves have to land inside the test: the release is what used to fire
+  // after teardown (see the sleep mock at the top).
+  it("holds the watcher skip around an edit and lets go of it after", async () => {
+    select(DOCS)
+    const done = harness.treeController.performCreate(false)
+    await answerPrompt("new.md")
+    await done
+
+    expect(harness.ipc.setWatchSkipState.mock.calls).toEqual([[true], [false]])
   })
 
   // The tab used to be found by an id handed back after the open, so undoing
