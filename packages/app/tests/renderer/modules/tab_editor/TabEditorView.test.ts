@@ -249,3 +249,49 @@ describe("TabEditorView search state", () => {
     expect(view.searchInRange).toBe(false)
   })
 })
+
+/**
+ * The counts under the badge.
+ *
+ * English measures a text in words and Korean in characters, and a form's
+ * limit is in characters whatever the language, so all three numbers have to
+ * be right at once, and each has its own way of going wrong.
+ */
+describe("TabEditorView counts", () => {
+  it("counts words as whitespace-separated runs", async () => {
+    const view = await createEditorView("안녕하세요 반갑습니다")
+
+    expect(view.getCounts().words).toBe(2)
+  })
+
+  it("counts spaces as characters and paragraph breaks as none", async () => {
+    const view = await createEditorView("ab cd\n\nef")
+
+    expect(view.getCounts()).toEqual({ words: 3, characters: 7, charactersWithoutSpaces: 6 })
+  })
+
+  it("counts a Korean syllable as one character", async () => {
+    const view = await createEditorView("안녕하세요")
+
+    expect(view.getCounts().characters).toBe(5)
+  })
+
+  // Emoji sit outside the BMP, so a UTF-16 length would count each of them twice.
+  it("counts an emoji once", async () => {
+    const view = await createEditorView("a😀b")
+
+    expect(view.getCounts()).toEqual({ words: 1, characters: 3, charactersWithoutSpaces: 3 })
+  })
+
+  it("counts the text, not the markdown around it", async () => {
+    const view = await createEditorView("# Title\n\n**bold** and *italic*")
+
+    expect(view.getCounts()).toEqual({ words: 4, characters: 20, charactersWithoutSpaces: 18 })
+  })
+
+  it("has nothing to count in an empty document", async () => {
+    const view = await createEditorView("")
+
+    expect(view.getCounts()).toEqual({ words: 0, characters: 0, charactersWithoutSpaces: 0 })
+  })
+})

@@ -6,13 +6,20 @@ import { history } from "@milkdown/kit/plugin/history"
 import { commonmark } from "@milkdown/kit/preset/commonmark"
 import { nord } from "@milkdown/theme-nord"
 import "@milkdown/theme-nord/style.css"
-import { TabEditorView } from "./TabEditorView"
+import { TabEditorView, type DocumentCounts } from "./TabEditorView"
 import { BINARY_FILE_WARNING } from "./messages"
 import { isImageDataUrl } from "@shared/utils/image"
 import { DI, DOM } from "@renderer/constants"
 import type { TabEditorElements } from "./TabEditorElements"
 import { TabEditorStore } from "./TabEditorStore"
 import { throttle } from "../../utils/throttle"
+
+/** One line of the count badge: "1,234 words". */
+function countLine(count: number, singular: string, plural: string): HTMLElement {
+  const line = document.createElement("div")
+  line.textContent = `${count.toLocaleString()} ${count === 1 ? singular : plural}`
+  return line
+}
 
 @injectable()
 export class TabEditorRenderer {
@@ -377,10 +384,26 @@ export class TabEditorRenderer {
     this.elements.editorContainer.style.setProperty("--editor-width", `${width}px`)
   }
 
-  /** Null when there is nothing to count — the badge empties and CSS hides it. */
-  updateWordCount(count: number | null) {
-    this.elements.wordCount.textContent =
-      count === null ? "" : `${count.toLocaleString()} ${count === 1 ? "word" : "words"}`
+  /**
+   * Null when there is nothing to count — the badge empties and CSS hides it.
+   *
+   * Two lines, words over characters, because which one is "the" length
+   * depends on the language being written and the place it is going. The
+   * space-less character count is the rarer ask, so it waits in the tooltip.
+   */
+  updateWordCount(counts: DocumentCounts | null) {
+    const badge = this.elements.wordCount
+    if (counts === null) {
+      badge.replaceChildren()
+      badge.removeAttribute("title")
+      return
+    }
+
+    badge.replaceChildren(
+      countLine(counts.words, "word", "words"),
+      countLine(counts.characters, "character", "characters")
+    )
+    badge.title = `${counts.charactersWithoutSpaces.toLocaleString()} characters without spaces`
   }
 
   //

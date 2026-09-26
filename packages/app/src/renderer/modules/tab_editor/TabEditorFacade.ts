@@ -74,7 +74,7 @@ export class TabEditorFacade {
 
   /** Repaints the word count badge; a missing or binary view empties it. */
   private _paintWordCount(view: TabEditorView | undefined) {
-    this.renderer.updateWordCount(view && !view.isBinary ? view.getWordCount() : null)
+    this.renderer.updateWordCount(view && !view.isBinary ? view.getCounts() : null)
   }
 
   get activeTabIndex() {

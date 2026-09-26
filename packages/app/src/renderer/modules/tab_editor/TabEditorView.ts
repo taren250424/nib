@@ -52,6 +52,18 @@ function mapSearchRange(range: SearchRange, mapping: Mapping): SearchRange {
   return { from: mapping.map(range.from, -1), to: mapping.map(range.to, 1) }
 }
 
+export interface DocumentCounts {
+  words: number
+  /** Every character except paragraph breaks; spaces count. */
+  characters: number
+  charactersWithoutSpaces: number
+}
+
+/** Code points, not UTF-16 units: a surrogate pair is one character. */
+function countCodePoints(text: string): number {
+  return text.length - (text.match(/[\uD800-\uDBFF]/g)?.length ?? 0)
+}
+
 export class TabEditorView {
   private _tabBox: HTMLElement
   private _tabSpan: HTMLElement
@@ -168,12 +180,25 @@ export class TabEditorView {
     })
   }
 
-  /** Whitespace-separated words in the document, counted from its text, not its markdown. */
-  getWordCount(): number {
+  /**
+   * Words and characters in the document, counted from its text, not its markdown.
+   *
+   * Words are whitespace-separated runs, which is how English measures length.
+   * Characters are what Korean, Japanese and Chinese measure by, and what the
+   * character limits on forms and social sites measure by, so they come along
+   * in both the usual flavours. The definitions are Word's: a space is a
+   * character, a paragraph break is not, and a character is a code point
+   * rather than a UTF-16 unit, so an emoji counts once.
+   */
+  getCounts(): DocumentCounts {
     const view = this._editor!.ctx.get(editorViewCtx)
     const doc = view.state.doc
     const text = doc.textBetween(0, doc.content.size, "\n", " ")
-    return text.match(/\S+/g)?.length ?? 0
+    return {
+      words: text.match(/\S+/g)?.length ?? 0,
+      characters: countCodePoints(text.replace(/\n/g, "")),
+      charactersWithoutSpaces: countCodePoints(text.replace(/\s/g, "")),
+    }
   }
 
   setContent(content: string): void {

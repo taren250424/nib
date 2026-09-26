@@ -115,9 +115,13 @@ $offset: $mark-size + $mark-gap;
   }
 }
 
-// Word count for the active document, floating over the paper like a colophon.
-// Emptied (not hidden) when no countable document is active; the View menu
-// toggles its visibility separately.
+// Word and character counts for the active document, floating over the paper
+// like a colophon. Emptied (not hidden) when no countable document is active;
+// the View menu toggles its visibility separately.
+//
+// Takes pointer events, unlike most overlays, so hovering it shows the
+// tooltip holding the count without spaces. It sits in the paper's margin,
+// so there is nothing under it to steal clicks from.
 #word-count {
   position: absolute;
   right: 16px;
@@ -125,10 +129,11 @@ $offset: $mark-size + $mark-gap;
   z-index: 20;
 
   font-size: 0.78rem;
+  line-height: 1.4;
+  text-align: right;
   color: var(--status-font);
 
   user-select: none;
-  pointer-events: none;
 }
 
 #word-count:empty {

@@ -591,3 +591,43 @@ describe("TabEditorFacade auto save refusals", () => {
     expect(view.tabButton.textContent).toBe(DOM.EXIT_TEXT)
   })
 })
+
+/**
+ * What the count badge shows for the document on display.
+ *
+ * Two lines rather than one because the number that means "how long" depends
+ * on the language: words for English, characters for Korean and for any form
+ * with a character limit.
+ */
+describe("TabEditorFacade count badge", () => {
+  const badge = () => harness.elements.wordCount
+  const badgeLines = () => Array.from(badge().children, (line) => line.textContent)
+
+  it("shows words over characters", async () => {
+    await openTab(harness, { id: FIRST, content: "안녕하세요 반갑습니다" })
+
+    expect(badgeLines()).toEqual(["2 words", "11 characters"])
+  })
+
+  it("keeps the count without spaces in the tooltip", async () => {
+    await openTab(harness, { id: FIRST, content: "안녕하세요 반갑습니다" })
+
+    expect(badge().title).toBe("10 characters without spaces")
+  })
+
+  it("follows typing in the document on display", async () => {
+    const view = await openTab(harness, { id: FIRST, content: "cat" })
+
+    typeInEditor(view!, " dog")
+
+    expect(badgeLines()).toEqual(["2 words", "7 characters"])
+  })
+
+  it("empties for a binary document, tooltip included", async () => {
+    await openTab(harness, { id: FIRST, content: "cat" })
+    await openTab(harness, { id: SECOND, content: "", isBinary: true })
+
+    expect(badge().childElementCount).toBe(0)
+    expect(badge().hasAttribute("title")).toBe(false)
+  })
+})
